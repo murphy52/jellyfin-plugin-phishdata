@@ -10,6 +10,14 @@
     "repositoryUrl": "https://github.com/murphy52/jellyfin-plugin-phishnet",
     "versions": [
       {
+        "version": "1.1.8",
+        "changelog": "## 🔍 Debug Enhancement v1.1.8\n\n### Enhanced Debugging\n- **Detailed Rating Logs**: Shows sample reviews with raw/parsed ratings\n- **Rating Breakdown**: Displays rating distribution (e.g., 4.0★(3), 5.0★(2))\n- **Information-Level Logging**: Critical debug info now at INFO level\n- **Clear Success/Failure Messages**: ✅/❌ indicators for rating calculation\n\n### What's New\n- Sample review data logged for troubleshooting\n- Rating parsing validation with clear error messages\n- Better visibility into why community ratings may be blank\n- Comprehensive breakdown of review rating distribution\n\n### For Users\n- Check logs for 'Sample Review' entries to see rating data\n- Look for 'Found X valid ratings out of Y reviews'\n- Clear ✅/❌ indicators for successful rating calculation\n- Better troubleshooting information for blank ratings\n\nThis version helps diagnose community rating issues with detailed logging.",
+        "targetAbi": "10.8.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishnet/master/jellyfin-plugin-phishnet-1.1.8.zip",
+        "checksum": "9bc75a7c53dd7ad1e7c8fbaf6f186516",
+        "timestamp": "2024-10-13T23:05:00Z"
+      },
+      {
         "version": "1.1.7",
         "changelog": "## 🔧 Parsing Fix v1.1.7\n\n### Major Fix\n- **Fixed Title Parsing**: Now handles processed titles like 'N2 Phish Hampton 11-22-1997'\n- **Lowered Confidence Threshold**: Reduced from 0.3 to 0.25 for better parsing success\n- **Enhanced Patterns**: Added specific patterns for processed titles and standard formats\n- **Better Logging**: Improved debug information for parsing failures\n\n### What's Fixed\n- Plugin was rejecting valid show titles due to low parsing confidence\n- Added patterns for multi-night run titles (N1, N2, N3, etc.)\n- Improved recognition of standard Phish title formats\n- Better error messages and debugging information\n\n### For Users\n- Shows that were previously skipped should now be processed\n- Better handling of multi-night runs and processed titles\n- Improved logging for troubleshooting parsing issues\n\nSee the full changelog at [GitHub](https://github.com/murphy52/jellyfin-plugin-phishnet/blob/master/CHANGELOG.md)",
         "targetAbi": "10.8.0.0",

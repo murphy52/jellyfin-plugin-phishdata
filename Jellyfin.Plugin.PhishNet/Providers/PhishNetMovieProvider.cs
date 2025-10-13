@@ -635,16 +635,17 @@ namespace Jellyfin.Plugin.PhishNet.Providers
             movie.DateCreated = showDate; // Release Date
             
             // Calculate community rating from reviews
-            _logger.LogDebug("Processing reviews for community rating: {ReviewCount} reviews available", 
+            _logger.LogInformation("Processing reviews for community rating: {ReviewCount} reviews available", 
                 reviewsData?.Count ?? 0);
             
             if (reviewsData != null && reviewsData.Any())
             {
-                // Log all ratings found
-                foreach (var review in reviewsData)
+                // Log sample of ratings found for debugging
+                var sampleReviews = reviewsData.Take(3).ToList();
+                foreach (var review in sampleReviews)
                 {
-                    _logger.LogTrace("Review {ReviewId}: Raw rating '{Rating}', Parsed: {ParsedRating}", 
-                        review.ReviewId, review.Rating, review.ParsedRating);
+                    _logger.LogInformation("Sample Review {ReviewId}: Raw rating='{Rating}', Parsed={ParsedRating}, Username={Username}", 
+                        review.ReviewId, review.Rating ?? "null", review.ParsedRating, review.Username);
                 }
                 
                 var ratingsWithValues = reviewsData
@@ -652,8 +653,16 @@ namespace Jellyfin.Plugin.PhishNet.Providers
                     .Select(r => r.ParsedRating!.Value)
                     .ToList();
                     
-                _logger.LogDebug("Found {ValidRatings} valid ratings out of {TotalReviews} reviews", 
+                _logger.LogInformation("Found {ValidRatings} valid ratings out of {TotalReviews} reviews", 
                     ratingsWithValues.Count, reviewsData.Count);
+                
+                // Show breakdown of rating distribution
+                if (ratingsWithValues.Any())
+                {
+                    var ratings = ratingsWithValues.GroupBy(r => Math.Round(r, 1)).OrderBy(g => g.Key);
+                    var ratingBreakdown = string.Join(", ", ratings.Select(g => $"{g.Key}★({g.Count()})"));
+                    _logger.LogInformation("Rating breakdown: {Breakdown}", ratingBreakdown);
+                }
                     
                 if (ratingsWithValues.Any())
                 {
@@ -662,17 +671,18 @@ namespace Jellyfin.Plugin.PhishNet.Providers
                     var communityRating = (float)(averageRating * 2.0);
                     movie.CommunityRating = communityRating;
                     
-                    _logger.LogInformation("Set community rating for {ShowDate}: {Rating}/10 (avg of {Count} reviews: {AvgOriginal}/5)", 
+                    _logger.LogInformation("✅ Set community rating for {ShowDate}: {Rating}/10 (avg of {Count} reviews: {AvgOriginal}/5)", 
                         showData.ShowDate, communityRating.ToString("F1"), ratingsWithValues.Count, averageRating.ToString("F1"));
                 }
                 else
                 {
-                    _logger.LogDebug("No valid numeric ratings found in reviews for {ShowDate}", showData.ShowDate);
+                    _logger.LogWarning("❌ No valid numeric ratings found in {TotalReviews} reviews for {ShowDate}. Check review rating format.", 
+                        reviewsData.Count, showData.ShowDate);
                 }
             }
             else
             {
-                _logger.LogDebug("No reviews available for community rating calculation for {ShowDate}", showData.ShowDate);
+                _logger.LogInformation("No reviews available for community rating calculation for {ShowDate}", showData.ShowDate);
             }
 
             // Build comprehensive overview with setlist at the top
