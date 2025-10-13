@@ -5,10 +5,16 @@ using System.Text.Json.Serialization;
 namespace Jellyfin.Plugin.PhishNet.API.Models;
 
 /// <summary>
-/// Represents a Phish show setlist from the Phish.net API.
+/// Represents a song in a Phish setlist from the Phish.net API.
 /// </summary>
-public class SetlistDto
+public class SetlistSongDto
 {
+    /// <summary>
+    /// Gets or sets the unique song identifier.
+    /// </summary>
+    [JsonPropertyName("songid")]
+    public long SongId { get; set; }
+
     /// <summary>
     /// Gets or sets the show date in YYYY-MM-DD format.
     /// </summary>
@@ -22,149 +28,171 @@ public class SetlistDto
     public long ShowId { get; set; }
 
     /// <summary>
-    /// Gets or sets the venue name.
+    /// Gets or sets the song title.
     /// </summary>
-    [JsonPropertyName("venue")]
-    public string Venue { get; set; } = string.Empty;
+    [JsonPropertyName("song")]
+    public string Song { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the city.
+    /// Gets or sets the set number (1, 2, 3, E for encore).
     /// </summary>
-    [JsonPropertyName("city")]
-    public string City { get; set; } = string.Empty;
+    [JsonPropertyName("set")]
+    public string Set { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the state.
+    /// Gets or sets the position of the song within the set.
     /// </summary>
-    [JsonPropertyName("state")]
-    public string State { get; set; } = string.Empty;
+    [JsonPropertyName("position")]
+    public int Position { get; set; }
 
     /// <summary>
-    /// Gets or sets the country.
+    /// Gets or sets the transition mark that follows this song.
+    /// Common values: "," (no transition), ">" (segue), "->" (direct segue)
     /// </summary>
-    [JsonPropertyName("country")]
-    public string Country { get; set; } = string.Empty;
+    [JsonPropertyName("trans_mark")]
+    public string TransMark { get; set; } = ",";
 
     /// <summary>
-    /// Gets or sets the artist name.
+    /// Gets or sets additional notes about the song performance.
     /// </summary>
-    [JsonPropertyName("artist")]
-    public string Artist { get; set; } = string.Empty;
+    [JsonPropertyName("footnote")]
+    public string? Footnote { get; set; }
 
     /// <summary>
-    /// Gets or sets the setlist data as a string.
-    /// This contains the actual setlist information that needs to be parsed.
+    /// Gets the clean set name for display.
     /// </summary>
-    [JsonPropertyName("setlistdata")]
-    public string SetlistData { get; set; } = string.Empty;
+    [JsonIgnore]
+    public string SetName
+    {
+        get
+        {
+            return Set.ToUpperInvariant() switch
+            {
+                "1" or "I" => "Set I",
+                "2" or "II" => "Set II", 
+                "3" or "III" => "Set III",
+                "E" or "ENCORE" => "Encore",
+                _ => $"Set {Set}"
+            };
+        }
+    }
 
     /// <summary>
-    /// Gets or sets additional setlist notes.
+    /// Gets whether this song transitions/segues into the next song.
     /// </summary>
-    [JsonPropertyName("setlistnotes")]
-    public string? SetlistNotes { get; set; }
+    [JsonIgnore]
+    public bool HasTransition
+    {
+        get
+        {
+            return !string.IsNullOrEmpty(TransMark) && 
+                   TransMark != "," && 
+                   TransMark.Trim() != string.Empty;
+        }
+    }
 
     /// <summary>
-    /// Gets the parsed setlist as structured data.
-    /// This parses the setlistdata string into sets and songs.
+    /// Gets the transition symbol for display (sanitized).
+    /// </summary>
+    [JsonIgnore]
+    public string DisplayTransition
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(TransMark))
+                return ", ";
+                
+            // Common transition marks and their display equivalents
+            return TransMark.Trim() switch
+            {
+                ">" or "->" or "→" => " > ",
+                "," => ", ",
+                "" => ", ",
+                _ => $" {TransMark.Trim()} "
+            };
+        }
+    }
+}
+
+/// <summary>
+/// Represents a Phish show setlist from the Phish.net API.
+/// This is now a collection of individual song objects with transition marks.
+/// </summary>
+public class SetlistDto : List<SetlistSongDto>
+{
+    /// <summary>
+    /// Gets the parsed setlist grouped by sets with proper transition marks.
     /// </summary>
     [JsonIgnore]
     public ParsedSetlist ParsedSetlist
     {
         get
         {
-            if (string.IsNullOrEmpty(SetlistData))
+            var parsedSetlist = new ParsedSetlist();
+            
+            if (!this.Any())
             {
-                return new ParsedSetlist();
+                return parsedSetlist;
             }
 
-            return ParseSetlistData(SetlistData);
-        }
-    }
+            // Group songs by set and order properly
+            var songsBySet = this
+                .OrderBy(s => s.Position)
+                .GroupBy(s => s.SetName)
+                .OrderBy(g => GetSetOrder(g.Key));
 
-    /// <summary>
-    /// Parses the raw setlist data string into structured setlist information.
-    /// </summary>
-    /// <param name="setlistData">The raw setlist data string.</param>
-    /// <returns>A parsed setlist structure.</returns>
-    private static ParsedSetlist ParseSetlistData(string setlistData)
-    {
-        var parsedSetlist = new ParsedSetlist();
-        
-        if (string.IsNullOrEmpty(setlistData))
-        {
+            foreach (var setGroup in songsBySet)
+            {
+                var setName = setGroup.Key;
+                var setSongs = setGroup.OrderBy(s => s.Position).ToList();
+                
+                var songs = setSongs.Select(song => new SongInfo
+                {
+                    Title = song.Song,
+                    OriginalText = song.Song,
+                    TransitionMark = song.TransMark,
+                    HasTransition = song.HasTransition,
+                    Notes = song.Footnote
+                }).ToList();
+
+                if (songs.Count > 0)
+                {
+                    parsedSetlist.Sets.Add(new SetInfo
+                    {
+                        SetNumber = GetSetNumber(setName),
+                        SetName = setName,
+                        Songs = songs
+                    });
+                }
+            }
+
             return parsedSetlist;
         }
-
-        // Split by common set separators
-        var setParts = setlistData.Split(new[] { "Set I:", "Set II:", "Set III:", "Encore:", "Set 1:", "Set 2:", "Set 3:" }, 
-            System.StringSplitOptions.RemoveEmptyEntries);
-
-        for (int i = 0; i < setParts.Length; i++)
-        {
-            var setPart = setParts[i].Trim();
-            if (string.IsNullOrEmpty(setPart)) continue;
-
-            var setNumber = i + 1;
-            var setName = GetSetName(i, setParts.Length);
-            
-            // Parse songs from the set part
-            var songs = ParseSongsFromSetPart(setPart);
-            
-            if (songs.Count > 0)
-            {
-                parsedSetlist.Sets.Add(new SetInfo
-                {
-                    SetNumber = setNumber,
-                    SetName = setName,
-                    Songs = songs
-                });
-            }
-        }
-
-        return parsedSetlist;
     }
 
-    private static string GetSetName(int index, int totalSets)
+    private static int GetSetOrder(string setName)
     {
-        return index switch
+        return setName switch
         {
-            0 when totalSets > 1 => "Set I",
-            1 when totalSets > 2 => "Set II", 
-            2 when totalSets > 3 => "Set III",
-            var i when i == totalSets - 1 && totalSets > 1 => "Encore",
-            _ => $"Set {index + 1}"
+            "Set I" => 1,
+            "Set II" => 2,
+            "Set III" => 3,
+            "Encore" => 99,
+            _ => 50 // Unknown sets in the middle
         };
     }
 
-    private static List<SongInfo> ParseSongsFromSetPart(string setPart)
+    private static int GetSetNumber(string setName)
     {
-        var songs = new List<SongInfo>();
-        
-        // Split by common song separators
-        var songParts = setPart.Split(new[] { ",", ">" }, System.StringSplitOptions.RemoveEmptyEntries);
-        
-        foreach (var songPart in songParts)
+        return setName switch
         {
-            var cleanSong = songPart.Trim();
-            if (string.IsNullOrEmpty(cleanSong)) continue;
-            
-            // Remove common annotations
-            cleanSong = System.Text.RegularExpressions.Regex.Replace(cleanSong, @"\[.*?\]", "").Trim();
-            cleanSong = System.Text.RegularExpressions.Regex.Replace(cleanSong, @"\(.*?\)", "").Trim();
-            
-            if (!string.IsNullOrEmpty(cleanSong))
-            {
-                songs.Add(new SongInfo
-                {
-                    Title = cleanSong,
-                    OriginalText = songPart.Trim()
-                });
-            }
-        }
-
-        return songs;
-    }
+            "Set I" => 1,
+            "Set II" => 2,
+            "Set III" => 3,
+            "Encore" => 4,
+            _ => 1
+        };
+}
 }
 
 /// <summary>
@@ -227,7 +255,37 @@ public class SongInfo
     public string OriginalText { get; set; } = string.Empty;
 
     /// <summary>
+    /// Gets or sets the transition mark for this song.
+    /// </summary>
+    public string TransitionMark { get; set; } = ",";
+
+    /// <summary>
+    /// Gets or sets whether this song has a transition to the next song.
+    /// </summary>
+    public bool HasTransition { get; set; }
+
+    /// <summary>
     /// Gets or sets any special notes about this song performance.
     /// </summary>
     public string? Notes { get; set; }
+
+    /// <summary>
+    /// Gets the transition symbol for display.
+    /// </summary>
+    public string DisplayTransition
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(TransitionMark))
+                return ", ";
+                
+            return TransitionMark.Trim() switch
+            {
+                ">" or "->" or "→" => " > ",
+                "," => ", ",
+                "" => ", ",
+                _ => $" {TransitionMark.Trim()} "
+            };
+        }
+    }
 }

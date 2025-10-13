@@ -102,9 +102,14 @@ public class PhishNetApiClient : IPhishNetApiClient, IDisposable
         }
 
         var endpoint = $"setlists/showdate/{showDate}.json";
-        var response = await MakeApiRequestAsync<SetlistDto>(endpoint, cancellationToken).ConfigureAwait(false);
+        var response = await MakeApiRequestAsync<SetlistSongDto>(endpoint, cancellationToken).ConfigureAwait(false);
         
-        return response?.Data ?? new List<SetlistDto>();
+        // Convert the individual song objects to a SetlistDto
+        var songs = response?.Data ?? new List<SetlistSongDto>();
+        var setlistDto = new SetlistDto();
+        setlistDto.AddRange(songs);
+        
+        return new List<SetlistDto> { setlistDto };
     }
 
     /// <inheritdoc />

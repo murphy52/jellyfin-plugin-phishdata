@@ -68,7 +68,7 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     /// <returns>An HTTP client configured for Phish.net API calls.</returns>
     public HttpClient GetHttpClient()
     {
-        var httpClient = _httpClientFactory.CreateClient(NamedClient.Default);
+        var httpClient = _httpClientFactory.CreateClient();
         httpClient.DefaultRequestHeaders.UserAgent.Add(
             new ProductInfoHeaderValue(Name, Version.ToString()));
 

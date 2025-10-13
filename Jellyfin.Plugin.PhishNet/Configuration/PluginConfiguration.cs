@@ -45,9 +45,34 @@ public class PluginConfiguration : BasePluginConfiguration
     public bool IncludeReviews { get; set; }
 
     /// <summary>
-    /// Gets or sets the maximum number of reviews to fetch per show.
+    /// Gets or sets the maximum number of reviews to include in metadata.
     /// </summary>
-    public int MaxReviews { get; set; }
+    public int MaxReviews { get; set; } = 3;
+    
+    /// <summary>
+    /// Gets or sets the Unsplash API key for venue images (optional).
+    /// </summary>
+    public string? UnsplashApiKey { get; set; }
+    
+    /// <summary>
+    /// Gets or sets the Google Places API key for venue images (optional).
+    /// </summary>
+    public string? GooglePlacesApiKey { get; set; }
+    
+    /// <summary>
+    /// Gets or sets the Instagram API key for show-specific photos (optional).
+    /// </summary>
+    public string? InstagramApiKey { get; set; }
+    
+    /// <summary>
+    /// Gets or sets the Twitter API key for show-specific photos (optional).
+    /// </summary>
+    public string? TwitterApiKey { get; set; }
+    
+    /// <summary>
+    /// Gets or sets the Flickr API key for show-specific photos (optional).
+    /// </summary>
+    public string? FlickrApiKey { get; set; }
 
     /// <summary>
     /// Gets or sets the cache duration in hours.

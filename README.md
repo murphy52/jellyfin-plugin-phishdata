@@ -6,13 +6,36 @@ This plugin adds a metadata provider for Phish concert videos using the [Phish.n
 
 ## Features
 
+### Core Metadata
 - **Show Metadata**: Automatically fetch show date, venue, location, and attendance information
-- **Setlist Integration**: Display complete setlists with song titles, set breaks, and encore information
+- **Setlist Integration**: Display complete setlists with song titles, set breaks, and encore information in overview
 - **Venue Information**: Get venue names, locations, and capacity details
+- **Smart Naming Format**: Intelligent title generation (e.g., "Phish - 1997-11-22 - Hampton Coliseum, Hampton, VA")
+- **Production Details**: Premiere date, production year, and external provider IDs
+- **Genre Classification**: Automatic categorization as "Concert" and "Live Music"
+- **Comprehensive Tags**: Including "Phish", venue, location, and show-specific tags
+
+### Community Features
+- **Community Ratings**: Aggregate user ratings from Phish.net reviews (scaled 1-10)
+- **Review Integration**: Pull user reviews and show ratings from Phish.net (up to 50 per show)
 - **Jam Chart Data**: Access notable jams and performance ratings from the community
-- **Review Integration**: Pull user reviews and show ratings from Phish.net
-- **Smart Matching**: Intelligent file name parsing to match video files with shows
+
+### Image Provider
+- **Multi-Source Image Fetching**: Comprehensive image provider with fallback hierarchy
+- **Venue Images**: Curated venue photography from multiple sources
+- **Show-Specific Photos**: Social media and fan photography integration
+- **Official Artwork**: LivePhish and Phish.net image support
+- **Quality Filtering**: Intelligent ranking and deduplication of images
+
+### Person Provider
+- **Band Member Profiles**: Dedicated profiles for Trey, Mike, Page, and Fish
+- **Detailed Biographies**: Comprehensive band member information
+- **Birth Dates**: Accurate biographical data for each member
+
+### Smart Matching
+- **Intelligent File Parsing**: Advanced filename parsing to match video files with shows
 - **Flexible Naming**: Support for various file naming conventions commonly used by Phish collectors
+- **Multi-Format Support**: Works with various video file formats and naming patterns
 
 ## Supported File Naming Conventions
 
@@ -71,8 +94,11 @@ Phish Videos/
    - **Prefer Official Releases**: Prioritize official releases over audience recordings
    - **Include Jam Charts**: Fetch jam chart data for notable performances
    - **Include Reviews**: Pull community reviews and ratings
-   - **Max Reviews**: Maximum number of reviews to display (default: 5)
+   - **Max Reviews**: Maximum number of reviews to display (default: 50)
    - **Cache Duration**: How long to cache API responses (default: 24 hours)
+   - **Image Provider Settings**: Configure image sources and quality preferences
+   - **Social Media API Keys**: Optional API keys for Instagram, Twitter, Flickr for enhanced image search
+   - **Google Places API Key**: Optional key for venue image integration
 
 ## Usage
 
@@ -88,14 +114,32 @@ This plugin is built with:
 - **.NET 8.0**: Target framework for Jellyfin compatibility
 - **Phish.net API v5**: Official API for accessing show data
 - **Jellyfin Plugin SDK**: For seamless integration
+- **Multiple Provider Architecture**: Movie, Person, and Image providers
+- **Comprehensive Service Layer**: API client, parsing, and image services
+- **Extensive Testing**: Unit tests, integration tests, and mocked API responses
+
+### Architecture
+
+- **Providers**: `PhishMovieProvider`, `PhishPersonProvider`, `PhishImageProvider`
+- **Services**: `PhishNetApiClient`, `ExternalImageService`, `ShowPhotoService`
+- **Parsers**: `FilenameParsing` utilities for intelligent show matching
+- **Configuration**: Flexible plugin configuration with multiple API key support
+- **Testing**: Comprehensive test suite with `MetadataTest` and unit test projects
 
 ### Building from Source
 
 1. Clone this repository
 2. Install .NET 8.0 SDK
-3. Build the project: `dotnet build`
-4. Copy output to Jellyfin plugins directory
-5. Restart Jellyfin
+3. Build the main project: `cd Jellyfin.Plugin.PhishNet && dotnet build`
+4. Run tests: `cd ../MetadataTest && dotnet run` or `cd ../Jellyfin.Plugin.PhishNet.Tests && dotnet test`
+5. Copy output to Jellyfin plugins directory
+6. Restart Jellyfin
+
+### Testing
+
+- **MetadataTest**: Interactive testing environment for metadata providers
+- **Unit Tests**: Comprehensive unit tests for parsing, API clients, and providers
+- **Mocked Responses**: Full API response simulation for development without API keys
 
 ## Contributing
 
