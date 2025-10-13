@@ -12,7 +12,7 @@ public class ReviewDto
     /// Gets or sets the review ID.
     /// </summary>
     [JsonPropertyName("reviewid")]
-    public string ReviewId { get; set; } = string.Empty;
+    public int ReviewId { get; set; }
 
     /// <summary>
     /// Gets or sets the show date this review is for.
@@ -24,7 +24,7 @@ public class ReviewDto
     /// Gets or sets the show ID this review is for.
     /// </summary>
     [JsonPropertyName("showid")]
-    public string ShowId { get; set; } = string.Empty;
+    public int ShowId { get; set; }
 
     /// <summary>
     /// Gets or sets the username of the reviewer.
