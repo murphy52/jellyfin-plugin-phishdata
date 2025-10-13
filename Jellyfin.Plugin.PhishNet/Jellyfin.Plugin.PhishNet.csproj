@@ -13,7 +13,8 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <BaseOutputPath>$(USERPROFILE)\AppData\Local\jellyfin\plugins\Jellyfin.Plugin.PhishNet</BaseOutputPath>
+    <!-- Use relative path for cross-platform development -->
+    <OutputPath>bin/Debug/</OutputPath>
     <Optimize>False</Optimize>
     <IsPublishable>False</IsPublishable>
   </PropertyGroup>
@@ -26,7 +27,7 @@
     <PackageReference Include="Jellyfin.Controller" Version="10.10.7" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
-    <PackageReference Include="System.Text.Json" Version="8.0.0" />
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
   </ItemGroup>
 
   <ItemGroup>
