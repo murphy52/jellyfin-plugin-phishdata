@@ -10,6 +10,14 @@
     "repositoryUrl": "https://github.com/murphy52/jellyfin-plugin-phishnet",
     "versions": [
       {
+        "version": "1.1.7",
+        "changelog": "## 🔧 Parsing Fix v1.1.7\n\n### Major Fix\n- **Fixed Title Parsing**: Now handles processed titles like 'N2 Phish Hampton 11-22-1997'\n- **Lowered Confidence Threshold**: Reduced from 0.3 to 0.25 for better parsing success\n- **Enhanced Patterns**: Added specific patterns for processed titles and standard formats\n- **Better Logging**: Improved debug information for parsing failures\n\n### What's Fixed\n- Plugin was rejecting valid show titles due to low parsing confidence\n- Added patterns for multi-night run titles (N1, N2, N3, etc.)\n- Improved recognition of standard Phish title formats\n- Better error messages and debugging information\n\n### For Users\n- Shows that were previously skipped should now be processed\n- Better handling of multi-night runs and processed titles\n- Improved logging for troubleshooting parsing issues\n\nSee the full changelog at [GitHub](https://github.com/murphy52/jellyfin-plugin-phishnet/blob/master/CHANGELOG.md)",
+        "targetAbi": "10.8.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishnet/master/jellyfin-plugin-phishnet-1.1.7.zip",
+        "checksum": "0fce31cf776c966436a0390a8aaa61eb",
+        "timestamp": "2024-10-13T22:35:00Z"
+      },
+      {
         "version": "1.1.6",
         "changelog": "## 🔧 Community Rating Fix v1.1.6\n\n### Major Fix\n- **Fixed Community Ratings**: Now properly checks IncludeReviews configuration\n- **Enhanced Debugging**: Comprehensive logging for troubleshooting\n- **Better Error Handling**: Improved review fetching with proper error handling\n\n### What's Fixed\n- Community ratings were blank due to configuration not being checked\n- Reviews now only fetched when 'Include Reviews' is enabled\n- Respects MaxReviews setting from configuration\n- Added detailed logging for rating calculation process\n\n### For Users\n1. Update plugin via catalog or manual installation\n2. Ensure 'Include Reviews' is checked in plugin settings\n3. Set MaxReviews to 10-50 for better accuracy\n4. Check logs for detailed community rating information\n\nSee the full changelog at [GitHub](https://github.com/murphy52/jellyfin-plugin-phishnet/blob/master/CHANGELOG.md)",
         "targetAbi": "10.8.0.0",

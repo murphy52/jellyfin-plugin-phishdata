@@ -118,14 +118,16 @@ namespace Jellyfin.Plugin.PhishNet.Providers
                 // Parse the filename to extract show information
                 var parseResult = _filenameParser.Parse(info.Name, info.Path);
                 
-                if (parseResult.Confidence < 0.3)
+                if (parseResult.Confidence < 0.25)
                 {
-                    _logger.LogInformation("Low confidence parse result for {Name}, skipping", info.Name);
+                    _logger.LogInformation("Low confidence parse result for {Name} (confidence: {Confidence}), skipping", 
+                        info.Name, parseResult.Confidence);
                     return result;
                 }
 
-                _logger.LogDebug("Parsed {Name} with confidence {Confidence}: {Date} at {Venue}", 
-                    info.Name, parseResult.Confidence, parseResult.ShowDate?.ToString("yyyy-MM-dd"), parseResult.Venue);
+                _logger.LogInformation("Successfully parsed {Name} with confidence {Confidence}: Date={Date}, City={City}, Venue={Venue}, DayNumber={DayNumber}", 
+                    info.Name, parseResult.Confidence, parseResult.ShowDate?.ToString("yyyy-MM-dd"), 
+                    parseResult.City, parseResult.Venue, parseResult.DayNumber);
 
                 // Initialize API client if needed
                 await EnsureApiClientAsync(cancellationToken);

@@ -126,7 +126,15 @@ namespace Jellyfin.Plugin.PhishNet.Parsers
             (new Regex(@"(ambient|secret)\s+set", RegexOptions.IgnoreCase), 
              "Ambient/Secret set without date", ParseAmbientSpecialFormat),
 
-            // Pattern 9: Generic date patterns as fallback
+            // Pattern 9: Pre-processed titles with night indicators (N1, N2, etc.)
+            (new Regex(@"^N(\d+)\s+Phish\s+([^\d]+?)\s*(\d{1,2})-(\d{1,2})-(\d{4})$", RegexOptions.IgnoreCase), 
+             "Processed title with night indicator", ParseProcessedTitleFormat),
+
+            // Pattern 10: Standard Phish title format (Phish City M-D-YYYY)
+            (new Regex(@"^Phish\s+([^\d]+?)\s*(\d{1,2})-(\d{1,2})-(\d{4})$", RegexOptions.IgnoreCase), 
+             "Standard Phish title format", ParseStandardTitleFormat),
+
+            // Pattern 11: Generic date patterns as fallback
             (new Regex(@"(\d{4})-(\d{2})-(\d{2})", RegexOptions.IgnoreCase), 
              "Generic date fallback", ParseGenericDateFormat)
         };
@@ -418,6 +426,38 @@ namespace Jellyfin.Plugin.PhishNet.Parsers
             };
         }
 
+        private static PhishShowParseResult ParseProcessedTitleFormat(Match match)
+        {
+            var nightNumber = int.Parse(match.Groups[1].Value);
+            var city = match.Groups[2].Value.Trim();
+            var month = int.Parse(match.Groups[3].Value);
+            var day = int.Parse(match.Groups[4].Value);
+            var year = int.Parse(match.Groups[5].Value);
+
+            return new PhishShowParseResult
+            {
+                ShowDate = new DateTime(year, month, day),
+                City = city,
+                DayNumber = nightNumber,
+                Confidence = 0.85 // High confidence for processed titles
+            };
+        }
+
+        private static PhishShowParseResult ParseStandardTitleFormat(Match match)
+        {
+            var city = match.Groups[1].Value.Trim();
+            var month = int.Parse(match.Groups[2].Value);
+            var day = int.Parse(match.Groups[3].Value);
+            var year = int.Parse(match.Groups[4].Value);
+
+            return new PhishShowParseResult
+            {
+                ShowDate = new DateTime(year, month, day),
+                City = city,
+                Confidence = 0.75 // Good confidence for standard titles
+            };
+        }
+
         private static PhishShowParseResult ParseGenericDateFormat(Match match)
         {
             var year = int.Parse(match.Groups[1].Value);
@@ -427,7 +467,7 @@ namespace Jellyfin.Plugin.PhishNet.Parsers
             return new PhishShowParseResult
             {
                 ShowDate = new DateTime(year, month, day),
-                Confidence = 0.3 // Low confidence for generic fallback
+                Confidence = 0.4 // Slightly higher confidence for date detection
             };
         }
     }

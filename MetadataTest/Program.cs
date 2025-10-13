@@ -39,11 +39,15 @@ namespace MetadataTest
             // Test cases from your actual collection
             var testCases = new List<(string name, string path)>
             {
+                // Original filename formats
                 ("ph2024-08-06.Webcast.UntouchedTrimmed.1080p.hetyet.mkv", "/test/Mondegreen 2024/ph2024-08-06.Webcast.UntouchedTrimmed.1080p.hetyet.mkv"),
                 ("Phish.2024-04-18.Las.Vegas.NV.1080p.WEB.x264.TRIMMED-WEEKaPAuG.mkv", "/test/Sphere 2024/Phish.2024-04-18.Las.Vegas.NV.1080p.WEB.x264.TRIMMED-WEEKaPAuG.mkv"),
                 ("new Phish - 8-16-2024 - Mondegreen Secret Set .mp4", "/test/new Phish - 8-16-2024 - Mondegreen Secret Set .mp4"),
                 ("Phish 1999.12.31 Big Cypress RAW VHS Footage.mp4", "/test/Phish 1999.12.31 Big Cypress RAW VHS Footage.mp4"),
-                ("ph2023-08-31.Dicks.CO.vod.trimmed.6800BR.1080.sky.mkv", "/test/Dicks 2023/ph2023-08-31.Dicks.CO.vod.trimmed.6800BR.1080.sky.mkv")
+                ("ph2023-08-31.Dicks.CO.vod.trimmed.6800BR.1080.sky.mkv", "/test/Dicks 2023/ph2023-08-31.Dicks.CO.vod.trimmed.6800BR.1080.sky.mkv"),
+                // Processed title format (the problematic case)
+                ("N2 Phish Hampton 11-22-1997", "/test/Concerts/Phish/Alpharetta 2025/ph1997-11-22.mkv"),
+                ("ph1997-11-22.mkv", "/test/Concerts/Phish/Alpharetta 2025/ph1997-11-22.mkv")
             };
 
             Console.WriteLine("=== Phish.net Metadata Provider Test ===\n");
