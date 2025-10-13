@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Phish.net</title>
+</head>
+<body>
+    <div id="PhishNetConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox,emby-select">
+        <div data-role="content">
+            <div class="content-primary">
+                <form id="PhishNetConfigForm">
+                    <div class="sectionTitleContainer flex align-items-center">
+                        <h2 class="sectionTitle">Phish.net Configuration</h2>
+                        <a is="emby-linkbutton" class="raised button-alt headerHelpButton" target="_blank" href="https://docs.phish.net/">API Documentation</a>
+                    </div>
+
+                    <div class="verticalSection">
+                        <div class="sectionTitleContainer flex align-items-center">
+                            <h3 class="sectionTitle">API Settings</h3>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="txtApiKey">API Key (Required)</label>
+                            <input id="txtApiKey" name="txtApiKey" type="password" is="emby-input" autocomplete="off" />
+                            <div class="fieldDescription">
+                                Get your free API key from <a href="https://phish.net/api/keys" target="_blank">Phish.net</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="verticalSection">
+                        <div class="sectionTitleContainer flex align-items-center">
+                            <h3 class="sectionTitle">Metadata Preferences</h3>
+                        </div>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label>
+                                <input id="chkPreferOfficialReleases" name="chkPreferOfficialReleases" type="checkbox" is="emby-checkbox" />
+                                <span>Prefer Official Releases</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                When enabled, prioritizes official releases over audience recordings in search results.
+                            </div>
+                        </div>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label>
+                                <input id="chkIncludeJamCharts" name="chkIncludeJamCharts" type="checkbox" is="emby-checkbox" />
+                                <span>Include Jam Charts</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Fetch jam chart data for notable performances (may increase loading time).
+                            </div>
+                        </div>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label>
+                                <input id="chkIncludeReviews" name="chkIncludeReviews" type="checkbox" is="emby-checkbox" />
+                                <span>Include Reviews</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Pull community reviews and ratings from Phish.net.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="verticalSection">
+                        <div class="sectionTitleContainer flex align-items-center">
+                            <h3 class="sectionTitle">Display Options</h3>
+                        </div>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label>
+                                <input id="chkShowRatingInTitle" name="chkShowRatingInTitle" type="checkbox" is="emby-checkbox" />
+                                <span>Show Rating in Title</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Include community rating in the show title (e.g., "1997-11-22 Hampton (4.5/5)").
+                            </div>
+                        </div>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label>
+                                <input id="chkIncludeSetlistInDescription" name="chkIncludeSetlistInDescription" type="checkbox" is="emby-checkbox" />
+                                <span>Include Setlist in Description</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Add the complete setlist to the show description.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="verticalSection">
+                        <div class="sectionTitleContainer flex align-items-center">
+                            <h3 class="sectionTitle">Advanced Settings</h3>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="txtMaxReviews">Max Reviews</label>
+                            <input id="txtMaxReviews" name="txtMaxReviews" type="number" min="0" max="50" step="1" is="emby-input" />
+                            <div class="fieldDescription">Maximum number of reviews to display per show (0 = unlimited).</div>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="txtCacheDurationHours">Cache Duration (Hours)</label>
+                            <input id="txtCacheDurationHours" name="txtCacheDurationHours" type="number" min="1" max="168" step="1" is="emby-input" />
+                            <div class="fieldDescription">How long to cache API responses (1-168 hours). Longer cache improves performance.</div>
+                        </div>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label>
+                                <input id="chkDisableLocalCache" name="chkDisableLocalCache" type="checkbox" is="emby-checkbox" />
+                                <span>Disable Local Cache</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Always fetch fresh data from the API (not recommended for regular use).
+                            </div>
+                        </div>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label>
+                                <input id="chkEnableDebugLogging" name="chkEnableDebugLogging" type="checkbox" is="emby-checkbox" />
+                                <span>Enable Debug Logging</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Enable verbose logging for troubleshooting (may impact performance).
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <button is="emby-button" type="submit" class="raised button-submit block">
+                            <span>Save</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script type="text/javascript">
+            (function() {
+                var pluginId = "8a4d0e85-6f3c-4e5a-9b2c-3d7f8e9a1b4c";
+
+                function loadPage(page, config) {
+                    page.querySelector('#txtApiKey').value = config.ApiKey || '';
+                    page.querySelector('#chkPreferOfficialReleases').checked = config.PreferOfficialReleases || false;
+                    page.querySelector('#chkIncludeJamCharts').checked = config.IncludeJamCharts !== false;
+                    page.querySelector('#chkIncludeReviews').checked = config.IncludeReviews !== false;
+                    page.querySelector('#chkShowRatingInTitle').checked = config.ShowRatingInTitle || false;
+                    page.querySelector('#chkIncludeSetlistInDescription').checked = config.IncludeSetlistInDescription !== false;
+                    page.querySelector('#txtMaxReviews').value = config.MaxReviews || 5;
+                    page.querySelector('#txtCacheDurationHours').value = config.CacheDurationHours || 24;
+                    page.querySelector('#chkDisableLocalCache').checked = config.DisableLocalCache || false;
+                    page.querySelector('#chkEnableDebugLogging').checked = config.EnableDebugLogging || false;
+                }
+
+                function onSubmit(e) {
+                    e.preventDefault();
+                    Dashboard.showLoadingMsg();
+
+                    var form = this;
+                    var config = {
+                        ApiKey: form.querySelector('#txtApiKey').value,
+                        PreferOfficialReleases: form.querySelector('#chkPreferOfficialReleases').checked,
+                        IncludeJamCharts: form.querySelector('#chkIncludeJamCharts').checked,
+                        IncludeReviews: form.querySelector('#chkIncludeReviews').checked,
+                        ShowRatingInTitle: form.querySelector('#chkShowRatingInTitle').checked,
+                        IncludeSetlistInDescription: form.querySelector('#chkIncludeSetlistInDescription').checked,
+                        MaxReviews: parseInt(form.querySelector('#txtMaxReviews').value) || 5,
+                        CacheDurationHours: parseInt(form.querySelector('#txtCacheDurationHours').value) || 24,
+                        DisableLocalCache: form.querySelector('#chkDisableLocalCache').checked,
+                        EnableDebugLogging: form.querySelector('#chkEnableDebugLogging').checked
+                    };
+
+                    ApiClient.updatePluginConfiguration(pluginId, config).then(function(result) {
+                        Dashboard.processPluginConfigurationUpdateResult(result);
+                    });
+
+                    return false;
+                }
+
+                function getTabs() {
+                    return [
+                        {
+                            href: Dashboard.getConfigurationPageUrl('PhishNetConfigPage'),
+                            name: 'Phish.net'
+                        }
+                    ];
+                }
+
+                window.addEventListener('pageshow', function(e) {
+                    var page = e.target;
+                    Dashboard.showLoadingMsg();
+                    ApiClient.getPluginConfiguration(pluginId).then(function(config) {
+                        loadPage(page, config);
+                        Dashboard.hideLoadingMsg();
+                    });
+                });
+
+                document.getElementById('PhishNetConfigForm').addEventListener('submit', onSubmit);
+            })();
+        </script>
+    </div>
+</body>
+</html>
