@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Reflection;
 using Jellyfin.Plugin.PhishNet.Configuration;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Net;
@@ -73,6 +74,17 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
             new ProductInfoHeaderValue(Name, Version.ToString()));
 
         return httpClient;
+    }
+
+    /// <summary>
+    /// Gets the plugin icon as a stream.
+    /// </summary>
+    /// <returns>The plugin icon stream.</returns>
+    public Stream? GetPluginImage()
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        return assembly.GetManifestResourceStream("Jellyfin.Plugin.PhishNet.thumb.png") 
+            ?? assembly.GetManifestResourceStream("Jellyfin.Plugin.PhishNet.logo.png");
     }
 
     /// <inheritdoc />

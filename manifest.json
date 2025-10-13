@@ -10,6 +10,14 @@
     "repositoryUrl": "https://github.com/murphy52/jellyfin-plugin-phishnet",
     "versions": [
       {
+        "version": "1.1.5",
+        "changelog": "## 🎨 Icon Fix Attempt v1.1.5\n\n### Fixes\n- Added explicit GetPluginImage() method for plugin icon\n- Multiple embedded image formats (thumb.png, logo.png)\n- Improved icon loading for My Plugins section\n\n### Notes\n- Attempting different approach to fix icon display after restart\n- Core metadata functionality remains unchanged\n\nSee the full changelog at [GitHub](https://github.com/murphy52/jellyfin-plugin-phishnet/blob/master/CHANGELOG.md)",
+        "targetAbi": "10.8.0.0",
+        "sourceUrl": "https://github.com/murphy52/jellyfin-plugin-phishnet/releases/download/v1.1.5/jellyfin-plugin-phishnet-1.1.5.zip",
+        "checksum": "fbf01897ab91b23765b66e29544c03b7",
+        "timestamp": "2024-10-13T21:20:00Z"
+      },
+      {
         "version": "1.1.4",
         "changelog": "## 🎨 Plugin Icon Fix v1.1.4\n\n### Fixes\n- Added embedded plugin icon for 'My Plugins' section\n- Plugin now shows custom icon in both catalog and installed plugins\n- Consistent branding across all plugin interfaces\n\n### Notes\n- Same custom Phish-data icon now appears everywhere\n- No more generic placeholder in installed plugins list\n\nSee the full changelog at [GitHub](https://github.com/murphy52/jellyfin-plugin-phishnet/blob/master/CHANGELOG.md)",
         "targetAbi": "10.8.0.0",
