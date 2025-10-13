@@ -10,6 +10,14 @@
     "repositoryUrl": "https://github.com/murphy52/jellyfin-plugin-phishnet",
     "versions": [
       {
+        "version": "1.1.10",
+        "changelog": "## 🐛 Debug Version v1.1.10\n\n### Debug Enhancement\n- **Added Comprehensive API Response Logging**: Now logs all show data fields returned by Phish.net API\n- **Show Data Investigation**: Helps identify why community ratings are null\n- **Field-by-Field Analysis**: Logs ShowId, Venue, City, State, Rating, ReviewCount, and all other fields\n\n### Purpose\n- This is a debug build to understand the API response structure\n- Helps determine if rating data is missing from the API or if we're using the wrong field\n- Temporary version to diagnose Hampton 11/22/1997 rating issue\n\n### For Users\n- Install this version temporarily to help diagnose rating issues\n- Check logs for 'DEBUG Show Data:' entries after metadata refresh\n- This will show exactly what data Phish.net API is returning\n\nThis debug version will help us fix the community rating issue permanently!",
+        "targetAbi": "10.8.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishnet/master/jellyfin-plugin-phishnet-1.1.10.zip",
+        "checksum": "9dfb7a5e36a23bd02ebca2354531c48d",
+        "timestamp": "2024-10-13T23:55:00Z"
+      },
+      {
         "version": "1.1.9",
         "changelog": "## ✅ Community Rating Fix v1.1.9\n\n### Major Fix\n- **Fixed Community Ratings**: Now uses show's overall rating instead of individual review ratings\n- **Correct Data Source**: Uses the 4.64/5 rating displayed on Phish.net show pages\n- **Proper API Usage**: Individual reviews don't contain ratings, but show data does\n- **Better Logging**: Shows exactly where rating data comes from\n\n### What Was Wrong\n- Plugin was trying to aggregate individual review ratings (which are always null)\n- Should have been using the show's overall community rating from show data\n- Hampton 11/22/1997 has 4.64/5 rating (>500 reviews) - now correctly displays as 9.3/10\n\n### What's Fixed\n- Community ratings now work for all shows with Phish.net ratings\n- Uses the same 4.64/5 rating visible on the show's web page\n- Converted properly to Jellyfin's 1-10 scale (4.64 × 2 = 9.28/10)\n- Shows review count in logs for verification\n\n### For Users\n- Community ratings should now appear immediately after updating\n- Popular shows will show ratings like 8-9/10\n- Check logs for '✅ Set community rating' success messages\n\nThis is the final fix for the community rating feature!",
         "targetAbi": "10.8.0.0",
