@@ -121,6 +121,20 @@ public class PhishNetApiClient : IPhishNetApiClient, IDisposable
         return response?.Data?.FirstOrDefault();
     }
 
+    /// <summary>
+    /// Gets venue information by venue ID.
+    /// </summary>
+    /// <param name="venueId">The venue ID.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>Venue information.</returns>
+    public async Task<VenueDto?> GetVenueAsync(int venueId, CancellationToken cancellationToken = default)
+    {
+        var endpoint = $"venues/venueid/{venueId}.json";
+        var response = await MakeApiRequestAsync<VenueDto>(endpoint, cancellationToken).ConfigureAwait(false);
+        
+        return response?.Data?.FirstOrDefault();
+    }
+
     /// <inheritdoc />
     public async Task<List<ReviewDto>> GetReviewsAsync(string showDate, int limit = 5, CancellationToken cancellationToken = default)
     {
@@ -149,7 +163,7 @@ public class PhishNetApiClient : IPhishNetApiClient, IDisposable
         try
         {
             // Test with a simple API call to get recent shows
-            var endpoint = "shows/artist/phish.json";
+            var endpoint = "shows.json";
             var queryParams = new Dictionary<string, string>
             {
                 ["limit"] = "1"
@@ -209,7 +223,7 @@ public class PhishNetApiClient : IPhishNetApiClient, IDisposable
 
             if (apiResponse != null && !apiResponse.IsSuccess)
             {
-                _logger.LogWarning("API returned error: {ErrorCode} - {ErrorMessage}", apiResponse.Error, apiResponse.ErrorMessage);
+                _logger.LogWarning("API returned error: {Error} - {ErrorMessage}", apiResponse.Error, apiResponse.ErrorMessage);
             }
 
             return apiResponse;

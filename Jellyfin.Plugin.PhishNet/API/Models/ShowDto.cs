@@ -13,7 +13,7 @@ public class ShowDto
     /// Gets or sets the unique show identifier.
     /// </summary>
     [JsonPropertyName("showid")]
-    public string ShowId { get; set; } = string.Empty;
+    public long ShowId { get; set; }
 
     /// <summary>
     /// Gets or sets the show date in YYYY-MM-DD format.
@@ -49,19 +49,19 @@ public class ShowDto
     /// Gets or sets the venue ID for cross-referencing venue information.
     /// </summary>
     [JsonPropertyName("venueid")]
-    public string? VenueId { get; set; }
+    public int? VenueId { get; set; }
 
     /// <summary>
     /// Gets or sets the artist name (typically "Phish").
     /// </summary>
-    [JsonPropertyName("artistname")]
+    [JsonPropertyName("artist_name")]
     public string ArtistName { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the artist ID.
     /// </summary>
     [JsonPropertyName("artistid")]
-    public string? ArtistId { get; set; }
+    public int? ArtistId { get; set; }
 
     /// <summary>
     /// Gets or sets the community rating for this show.
@@ -98,6 +98,42 @@ public class ShowDto
     /// </summary>
     [JsonPropertyName("tags")]
     public string? Tags { get; set; }
+
+    /// <summary>
+    /// Gets or sets the show year.
+    /// </summary>
+    [JsonPropertyName("showyear")]
+    public string? ShowYear { get; set; }
+
+    /// <summary>
+    /// Gets or sets the show month.
+    /// </summary>
+    [JsonPropertyName("showmonth")]
+    public int? ShowMonth { get; set; }
+
+    /// <summary>
+    /// Gets or sets the show day.
+    /// </summary>
+    [JsonPropertyName("showday")]
+    public int? ShowDay { get; set; }
+
+    /// <summary>
+    /// Gets or sets the tour ID.
+    /// </summary>
+    [JsonPropertyName("tourid")]
+    public int? TourId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the tour name.
+    /// </summary>
+    [JsonPropertyName("tour_name")]
+    public string? TourName { get; set; }
+
+    /// <summary>
+    /// Gets or sets the setlist notes with HTML formatting.
+    /// </summary>
+    [JsonPropertyName("setlist_notes")]
+    public string? SetlistNotes { get; set; }
 
     /// <summary>
     /// Gets the parsed show date as a DateTime object.

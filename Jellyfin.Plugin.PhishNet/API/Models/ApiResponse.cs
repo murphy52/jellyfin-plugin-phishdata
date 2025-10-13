@@ -10,10 +10,10 @@ namespace Jellyfin.Plugin.PhishNet.API.Models;
 public class ApiResponse<T>
 {
     /// <summary>
-    /// Gets or sets the error code. 0 indicates success.
+    /// Gets or sets the error flag. false indicates success.
     /// </summary>
     [JsonPropertyName("error")]
-    public int Error { get; set; }
+    public bool Error { get; set; }
 
     /// <summary>
     /// Gets or sets the error message. Empty if no error occurred.
@@ -31,7 +31,7 @@ public class ApiResponse<T>
     /// Gets a value indicating whether the API call was successful.
     /// </summary>
     [JsonIgnore]
-    public bool IsSuccess => Error == 0;
+    public bool IsSuccess => !Error;
 
     /// <summary>
     /// Gets a value indicating whether the response contains any data.

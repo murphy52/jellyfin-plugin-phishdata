@@ -12,7 +12,7 @@ public class VenueDto
     /// Gets or sets the venue ID.
     /// </summary>
     [JsonPropertyName("venueid")]
-    public string VenueId { get; set; } = string.Empty;
+    public int VenueId { get; set; }
 
     /// <summary>
     /// Gets or sets the venue name.

@@ -19,7 +19,7 @@ public class SetlistDto
     /// Gets or sets the show ID.
     /// </summary>
     [JsonPropertyName("showid")]
-    public string ShowId { get; set; } = string.Empty;
+    public long ShowId { get; set; }
 
     /// <summary>
     /// Gets or sets the venue name.

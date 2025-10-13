@@ -53,6 +53,14 @@ public interface IPhishNetApiClient
     Task<VenueDto?> GetVenueAsync(string venueId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Gets venue information by venue ID.
+    /// </summary>
+    /// <param name="venueId">The venue ID.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>Venue information.</returns>
+    Task<VenueDto?> GetVenueAsync(int venueId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Gets reviews for a specific show date.
     /// </summary>
     /// <param name="showDate">The show date in YYYY-MM-DD format.</param>
