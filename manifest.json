@@ -10,6 +10,14 @@
     "repositoryUrl": "https://github.com/murphy52/jellyfin-plugin-phishnet",
     "versions": [
       {
+        "version": "1.1.2",
+        "changelog": "## 🔧 Configuration Fix v1.1.2\n\n### Fixes\n- Fixed embedded resource path for configuration page\n- Configuration page should now load properly in Jellyfin UI\n- Updated resource naming for better compatibility\n\n### Notes\n- This specifically addresses the 'no settings to set up' issue\n- Recommended for all users experiencing configuration problems\n\nSee the full changelog at [GitHub](https://github.com/murphy52/jellyfin-plugin-phishnet/blob/master/CHANGELOG.md)",
+        "targetAbi": "10.8.0.0",
+        "sourceUrl": "https://github.com/murphy52/jellyfin-plugin-phishnet/releases/download/v1.1.2/jellyfin-plugin-phishnet-1.1.2.zip",
+        "checksum": "f295b2f9bd6e89eefb3eec21a9c6513e",
+        "timestamp": "2024-10-13T19:35:00Z"
+      },
+      {
         "version": "1.1.1",
         "changelog": "## 🔧 Patch Release v1.1.1\n\n### Fixes\n- Ensure configuration page is embedded and recognized by Jellyfin\n- Minor build and packaging improvements\n\n### Notes\n- If you previously installed v1.1.0, updating to this version is recommended\n\nSee the full changelog at [GitHub](https://github.com/murphy52/jellyfin-plugin-phishnet/blob/master/CHANGELOG.md)",
         "targetAbi": "10.8.0.0",

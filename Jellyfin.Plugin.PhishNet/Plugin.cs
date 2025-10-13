@@ -82,8 +82,8 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
         {
             new PluginPageInfo
             {
-                Name = Name,
-                EmbeddedResourcePath = string.Format("{0}.Configuration.configPage.html", GetType().Namespace)
+                Name = "PhishNetConfigPage",
+                EmbeddedResourcePath = "Jellyfin.Plugin.PhishNet.Configuration.configPage.html"
             }
         };
     }
