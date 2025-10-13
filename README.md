@@ -68,13 +68,16 @@ Phish Videos/
 
 ## Installation
 
-### Automatic (Recommended - Coming Soon)
+### Plugin Catalog (Recommended)
 
-1. Navigate to **Settings > Admin Dashboard > Plugins > Repositories**
-2. Add a new repository with URL: `https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishnet/main/manifest.json`
-3. Save and navigate to **Catalogue**
-4. Find "Phish.net" in the plugin list and install the latest version
-5. Restart Jellyfin Server
+1. Navigate to **Admin Dashboard > Plugins > Repositories**
+2. Click **+** to add a new repository
+3. **Repository Name**: `Phish.net Plugin Repository`
+4. **Repository URL**: `https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishnet/master/manifest.json`
+5. Click **Save** and navigate to **Catalog**
+6. Find "Phish.net" in the plugin list and click **Install**
+7. Select the latest version (1.1.0) and confirm installation
+8. Restart Jellyfin Server
 
 ### Manual Installation
 
