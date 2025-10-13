@@ -10,6 +10,14 @@
     "repositoryUrl": "https://github.com/murphy52/jellyfin-plugin-phishnet",
     "versions": [
       {
+        "version": "1.1.9",
+        "changelog": "## ✅ Community Rating Fix v1.1.9\n\n### Major Fix\n- **Fixed Community Ratings**: Now uses show's overall rating instead of individual review ratings\n- **Correct Data Source**: Uses the 4.64/5 rating displayed on Phish.net show pages\n- **Proper API Usage**: Individual reviews don't contain ratings, but show data does\n- **Better Logging**: Shows exactly where rating data comes from\n\n### What Was Wrong\n- Plugin was trying to aggregate individual review ratings (which are always null)\n- Should have been using the show's overall community rating from show data\n- Hampton 11/22/1997 has 4.64/5 rating (>500 reviews) - now correctly displays as 9.3/10\n\n### What's Fixed\n- Community ratings now work for all shows with Phish.net ratings\n- Uses the same 4.64/5 rating visible on the show's web page\n- Converted properly to Jellyfin's 1-10 scale (4.64 × 2 = 9.28/10)\n- Shows review count in logs for verification\n\n### For Users\n- Community ratings should now appear immediately after updating\n- Popular shows will show ratings like 8-9/10\n- Check logs for '✅ Set community rating' success messages\n\nThis is the final fix for the community rating feature!",
+        "targetAbi": "10.8.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishnet/master/jellyfin-plugin-phishnet-1.1.9.zip",
+        "checksum": "f40893a8e32cc1829a9e887611a4056a",
+        "timestamp": "2024-10-13T23:20:00Z"
+      },
+      {
         "version": "1.1.8",
         "changelog": "## 🔍 Debug Enhancement v1.1.8\n\n### Enhanced Debugging\n- **Detailed Rating Logs**: Shows sample reviews with raw/parsed ratings\n- **Rating Breakdown**: Displays rating distribution (e.g., 4.0★(3), 5.0★(2))\n- **Information-Level Logging**: Critical debug info now at INFO level\n- **Clear Success/Failure Messages**: ✅/❌ indicators for rating calculation\n\n### What's New\n- Sample review data logged for troubleshooting\n- Rating parsing validation with clear error messages\n- Better visibility into why community ratings may be blank\n- Comprehensive breakdown of review rating distribution\n\n### For Users\n- Check logs for 'Sample Review' entries to see rating data\n- Look for 'Found X valid ratings out of Y reviews'\n- Clear ✅/❌ indicators for successful rating calculation\n- Better troubleshooting information for blank ratings\n\nThis version helps diagnose community rating issues with detailed logging.",
         "targetAbi": "10.8.0.0",

@@ -634,55 +634,48 @@ namespace Jellyfin.Plugin.PhishNet.Providers
             movie.ProductionYear = showDate.Year;
             movie.DateCreated = showDate; // Release Date
             
-            // Calculate community rating from reviews
-            _logger.LogInformation("Processing reviews for community rating: {ReviewCount} reviews available", 
-                reviewsData?.Count ?? 0);
+            // Calculate community rating from show's overall rating (not individual review ratings)
+            _logger.LogInformation("Processing community rating for show {ShowDate}. Show rating='{ShowRating}', Review count='{ReviewCount}'", 
+                showData.ShowDate, showData.Rating ?? "null", showData.ReviewCount ?? "null");
             
-            if (reviewsData != null && reviewsData.Any())
+            if (showData.ParsedRating.HasValue && showData.ParsedRating.Value > 0)
             {
-                // Log sample of ratings found for debugging
-                var sampleReviews = reviewsData.Take(3).ToList();
-                foreach (var review in sampleReviews)
-                {
-                    _logger.LogInformation("Sample Review {ReviewId}: Raw rating='{Rating}', Parsed={ParsedRating}, Username={Username}", 
-                        review.ReviewId, review.Rating ?? "null", review.ParsedRating, review.Username);
-                }
+                // Show has an overall rating - use this instead of individual review ratings
+                var showRating = showData.ParsedRating.Value;
+                // Phish.net uses 1-5 scale, Jellyfin uses 1-10, so multiply by 2
+                var communityRating = (float)(showRating * 2.0);
+                movie.CommunityRating = communityRating;
                 
-                var ratingsWithValues = reviewsData
-                    .Where(r => r.ParsedRating.HasValue && r.ParsedRating.Value > 0)
-                    .Select(r => r.ParsedRating!.Value)
-                    .ToList();
-                    
-                _logger.LogInformation("Found {ValidRatings} valid ratings out of {TotalReviews} reviews", 
-                    ratingsWithValues.Count, reviewsData.Count);
-                
-                // Show breakdown of rating distribution
-                if (ratingsWithValues.Any())
-                {
-                    var ratings = ratingsWithValues.GroupBy(r => Math.Round(r, 1)).OrderBy(g => g.Key);
-                    var ratingBreakdown = string.Join(", ", ratings.Select(g => $"{g.Key}★({g.Count()})"));
-                    _logger.LogInformation("Rating breakdown: {Breakdown}", ratingBreakdown);
-                }
-                    
-                if (ratingsWithValues.Any())
-                {
-                    var averageRating = ratingsWithValues.Average();
-                    // Phish.net uses 1-5 scale, Jellyfin uses 1-10, so multiply by 2
-                    var communityRating = (float)(averageRating * 2.0);
-                    movie.CommunityRating = communityRating;
-                    
-                    _logger.LogInformation("✅ Set community rating for {ShowDate}: {Rating}/10 (avg of {Count} reviews: {AvgOriginal}/5)", 
-                        showData.ShowDate, communityRating.ToString("F1"), ratingsWithValues.Count, averageRating.ToString("F1"));
-                }
-                else
-                {
-                    _logger.LogWarning("❌ No valid numeric ratings found in {TotalReviews} reviews for {ShowDate}. Check review rating format.", 
-                        reviewsData.Count, showData.ShowDate);
-                }
+                _logger.LogInformation("✅ Set community rating for {ShowDate}: {Rating}/10 (show rating: {OriginalRating}/5, {ReviewCount} reviews)", 
+                    showData.ShowDate, communityRating.ToString("F1"), showRating.ToString("F2"), showData.ReviewCount ?? "?");
             }
             else
             {
-                _logger.LogInformation("No reviews available for community rating calculation for {ShowDate}", showData.ShowDate);
+                _logger.LogInformation("❌ No show rating available for {ShowDate}. Raw rating value: '{RawRating}'", 
+                    showData.ShowDate, showData.Rating ?? "null");
+                
+                // Fallback: Try to calculate from individual reviews if available (though they seem to have null ratings)
+                if (reviewsData != null && reviewsData.Any())
+                {
+                    var ratingsWithValues = reviewsData
+                        .Where(r => r.ParsedRating.HasValue && r.ParsedRating.Value > 0)
+                        .Select(r => r.ParsedRating!.Value)
+                        .ToList();
+                        
+                    if (ratingsWithValues.Any())
+                    {
+                        var averageRating = ratingsWithValues.Average();
+                        var communityRating = (float)(averageRating * 2.0);
+                        movie.CommunityRating = communityRating;
+                        
+                        _logger.LogInformation("✅ Fallback: Set community rating from {Count} individual reviews: {Rating}/10 (avg: {OriginalRating}/5)", 
+                            ratingsWithValues.Count, communityRating.ToString("F1"), averageRating.ToString("F1"));
+                    }
+                    else
+                    {
+                        _logger.LogInformation("❌ No valid ratings found in show data or {ReviewCount} individual reviews", reviewsData.Count);
+                    }
+                }
             }
 
             // Build comprehensive overview with setlist at the top
