@@ -105,8 +105,47 @@ Phish Videos/
 1. Add your Phish video files to a Jellyfin library
 2. Set the library content type to "Music Videos" or "Movies"
 3. Enable the "Phish.net" metadata provider for the library
-4. Run a library scan
-5. The plugin will automatically match files with Phish shows and populate metadata
+4. **Important**: Also enable the "Phish.net" image provider and person provider for complete metadata
+5. Run a library scan
+6. The plugin will automatically match files with Phish shows and populate metadata
+
+### What You'll Get
+
+Once configured, your Phish videos will display:
+- **Smart Titles**: "Phish - 1997-11-22 - Hampton Coliseum, Hampton, VA"
+- **Complete Setlists**: Full song lists with set breaks and transitions in the overview
+- **Community Ratings**: Average ratings from Phish.net reviews (1-10 scale)
+- **Rich Metadata**: Venue details, show dates, production years, and comprehensive tagging
+- **Band Member Info**: Individual profiles for Trey, Mike, Page, and Fish
+- **Quality Images**: Venue photos, show-specific images from multiple sources
+
+## Example Output
+
+### Typical Show Metadata
+
+**Title**: `Phish - 1997-11-22 - Hampton Coliseum, Hampton, VA`
+
+**Overview**:
+```
+Setlist (29 songs):
+Set 1: Makisupa Policeman > Llama, Divided Sky, Guelah Papyrus, Maze, Sparkle, Sample in a Jar, Limb By Limb, Bouncing Around the Room, Run Like an Antelope
+Set 2: Ghost > Isabella, Piper > Black-Eyed Katy, Harry Hood > Cavern
+Encore: Rocky Top
+
+Phish concert performed on November 22, 1997 at Hampton Coliseum, Hampton, VA
+```
+
+**Community Rating**: `8.4/10` (based on Phish.net reviews)
+
+**Tags**: `Phish, Concert, Live Music, Jam Band, Hampton, VA, Hampton Coliseum, 1997`
+
+**Genres**: `Concert, Live Music`
+
+### Multi-Night Run Example
+
+**Title**: `N2 Phish - 1995-12-31 - Madison Square Garden, New York, NY`
+
+For multi-night runs, the plugin automatically detects consecutive shows at the same venue and adds night indicators (N1, N2, N3, etc.)
 
 ## Development
 
@@ -141,9 +180,87 @@ This plugin is built with:
 - **Unit Tests**: Comprehensive unit tests for parsing, API clients, and providers
 - **Mocked Responses**: Full API response simulation for development without API keys
 
+## Troubleshooting
+
+### Common Issues
+
+**Plugin Not Finding Shows**
+- Ensure your API key is correctly configured in plugin settings
+- Check that filenames contain recognizable date patterns (YYYY-MM-DD format works best)
+- Verify the show exists in the Phish.net database
+- Check Jellyfin logs for parsing details and API responses
+
+**No Images Appearing**
+- Enable the "Phish.net" image provider in your library settings
+- Configure optional API keys (Google Places, social media) for enhanced image sources
+- Some venues may not have images available from current sources
+
+**Community Ratings Not Showing**
+- Ratings only appear for shows that have reviews on Phish.net
+- Check that "Include Reviews" is enabled in plugin configuration
+- Some older shows may have fewer or no community reviews
+
+**Performance Issues**
+- Adjust cache duration settings to reduce API calls
+- Disable image providers temporarily if experiencing slowdowns
+- Consider reducing max review count for faster metadata loading
+
+### Debug Logging
+
+Enable debug logging in Jellyfin for detailed troubleshooting:
+1. Go to **Settings > Admin Dashboard > Logs**
+2. Set log level to "Debug" for the PhishNet plugin
+3. Run a library scan and check logs for detailed information
+
+## Version History
+
+- **v1.1.0** (Current): Community ratings, comprehensive image provider, person provider, enhanced metadata
+- **v1.0.0**: Basic metadata provider with Phish.net API integration
+
+## Roadmap
+
+### Planned Features
+- **Series Grouping**: Group multi-night runs as series
+- **Show Duration**: Estimate show duration from setlist data  
+- **Enhanced Images**: AI-generated fallback images, community contributions
+- **Advanced Filtering**: Filter by venue, year, song appearance
+- **Jam Chart Integration**: Deep integration with Phish.net jam charts
+- **LivePhish Integration**: Official LivePhish artwork and metadata
+
+### Image Provider Enhancements
+- Real-time social media photo integration
+- Community image contribution system
+- AI-generated venue/show artwork
+- Enhanced image quality scoring
+
+## Support
+
+### Getting Help
+- **Issues**: Report bugs or request features on [GitHub Issues](https://github.com/murphy52/jellyfin-plugin-phishnet/issues)
+- **Discussions**: Join the conversation on [GitHub Discussions](https://github.com/murphy52/jellyfin-plugin-phishnet/discussions)
+- **Documentation**: Check out the comprehensive guides in the repository
+
+### Performance Tips
+- Use descriptive filenames with dates in YYYY-MM-DD format
+- Enable all three providers (movie, person, image) for complete metadata
+- Configure optional API keys for enhanced image sources
+- Adjust cache duration based on library size and update frequency
+
 ## Contributing
 
-Contributions are welcome! Please read our contributing guidelines and submit pull requests for any improvements.
+Contributions are welcome! Here's how you can help:
+
+1. **Bug Reports**: Use GitHub Issues with detailed reproduction steps
+2. **Feature Requests**: Discuss new ideas in GitHub Discussions first
+3. **Code Contributions**: Fork the repository and submit pull requests
+4. **Documentation**: Help improve guides, examples, and troubleshooting
+5. **Testing**: Test with different file naming conventions and report issues
+
+Before contributing code:
+- Review the architecture documentation in `/docs`
+- Run the test suite: `dotnet test`
+- Follow existing code style and patterns
+- Add tests for new functionality
 
 ## License
 
