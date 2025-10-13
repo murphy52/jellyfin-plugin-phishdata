@@ -171,12 +171,52 @@ namespace Jellyfin.Plugin.PhishNet.Providers
                     venueData = await _apiClient.GetVenueAsync(showData.VenueId.Value.ToString(), cancellationToken);
                 }
                 
-                // Get reviews for community rating calculation
+                // Get reviews for community rating calculation (if enabled)
                 List<ReviewDto>? reviewsData = null;
-                if (parseResult.ShowDate.HasValue)
+                var config = Plugin.Instance?.Configuration;
+                
+                // Log configuration status
+                if (config == null)
+                {
+                    _logger.LogWarning("Plugin configuration is not available, reviews disabled");
+                }
+                else
+                {
+                    _logger.LogDebug("Configuration: IncludeReviews={IncludeReviews}, MaxReviews={MaxReviews}", 
+                        config.IncludeReviews, config.MaxReviews);
+                }
+                
+                if (parseResult.ShowDate.HasValue && config?.IncludeReviews == true)
                 {
                     var dateString = parseResult.ShowDate.Value.ToString("yyyy-MM-dd");
-                    reviewsData = await _apiClient.GetReviewsAsync(dateString, 50, cancellationToken); // Get up to 50 reviews
+                    var maxReviews = config.MaxReviews > 0 ? config.MaxReviews : 50;
+                    _logger.LogInformation("Fetching reviews for {Date} (max: {MaxReviews})", dateString, maxReviews);
+                    
+                    try
+                    {
+                        reviewsData = await _apiClient.GetReviewsAsync(dateString, maxReviews, cancellationToken);
+                        
+                        if (reviewsData != null && reviewsData.Any())
+                        {
+                            _logger.LogInformation("Successfully fetched {Count} reviews for {Date}", reviewsData.Count, dateString);
+                        }
+                        else
+                        {
+                            _logger.LogInformation("No reviews found for {Date}", dateString);
+                        }
+                    }
+                    catch (Exception reviewEx)
+                    {
+                        _logger.LogError(reviewEx, "Failed to fetch reviews for {Date}", dateString);
+                    }
+                }
+                else if (parseResult.ShowDate.HasValue)
+                {
+                    var reason = config == null ? "configuration not available" 
+                        : config.IncludeReviews ? "unknown reason" 
+                        : "reviews disabled in configuration";
+                    _logger.LogDebug("Skipping reviews for {Date}: {Reason}", 
+                        parseResult.ShowDate.Value.ToString("yyyy-MM-dd"), reason);
                 }
 
                 // Detect if this show is part of a multi-night run
@@ -528,7 +568,7 @@ namespace Jellyfin.Plugin.PhishNet.Providers
         /// <param name="venueData">The venue data from the API.</param>
         /// <param name="runInfo">The multi-night run information.</param>
         /// <param name="reviewsData">The reviews data from the API for community rating.</param>
-        private static void PopulateMetadataFromApiAsync(
+        private void PopulateMetadataFromApiAsync(
             Movie movie, 
             PhishShowParseResult parseResult,
             ShowDto showData, 
@@ -593,19 +633,44 @@ namespace Jellyfin.Plugin.PhishNet.Providers
             movie.DateCreated = showDate; // Release Date
             
             // Calculate community rating from reviews
+            _logger.LogDebug("Processing reviews for community rating: {ReviewCount} reviews available", 
+                reviewsData?.Count ?? 0);
+            
             if (reviewsData != null && reviewsData.Any())
             {
+                // Log all ratings found
+                foreach (var review in reviewsData)
+                {
+                    _logger.LogTrace("Review {ReviewId}: Raw rating '{Rating}', Parsed: {ParsedRating}", 
+                        review.ReviewId, review.Rating, review.ParsedRating);
+                }
+                
                 var ratingsWithValues = reviewsData
                     .Where(r => r.ParsedRating.HasValue && r.ParsedRating.Value > 0)
                     .Select(r => r.ParsedRating!.Value)
                     .ToList();
                     
+                _logger.LogDebug("Found {ValidRatings} valid ratings out of {TotalReviews} reviews", 
+                    ratingsWithValues.Count, reviewsData.Count);
+                    
                 if (ratingsWithValues.Any())
                 {
                     var averageRating = ratingsWithValues.Average();
                     // Phish.net uses 1-5 scale, Jellyfin uses 1-10, so multiply by 2
-                    movie.CommunityRating = (float)(averageRating * 2.0);
+                    var communityRating = (float)(averageRating * 2.0);
+                    movie.CommunityRating = communityRating;
+                    
+                    _logger.LogInformation("Set community rating for {ShowDate}: {Rating}/10 (avg of {Count} reviews: {AvgOriginal}/5)", 
+                        showData.ShowDate, communityRating.ToString("F1"), ratingsWithValues.Count, averageRating.ToString("F1"));
                 }
+                else
+                {
+                    _logger.LogDebug("No valid numeric ratings found in reviews for {ShowDate}", showData.ShowDate);
+                }
+            }
+            else
+            {
+                _logger.LogDebug("No reviews available for community rating calculation for {ShowDate}", showData.ShowDate);
             }
 
             // Build comprehensive overview with setlist at the top

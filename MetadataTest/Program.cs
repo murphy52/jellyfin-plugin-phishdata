@@ -149,8 +149,8 @@ namespace MetadataTest
             {
                 ApiKey = "YOUR_API_KEY_HERE", // This will be replaced when testing with real API
                 IncludeSetlistInDescription = true,
-                IncludeReviews = false,
-                MaxReviews = 3
+                IncludeReviews = true,  // Enable reviews to test community ratings
+                MaxReviews = 10         // Get more reviews for better rating accuracy
             };
 
             // For testing purposes, we'll need to mock the Plugin.Instance
