@@ -1,0 +1,22 @@
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="128" cy="128" r="120" fill="#4a90e2" stroke="#2c5aa0" stroke-width="4"/>
+  
+  <!-- Musical note -->
+  <g fill="white">
+    <!-- Note head -->
+    <ellipse cx="90" cy="160" rx="20" ry="15" transform="rotate(-20 90 160)"/>
+    <!-- Note stem -->
+    <rect x="105" y="80" width="6" height="85" rx="3"/>
+    <!-- Note flag -->
+    <path d="M111 80 Q140 70 140 90 Q140 100 111 95 Z"/>
+  </g>
+  
+  <!-- ".net" text -->
+  <text x="128" y="200" font-family="Arial, sans-serif" font-size="24" font-weight="bold" 
+        fill="white" text-anchor="middle">.net</text>
+  
+  <!-- Phish reference (small donut) -->
+  <circle cx="170" cy="100" r="15" fill="none" stroke="white" stroke-width="3"/>
+  <circle cx="170" cy="100" r="6" fill="white"/>
+</svg>

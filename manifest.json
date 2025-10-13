@@ -6,7 +6,7 @@
     "description": "This plugin provides rich metadata for your Phish concert video collection by integrating with the Phish.net API. Features include comprehensive show information with setlists, community ratings from reviews, venue details, band member profiles, and multi-source image provider for venue and show-specific photos. Perfect for organizing and enriching your Phish video library with official show data, fan ratings, and beautiful imagery.",
     "owner": "murphy52",
     "category": "Metadata",
-    "imageUrl": "https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishnet/master/images/plugin-icon.png",
+    "imageUrl": "https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishnet/master/images/plugin-icon.svg",
     "repositoryUrl": "https://github.com/murphy52/jellyfin-plugin-phishnet",
     "versions": [
       {
