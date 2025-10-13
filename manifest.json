@@ -13,7 +13,7 @@
         "version": "1.1.6",
         "changelog": "## 🔧 Community Rating Fix v1.1.6\n\n### Major Fix\n- **Fixed Community Ratings**: Now properly checks IncludeReviews configuration\n- **Enhanced Debugging**: Comprehensive logging for troubleshooting\n- **Better Error Handling**: Improved review fetching with proper error handling\n\n### What's Fixed\n- Community ratings were blank due to configuration not being checked\n- Reviews now only fetched when 'Include Reviews' is enabled\n- Respects MaxReviews setting from configuration\n- Added detailed logging for rating calculation process\n\n### For Users\n1. Update plugin via catalog or manual installation\n2. Ensure 'Include Reviews' is checked in plugin settings\n3. Set MaxReviews to 10-50 for better accuracy\n4. Check logs for detailed community rating information\n\nSee the full changelog at [GitHub](https://github.com/murphy52/jellyfin-plugin-phishnet/blob/master/CHANGELOG.md)",
         "targetAbi": "10.8.0.0",
-        "sourceUrl": "https://github.com/murphy52/jellyfin-plugin-phishnet/releases/download/v1.1.6/jellyfin-plugin-phishnet-1.1.6.zip",
+        "sourceUrl": "https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishnet/master/jellyfin-plugin-phishnet-1.1.6.zip",
         "checksum": "996fccad62d9ee9d3a96b23e9e67ccfc",
         "timestamp": "2024-10-13T22:05:00Z"
       },
