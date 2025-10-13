@@ -23,10 +23,10 @@ This document outlines the architecture of the Jellyfin Phish.net metadata provi
 │  │  │   Providers     │  │   API Layer     │  │ Configuration│ │ │
 │  │  │                 │  │                 │  │              │ │ │
 │  │  │ • Movie Provider│  │ • PhishNet API  │  │ • Settings   │ │ │
-│  │  │ • Series Provider│ │ • HTTP Client   │  │ • Cache Mgmt │ │ │
-│  │  │ • Episode Provider│ │ • Response Cache│  │ • Validation │ │ │
-│  │  │ • Image Provider│  │ • Rate Limiting │  │              │ │ │
-│  │  │ • External ID   │  │ • Error Handling│  │              │ │ │
+│  │  │ • Person Provider│ │ • HTTP Client   │  │ • Cache Mgmt │ │ │
+│  │  │ • Image Provider│  │ • Response Cache│  │ • Validation │ │ │
+│  │  │ • Service Layer │  │ • Rate Limiting │  │ • DI System  │ │ │
+│  │  │ • External APIs │  │ • Error Handling│  │              │ │ │
 │  │  └─────────────────┘  └─────────────────┘  └──────────────┘ │ │
 │  │                                                             │ │
 │  │  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────┐ │ │
@@ -72,14 +72,23 @@ This document outlines the architecture of the Jellyfin Phish.net metadata provi
 ### 4. Metadata Providers
 Based on Jellyfin's metadata provider system:
 
-#### Video Providers
-- **`PhishNetMovieProvider.cs`**: For single-show video files
-- **`PhishNetSeriesProvider.cs`**: For multi-set shows or tours
-- **`PhishNetEpisodeProvider.cs`**: For individual sets/songs
+#### Core Providers (Implemented)
+- **`PhishMovieProvider.cs`**: Complete movie metadata for Phish shows
+  - Smart title generation with multi-night run detection
+  - Setlist integration and community ratings
+  - Venue information and production metadata
+- **`PhishPersonProvider.cs`**: Band member profiles and biographies
+  - Individual profiles for all four band members
+  - Birth dates, roles, and comprehensive biographies
+- **`PhishImageProvider.cs`**: Multi-source image provider
+  - Venue photos, show-specific images, concert artwork
+  - Support for Primary, Backdrop, and Thumb image types
+  - Integration with ExternalImageService and ShowPhotoService
 
-#### Supplementary Providers  
-- **`PhishNetImageProvider.cs`**: Venue images, band photos
-- **`PhishNetExternalId.cs`**: Links to Phish.net show pages
+#### Supporting Services
+- **`ExternalImageService.cs`**: Venue and generic image fetching
+- **`ShowPhotoService.cs`**: Show-specific photo search and aggregation
+- **`PluginServiceRegistrator.cs`**: Dependency injection registration
 
 ### 5. Utilities and Helpers
 - **`FileNameParser.cs`**: Parse various Phish file naming conventions

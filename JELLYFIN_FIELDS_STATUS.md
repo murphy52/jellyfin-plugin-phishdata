@@ -45,8 +45,8 @@
 
 ### **Content Rating & Classification**  
 - ❌ **OfficialRating** - Could be "Not Rated" or "G" for concerts
-- ❌ **CommunityRating** - Could use Phish.net show ratings
-- ❌ **CriticRating** - Could use Phish.net review scores
+- ✅ **CommunityRating** - ✅ **IMPLEMENTED**: Uses Phish.net review ratings (1-10 scale)
+- ❌ **CriticRating** - Could use Phish.net review scores (separate from community)
 - ✅ **Genres** - Hard-coded: `["Concert", "Live Music"]`
 
 ### **Audio/Video Technical Info**
@@ -74,7 +74,7 @@
 ## 🎯 **PRIORITY ADDITIONS WE SHOULD IMPLEMENT**
 
 ### **High Priority** 
-1. **CommunityRating** - Use Phish.net show ratings (1-5 stars)
+1. ✅ **CommunityRating** - ~~Use Phish.net show ratings~~ **COMPLETED** (1-10 scale from review aggregation)
 2. ✅ **Genres** - ~~Move from Tags to proper Genres~~ **COMPLETED**
 3. ✅ **People** - ~~Add band members as actors/performers~~ **COMPLETED via PersonProvider**
 4. **RunTimeTicks** - Calculate show duration from setlist data
@@ -111,7 +111,7 @@
 ### **What's Still Missing:**
 ```json
 {
-  "CommunityRating": 4.2,
+  // CommunityRating: 4.2 - ✅ NOW IMPLEMENTED
   "RunTimeTicks": 108000000000, // ~3 hours
   "SeriesName": "Phish 2024",
   "SeasonNumber": 2024,
@@ -128,11 +128,12 @@
 - ✅ **Genres** - Hard-coded: `["Concert", "Live Music"]`
 - ✅ **People** - All 4 band members via PersonProvider with biographies
 - ✅ **"Phish" Tag** - Added to Tags array
+- ✅ **CommunityRating** - ✅ **COMPLETED**: Aggregate ratings from Phish.net reviews (1-10 scale)
 
 🎯 **NEXT LOGICAL ADDITIONS:**
-1. **CommunityRating** from Phish.net ratings
-2. **RunTimeTicks** for show duration
-3. **SeriesName/Season** for year-based grouping
-4. **HomePageUrl** linking to Phish.net
+1. **RunTimeTicks** for show duration
+2. **SeriesName/Season** for year-based grouping
+3. **HomePageUrl** linking to Phish.net
+4. **Tagline** with show highlights
 
 The plugin now provides **comprehensive metadata** that enhances the Jellyfin experience for Phish fans!

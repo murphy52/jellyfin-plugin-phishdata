@@ -10,29 +10,61 @@
 
 ## 🛠️ Installation
 
-### Method 1: Manual Installation (Recommended)
+### Method 1: Plugin Catalog (Recommended)
+
+#### Step 1: Add Plugin Repository
+1. Navigate to **Admin Dashboard > Plugins > Repositories**
+2. Click **+** to add a new repository
+3. **Repository Name**: `Phish.net Plugin Repository`
+4. **Repository URL**: `https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishnet/master/manifest.json`
+5. Click **Save**
+
+#### Step 2: Install Plugin from Catalog
+1. Navigate to **Admin Dashboard > Plugins > Catalog**
+2. Find "Phish.net" in the plugin list and click **Install**
+3. Select the latest version and confirm installation
+4. **Restart Jellyfin Server** - This is required for the plugin to load
+
+#### Step 3: Get API Key
+1. Visit [Phish.net API Keys](https://phish.net/api/keys) to register for a free API key
+2. Complete the registration form and note your API key
+
+#### Step 4: Configure Plugin
+1. After restarting, go to **Admin Dashboard > Plugins > My Plugins**
+2. Find "Phish.net" and click **Settings** (gear icon)
+3. Enter your Phish.net API key and configure preferences
+4. Click **Save**
+
+#### Step 5: Enable Library Providers
+1. Navigate to your Phish video library settings
+2. Go to **Metadata** tab
+3. Enable **all three** Phish.net providers:
+   - ✅ **Phish.net** (movie metadata)
+   - ✅ **Phish.net** (image provider)
+   - ✅ **Phish.net** (person provider)
+4. Click **OK** and scan your library
+
+### Method 2: Manual Installation
 
 1. **Download the plugin:**
+   - Get the latest release from [GitHub Releases](https://github.com/murphy52/jellyfin-plugin-phishnet/releases)
+   - Extract the zip file
+
+2. **Install plugin files:**
    ```bash
    # Copy the plugin DLL to your Jellyfin plugins directory
-   cp Jellyfin.Plugin.PhishNet.dll /path/to/jellyfin/plugins/
+   cp Jellyfin.Plugin.PhishNet.dll /path/to/jellyfin/plugins/phishnet/
    ```
 
-2. **Find your Jellyfin plugins directory:**
+3. **Find your Jellyfin plugins directory:**
    - **Linux:** `/var/lib/jellyfin/plugins/`
    - **Windows:** `%PROGRAMDATA%\Jellyfin\Server\plugins\`
    - **Docker:** `/config/plugins/` (mounted volume)
    - **macOS:** `/Users/[username]/.local/share/jellyfin/plugins/`
 
-3. **Restart Jellyfin server**
+4. **Restart Jellyfin server**
 
-4. **Configure the plugin:**
-   - Go to **Dashboard** → **Plugins** → **Phish.net**
-   - Enter your Phish.net API key (get one from https://phish.net/api/register)
-   - Enable setlist descriptions and other options as desired
-
-### Method 2: Plugin Repository (Future)
-*This plugin will be submitted to the official Jellyfin plugin repository.*
+5. **Follow Steps 3-5** from Method 1 above for configuration
 
 ## 🔧 Configuration
 

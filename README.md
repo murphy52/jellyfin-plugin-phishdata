@@ -70,30 +70,28 @@ Phish Videos/
 
 ### Plugin Catalog (Recommended)
 
+#### Step 1: Add Plugin Repository
 1. Navigate to **Admin Dashboard > Plugins > Repositories**
 2. Click **+** to add a new repository
 3. **Repository Name**: `Phish.net Plugin Repository`
 4. **Repository URL**: `https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishnet/master/manifest.json`
-5. Click **Save** and navigate to **Catalog**
-6. Find "Phish.net" in the plugin list and click **Install**
-7. Select the latest version (1.1.0) and confirm installation
-8. Restart Jellyfin Server
+5. Click **Save**
 
-### Manual Installation
+#### Step 2: Install Plugin
+1. Navigate to **Admin Dashboard > Plugins > Catalog**
+2. Find "Phish.net" in the plugin list and click **Install**
+3. Select the latest version and confirm installation
+4. **Restart Jellyfin Server** - This is required for the plugin to load
 
-1. Download the latest release from [GitHub Releases](https://github.com/murphy52/jellyfin-plugin-phishnet/releases)
-2. Extract the zip file
-3. Copy the `.dll` files to your Jellyfin plugins directory under `plugins/phishnet/`
-4. Restart Jellyfin Server
-5. Configure the plugin with your Phish.net API key
+#### Step 3: Get API Key
+1. Visit [Phish.net API Keys](https://phish.net/api/keys) to register for a free API key
+2. Complete the registration form and note your API key
 
-## Configuration
-
-1. Get a free API key from [Phish.net](https://phish.net/api/keys)
-2. In Jellyfin, go to **Settings > Admin Dashboard > Plugins**
-3. Find "Phish.net" and click **Settings**
-4. Enter your API key and configure preferences:
-   - **API Key**: Your Phish.net API key (required)
+#### Step 4: Configure Plugin
+1. After restarting, go to **Admin Dashboard > Plugins > My Plugins**
+2. Find "Phish.net" and click **Settings** (gear icon)
+3. Enter your Phish.net API key in the **API Key** field
+4. Configure other preferences as desired:
    - **Prefer Official Releases**: Prioritize official releases over audience recordings
    - **Include Jam Charts**: Fetch jam chart data for notable performances
    - **Include Reviews**: Pull community reviews and ratings
@@ -102,15 +100,67 @@ Phish Videos/
    - **Image Provider Settings**: Configure image sources and quality preferences
    - **Social Media API Keys**: Optional API keys for Instagram, Twitter, Flickr for enhanced image search
    - **Google Places API Key**: Optional key for venue image integration
+5. Click **Save**
 
-## Usage
+#### Step 5: Configure Library Settings
+1. Navigate to your Phish video library (or create a new one)
+2. Click the **three dots** menu and select **Manage Library**
+3. Go to the **Metadata** tab
+4. **Content Type**: Set to "Movies" or "Music Videos"
+5. **Metadata downloaders**: Check **all three** Phish.net providers:
+   - ✅ **Phish.net** (movie metadata)
+   - ✅ **Phish.net** (image provider)
+   - ✅ **Phish.net** (person provider)
+6. **Image fetchers**: Ensure **Phish.net** is checked and prioritized
+7. Click **OK** to save library settings
 
-1. Add your Phish video files to a Jellyfin library
-2. Set the library content type to "Music Videos" or "Movies"
-3. Enable the "Phish.net" metadata provider for the library
-4. **Important**: Also enable the "Phish.net" image provider and person provider for complete metadata
-5. Run a library scan
-6. The plugin will automatically match files with Phish shows and populate metadata
+#### Step 6: Scan Library
+1. Click **Scan Library** to refresh metadata
+2. Monitor the scan progress in **Admin Dashboard > Activity**
+3. Your Phish videos will now have rich metadata, setlists, ratings, and images!
+
+### Manual Installation
+
+1. Download the latest release from [GitHub Releases](https://github.com/murphy52/jellyfin-plugin-phishnet/releases)
+2. Extract the zip file
+3. Copy the `.dll` files to your Jellyfin plugins directory under `plugins/phishnet/`
+4. Restart Jellyfin Server
+5. Follow **Steps 3-6** above for configuration
+
+## Library Setup & Usage
+
+### Recommended Library Configuration
+
+**Library Type**: Movies or Music Videos
+- **Movies**: Best for complete show recordings
+- **Music Videos**: Good for individual song or set recordings
+
+**Folder Structure**: The plugin works with various naming conventions:
+```
+Phish Videos/
+├── 1997-11-22 - Hampton Coliseum/
+│   └── phish1997-11-22.mkv
+├── ph1995-12-31d1.mkv
+└── Phish - 1999-07-04 - Oswego, NY.mp4
+```
+
+### Essential Provider Settings
+
+For complete metadata experience, **enable all three providers**:
+
+1. **Phish.net (Movie)**: Core metadata, setlists, ratings
+2. **Phish.net (Image)**: Show photos, venue images, artwork
+3. **Phish.net (Person)**: Band member profiles and biographies
+
+### Post-Installation Verification
+
+After scanning, verify your shows display:
+- ✅ **Smart Titles**: "N2 Phish Hampton 11-22-1997"
+- ✅ **Complete Setlists**: Full song lists in overview
+- ✅ **Community Ratings**: Average ratings from Phish.net (1-10)
+- ✅ **Rich Images**: Venue photos and show-specific artwork
+- ✅ **Band Members**: Individual profiles for Trey, Mike, Page, Fish
+- ✅ **Comprehensive Tags**: Venue, location, year-specific tags
 
 ### What You'll Get
 
@@ -187,26 +237,54 @@ This plugin is built with:
 
 ### Common Issues
 
+**Plugin Repository Not Loading**
+- Double-check the repository URL is exactly: `https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishnet/master/manifest.json`
+- Try refreshing the Catalog page after adding the repository
+- Ensure your Jellyfin server has internet access
+- Check Admin Dashboard > Logs for repository loading errors
+
+**Plugin Not Appearing in Catalog**
+- Wait a few minutes after adding the repository, then refresh the Catalog page
+- Clear browser cache and reload the Jellyfin web interface
+- Verify the repository was added successfully in Admin Dashboard > Plugins > Repositories
+
+**No Configuration Page After Installation**
+- Ensure you've restarted Jellyfin Server after installing the plugin
+- Look for "Phish.net" in Admin Dashboard > Plugins > My Plugins
+- If missing, check that the plugin files are in the correct directory
+- Check Jellyfin logs for plugin loading errors
+
+**Phish.net Provider Not Available in Library Settings**
+- Confirm the plugin is installed and Jellyfin has been restarted
+- Verify your API key is configured in the plugin settings
+- Check that all three providers are visible: movie metadata, image provider, and person provider
+- If providers are missing, reinstall the plugin or check logs for registration errors
+
 **Plugin Not Finding Shows**
 - Ensure your API key is correctly configured in plugin settings
 - Check that filenames contain recognizable date patterns (YYYY-MM-DD format works best)
 - Verify the show exists in the Phish.net database
 - Check Jellyfin logs for parsing details and API responses
+- Try rescanning individual files to see detailed error messages
 
 **No Images Appearing**
-- Enable the "Phish.net" image provider in your library settings
+- Enable the "Phish.net" image provider in your library settings under **Metadata** tab
+- Ensure "Phish.net" is checked in the **Image fetchers** section
 - Configure optional API keys (Google Places, social media) for enhanced image sources
 - Some venues may not have images available from current sources
+- Check if images appear after a fresh library scan
 
 **Community Ratings Not Showing**
 - Ratings only appear for shows that have reviews on Phish.net
 - Check that "Include Reviews" is enabled in plugin configuration
 - Some older shows may have fewer or no community reviews
+- Verify the API key has proper permissions for review data
 
 **Performance Issues**
 - Adjust cache duration settings to reduce API calls
 - Disable image providers temporarily if experiencing slowdowns
 - Consider reducing max review count for faster metadata loading
+- Monitor API rate limits if scanning large libraries
 
 ### Debug Logging
 
@@ -215,9 +293,28 @@ Enable debug logging in Jellyfin for detailed troubleshooting:
 2. Set log level to "Debug" for the PhishNet plugin
 3. Run a library scan and check logs for detailed information
 
+## Quick Setup Summary
+
+For experienced users, here's the essential setup checklist:
+
+1. ➕ **Add Repository**: `https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishnet/master/manifest.json`
+2. 📦 **Install Plugin** from Catalog → **Restart Jellyfin**
+3. 🔑 **Get API Key** from [Phish.net](https://phish.net/api/keys)
+4. ⚙️ **Configure Plugin** in Admin Dashboard > Plugins > My Plugins
+5. 📚 **Enable All Providers** in Library Settings > Metadata tab:
+   - ✅ Phish.net (movie metadata)
+   - ✅ Phish.net (image provider)  
+   - ✅ Phish.net (person provider)
+6. 🔍 **Scan Library** and enjoy rich Phish metadata!
+
 ## Version History
 
-- **v1.1.0** (Current): Community ratings, comprehensive image provider, person provider, enhanced metadata
+- **v1.1.5** (Current): Enhanced plugin icons, JSON deserialization fixes, full metadata functionality
+- **v1.1.4**: Embedded plugin icons, provider registration improvements
+- **v1.1.3**: JSON parsing fixes for review data
+- **v1.1.2**: Configuration page loading fixes
+- **v1.1.1**: Manifest updates and release improvements
+- **v1.1.0**: Community ratings, comprehensive image provider, person provider, enhanced metadata
 - **v1.0.0**: Basic metadata provider with Phish.net API integration
 
 ## Roadmap

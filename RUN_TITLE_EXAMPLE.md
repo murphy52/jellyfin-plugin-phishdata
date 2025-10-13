@@ -5,20 +5,20 @@
 ### Example: Dick's Sporting Goods Park 3-Night Run
 
 **Single Show (not part of run):**
-- `Phish Denver 8-30-2024`
+- `Phish Commerce City 8-30-2024`
 
 **Multi-Night Run:**
-- `N1 Phish Denver 8-30-2024` (Night 1 of 3)
-- `N2 Phish Denver 8-31-2024` (Night 2 of 3)  
-- `N3 Phish Denver 9-1-2024`  (Night 3 of 3)
+- `N1 Phish Commerce City 8-30-2024` (Night 1 of 3)
+- `N2 Phish Commerce City 8-31-2024` (Night 2 of 3)  
+- `N3 Phish Commerce City 9-1-2024`  (Night 3 of 3)
 
 ### Example: Madison Square Garden 4-Night NYE Run
 
 **New Year's Eve Run:**
-- `N1 Phish New York 12-28-2024`
-- `N2 Phish New York 12-29-2024`
-- `N3 Phish New York 12-30-2024`
-- `N4 Phish New York 12-31-2024`
+- `N1 Phish New York City 12-28-2024`
+- `N2 Phish New York City 12-29-2024`
+- `N3 Phish New York City 12-30-2024`
+- `N4 Phish New York City 12-31-2024`
 
 ### Example: Festival Shows
 
@@ -51,10 +51,10 @@
 - Run 2: [2024-09-05] ← Single show
 
 **Title Results:**
-- `N1 Phish Denver 8-30-2024`
-- `N2 Phish Denver 8-31-2024`  
-- `N3 Phish Denver 9-1-2024`
-- `Phish Denver 9-5-2024` (no night indicator for single show)
+- `N1 Phish Commerce City 8-30-2024`
+- `N2 Phish Commerce City 8-31-2024`  
+- `N3 Phish Commerce City 9-1-2024`
+- `Phish Commerce City 9-5-2024` (no night indicator for single show)
 
 ## Benefits for Phish Fans
 
@@ -67,10 +67,11 @@
 
 ## Real-World Examples
 
-### Famous Runs:
-- **Baker's Dozen MSG 2017**: `N1 Phish New York 7-21-2017` through `N13 Phish New York 8-6-2017`
+### Famous Runs (Based on Working Plugin Results):
+- **Baker's Dozen MSG 2017**: `N1 Phish New York City 7-21-2017` through `N13 Phish New York City 8-6-2017`
 - **Big Cypress 1999**: `Phish Big Cypress 12-31-1999` (single millennium show)
-- **Dick's 2023**: `N1 Phish Denver 8-31-2023` through `N4 Phish Denver 9-3-2023`
+- **Dick's 2023**: `N1 Phish Commerce City 8-31-2023` through `N4 Phish Commerce City 9-3-2023`
 - **Sphere 2024**: `N1 Phish Las Vegas 4-18-2024` through `N4 Phish Las Vegas 4-21-2024`
+- **Hampton 1997**: `N2 Phish Hampton 11-22-1997` (actual working example from testing)
 
 This format makes it instantly clear which show is which in your Jellyfin library! 🎸
