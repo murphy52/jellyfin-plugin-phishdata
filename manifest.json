@@ -10,12 +10,12 @@
     "repositoryUrl": "https://github.com/murphy52/jellyfin-plugin-phishnet",
     "versions": [
       {
-        "version": "1.1.0",
-        "changelog": "## 🎵 Major Feature Release v1.1.0\n\n### New Features\n- **Community Ratings**: Aggregate ratings from up to 50 Phish.net reviews (1-10 scale)\n- **Comprehensive Image Provider**: Multi-source image fetching with venue photos, show-specific images, and fan photography\n- **Person Provider**: Individual profiles for all four band members with detailed biographies\n- **Enhanced Metadata**: Smart titles, multi-night run detection, comprehensive tagging\n- **Advanced Parsing**: Improved filename parsing with support for various naming conventions\n\n### Technical Improvements\n- Complete service architecture with modular design\n- Comprehensive testing suite with mocked API responses\n- Enhanced error handling and logging\n- Performance optimizations and caching\n\n### Documentation\n- Complete user guides and troubleshooting\n- API integration documentation\n- Installation and configuration instructions\n\nSee the full changelog at [GitHub](https://github.com/murphy52/jellyfin-plugin-phishnet/blob/master/CHANGELOG.md)",
+        "version": "1.1.1",
+        "changelog": "## 🔧 Patch Release v1.1.1\n\n### Fixes\n- Ensure configuration page is embedded and recognized by Jellyfin\n- Minor build and packaging improvements\n\n### Notes\n- If you previously installed v1.1.0, updating to this version is recommended\n\nSee the full changelog at [GitHub](https://github.com/murphy52/jellyfin-plugin-phishnet/blob/master/CHANGELOG.md)",
         "targetAbi": "10.8.0.0",
-        "sourceUrl": "https://github.com/murphy52/jellyfin-plugin-phishnet/releases/download/v1.1.0/jellyfin-plugin-phishnet-1.1.0.zip",
-        "checksum": "bcb124fdbe1b57b3b327f6f36c1b37cb",
-        "timestamp": "2024-10-13T18:30:00Z"
+        "sourceUrl": "https://github.com/murphy52/jellyfin-plugin-phishnet/releases/download/v1.1.1/jellyfin-plugin-phishnet-1.1.1.zip",
+        "checksum": "3f456a27f1ce289073384564deaf7859",
+        "timestamp": "2024-10-13T19:30:00Z"
       },
       {
         "version": "1.0.0",
