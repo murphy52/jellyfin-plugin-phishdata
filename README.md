@@ -305,7 +305,8 @@ For experienced users, here's the essential setup checklist:
 
 ## Version History
 
-- **v1.1.5** (Current): Enhanced plugin icons, JSON deserialization fixes, full metadata functionality
+- **v1.3.0** (Current): User feedback for parsing failures, comprehensive error guidance, enhanced UX
+- **v1.1.5**: Enhanced plugin icons, JSON deserialization fixes, full metadata functionality
 - **v1.1.4**: Embedded plugin icons, provider registration improvements
 - **v1.1.3**: JSON parsing fixes for review data
 - **v1.1.2**: Configuration page loading fixes
