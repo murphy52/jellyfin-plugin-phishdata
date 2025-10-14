@@ -24,7 +24,7 @@
         "sourceUrl": "https://github.com/murphy52/jellyfin-plugin-phishnet/releases/download/v1.2.7/jellyfin-plugin-phishnet-v1.2.7.zip",
         "checksum": "0169387beb9340e6512abb699cfd00de",
         "timestamp": "2024-12-29T16:20:00Z"
-      }
+      },
       {
         "version": "1.2.6",
         "changelog": "## External Link URL Fix v1.2.6\n\nImproved external link URL format:\n- Fixed URL format for better Phish.net navigation\n- Uses more direct path to setlist pages (/setlists/{date}.html)\n- Better user experience with improved link targeting\n\nUpdate via Jellyfin plugin catalog or manual install.",
