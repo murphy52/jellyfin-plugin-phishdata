@@ -732,9 +732,22 @@ namespace Jellyfin.Plugin.PhishNet.Providers
             movie.Tags = tags.Distinct().ToArray();
 
             // Set external ID for linking to Phish.net show page
-            // TODO: Use permalink from API response when available
-            var showDateString = showDate.ToString("yyyy-MM-dd");
-            movie.SetProviderId("PhishNet", showDateString);
+            // Use permalink from setlist data if available, otherwise fall back to date-based URL
+            if (setlistData?.Permalink != null && !string.IsNullOrEmpty(setlistData.Permalink))
+            {
+                // Extract the path from the full permalink URL for the provider ID
+                var uri = new Uri(setlistData.Permalink);
+                var pathWithoutQuery = uri.GetLeftPart(UriPartial.Path);
+                movie.SetProviderId("PhishNet", pathWithoutQuery);
+                _logger.LogDebug("Using permalink for external link: {Permalink}", setlistData.Permalink);
+            }
+            else
+            {
+                // Fallback to date-based URL
+                var showDateString = showDate.ToString("yyyy-MM-dd");
+                movie.SetProviderId("PhishNet", $"https://phish.net/show/{showDateString}");
+                _logger.LogDebug("Using fallback date-based URL for external link");
+            }
         }
         
         /// <summary>

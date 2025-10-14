@@ -102,14 +102,69 @@ public class PhishNetApiClient : IPhishNetApiClient, IDisposable
         }
 
         var endpoint = $"setlists/showdate/{showDate}.json";
-        var response = await MakeApiRequestAsync<SetlistSongDto>(endpoint, cancellationToken).ConfigureAwait(false);
         
-        // Convert the individual song objects to a SetlistDto
-        var songs = response?.Data ?? new List<SetlistSongDto>();
-        var setlistDto = new SetlistDto();
-        setlistDto.AddRange(songs);
+        // Make the request and get raw JSON to extract permalink
+        await ApplyRateLimitAsync(cancellationToken).ConfigureAwait(false);
         
-        return new List<SetlistDto> { setlistDto };
+        try
+        {
+            var url = BuildApiUrl(endpoint);
+            var response = await _httpClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Setlist API request failed with status code: {StatusCode}", response.StatusCode);
+                return new List<SetlistDto> { new SetlistDto() };
+            }
+            
+            var jsonContent = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            
+            if (string.IsNullOrEmpty(jsonContent))
+            {
+                _logger.LogWarning("Setlist API returned empty response");
+                return new List<SetlistDto> { new SetlistDto() };
+            }
+            
+            // Parse the response to extract both data and permalink
+            using var document = JsonDocument.Parse(jsonContent);
+            var root = document.RootElement;
+            
+            var songs = new List<SetlistSongDto>();
+            string? permalink = null;
+            
+            // Extract data array
+            if (root.TryGetProperty("data", out var dataElement) && dataElement.ValueKind == JsonValueKind.Array)
+            {
+                var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                foreach (var songElement in dataElement.EnumerateArray())
+                {
+                    var song = JsonSerializer.Deserialize<SetlistSongDto>(songElement.GetRawText(), jsonOptions);
+                    if (song != null)
+                    {
+                        songs.Add(song);
+                    }
+                }
+            }
+            
+            // Extract permalink
+            if (root.TryGetProperty("permalink", out var permalinkElement))
+            {
+                permalink = permalinkElement.GetString();
+                _logger.LogDebug("Found setlist permalink: {Permalink}", permalink);
+            }
+            
+            // Create SetlistDto with songs and permalink
+            var setlistDto = new SetlistDto();
+            setlistDto.AddRange(songs);
+            setlistDto.Permalink = permalink;
+            
+            return new List<SetlistDto> { setlistDto };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting setlist for date {ShowDate}", showDate);
+            return new List<SetlistDto> { new SetlistDto() };
+        }
     }
 
     /// <inheritdoc />
