@@ -120,8 +120,12 @@ namespace Jellyfin.Plugin.PhishNet.Providers
                 
                 if (parseResult.Confidence < 0.25)
                 {
-                    _logger.LogInformation("Low confidence parse result for {Name} (confidence: {Confidence}), skipping", 
+                    _logger.LogInformation("Low confidence parse result for {Name} (confidence: {Confidence}), providing user guidance", 
                         info.Name, parseResult.Confidence);
+                    
+                    // Instead of skipping, provide helpful feedback to the user
+                    PopulateLowConfidenceGuidance(result.Item, info.Name, parseResult.Confidence);
+                    result.HasMetadata = true;
                     return result;
                 }
 
@@ -750,6 +754,61 @@ namespace Jellyfin.Plugin.PhishNet.Providers
                 movie.SetProviderId("PhishNet", $"https://phish.net/show/{showDateString}");
                 _logger.LogDebug("Using fallback date-based URL for external link");
             }
+        }
+        
+        /// <summary>
+        /// Populates metadata with user guidance when filename parsing confidence is too low.
+        /// </summary>
+        /// <param name="movie">The movie item to populate with guidance.</param>
+        /// <param name="originalName">The original filename that failed to parse.</param>
+        /// <param name="confidence">The confidence score that was too low.</param>
+        private static void PopulateLowConfidenceGuidance(Movie movie, string originalName, double confidence)
+        {
+            // Set a descriptive title indicating the parsing issue
+            movie.Name = $"⚠️ Metadata Parsing Failed - {originalName}";
+            
+            // Create comprehensive guidance in the overview
+            var guidanceLines = new List<string>
+            {
+                "⚠️ PHISH.NET METADATA MATCHING FAILED",
+                "",
+                $"Based on the filename \"{originalName}\", we were unable to automatically match this video to a show in the Phish.net database (confidence: {confidence:P0}).",
+                "",
+                "TO FIX THIS ISSUE:",
+                "",
+                "1. Rename your file to include the show date in one of these formats:",
+                "   • Phish 1997-11-22 (recommended)",
+                "   • ph1997-11-22", 
+                "   • Phish Albany 11-22-97",
+                "   • 1997.11.22 Phish",
+                "   • Phish 1997-11-22 Foo Bar Venue",
+                "",
+                "2. After renaming, refresh the metadata:",
+                "   • Right-click this video in Jellyfin",
+                "   • Select \"Refresh Metadata\"",
+                "   • Choose \"Replace all metadata\" (recommended)",
+                "   • Click \"OK\"",
+                "",
+                "REFRESH MODE GUIDE:",
+                "• \"Scan for new and updated files\" - Only scans file system changes",
+                "• \"Search for missing metadata\" - Only fills in missing data", 
+                "• \"Replace all metadata\" - Completely refreshes all data (use this!)",
+                "",
+                "NEED HELP FINDING THE SHOW DATE?",
+                "Visit https://phish.net to search for shows by venue, city, or approximate date.",
+                "",
+                "Once you've renamed the file with a proper date format, this plugin will automatically",
+                "fetch detailed show information, setlists, and venue data from Phish.net."
+            };
+            
+            movie.Overview = string.Join("\n", guidanceLines);
+            
+            // Set basic metadata 
+            movie.Genres = new[] { "Concert", "Live Music" };
+            movie.Tags = new[] { "Phish", "Parsing Error", "Needs Rename" };
+            
+            // Set a generic date to avoid null reference issues
+            movie.DateCreated = DateTime.Now;
         }
         
         /// <summary>

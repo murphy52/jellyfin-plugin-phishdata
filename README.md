@@ -34,6 +34,7 @@ This plugin adds a metadata provider for Phish concert videos using the [Phish.n
 - **Intelligent File Parsing**: Advanced filename parsing to match video files with shows
 - **Flexible Naming**: Support for various file naming conventions commonly used by Phish collectors
 - **Multi-Format Support**: Works with various video file formats and naming patterns
+- **User Feedback**: Helpful error messages with specific guidance when filename parsing fails
 
 ## Supported File Naming Conventions
 
@@ -260,6 +261,12 @@ This plugin is built with:
 - Verify the show exists in the Phish.net database
 - Check Jellyfin logs for parsing details and API responses
 - Try rescanning individual files to see detailed error messages
+
+**"Metadata Parsing Failed" Messages**
+- If you see a video titled "⚠️ Metadata Parsing Failed" with guidance in the overview, the filename couldn't be matched to a show
+- Follow the detailed instructions in the overview to rename your file with a proper date format
+- After renaming, right-click the video and select "Refresh Metadata" → "Replace all metadata"
+- The plugin will automatically retry parsing with the new filename and fetch complete show data
 
 **No Images Appearing**
 - Enable the "Phish.net" image provider in your library settings under **Metadata** tab
