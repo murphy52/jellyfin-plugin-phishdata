@@ -151,7 +151,7 @@ public class PhishNetApiClientTests : IDisposable
                     {
                         new SetInfo
                         {
-                            SetName = "Set I",
+                            SetName = "SET 1",
                             Songs = new List<SongInfo>
                             {
                                 new SongInfo { Title = "Wilson", DisplayTransition = " > " },

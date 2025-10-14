@@ -5,10 +5,10 @@
 **✅ CURRENT WORKING FORMAT (Setlist First with Transition Marks):**
 ```
 Setlist (47 songs):
-Set I: AC/DC Bag, Funky Bitch > Bouncing Around the Room, Guelah Papyrus, My Mind's Got a Mind of Its Own > Divided Sky, Sleep, Theme From the Bottom, Golgi Apparatus > Cavern
-Set II: Also Sprach Zarathustra > Down with Disease > Bathtub Gin > Piper > Rock and Roll, You Enjoy Myself, Loving Cup
-Set III: Meatstick, Auld Lang Syne > Down with Disease > Midnight > Heavy Things > After Midnight
-Encore: First Tube
+SET 1: AC/DC Bag, Funky Bitch > Bouncing Around the Room, Guelah Papyrus, My Mind's Got a Mind of Its Own > Divided Sky, Sleep, Theme From the Bottom, Golgi Apparatus > Cavern
+SET 2: Also Sprach Zarathustra > Down with Disease > Bathtub Gin > Piper > Rock and Roll, You Enjoy Myself, Loving Cup
+SET 3: Meatstick, Auld Lang Syne > Down with Disease > Midnight > Heavy Things > After Midnight
+ENCORE: First Tube
 
 Phish concert performed on December 31, 1999 at Big Cypress Seminole Reservation, Big Cypress, FL
 ```
@@ -18,7 +18,7 @@ Phish concert performed on December 31, 1999 at Big Cypress Seminole Reservation
 Phish concert performed on December 31, 1999 at Big Cypress Seminole Reservation, Big Cypress, FL
 
 Setlist (47 songs):
-Set I: AC/DC Bag, Funky Bitch, Bouncing Around the Room...
+SET 1: AC/DC Bag, Funky Bitch, Bouncing Around the Room...
 ...
 ```
 
@@ -36,9 +36,9 @@ Set I: AC/DC Bag, Funky Bitch, Bouncing Around the Room...
 **With API Data (Actual Plugin Output):**
 ```
 Setlist (23 songs):
-Set I: Makisupa Policeman > Llama, Divided Sky, Guelah Papyrus, Maze, Sparkle, Sample in a Jar, Limb By Limb, Bouncing Around the Room, Run Like an Antelope
-Set II: Ghost > Isabella, Piper > Black-Eyed Katy, Harry Hood > Cavern
-Encore: Rocky Top
+SET 1: Makisupa Policeman > Llama, Divided Sky, Guelah Papyrus, Maze, Sparkle, Sample in a Jar, Limb By Limb, Bouncing Around the Room, Run Like an Antelope
+SET 2: Ghost > Isabella, Piper > Black-Eyed Katy, Harry Hood > Cavern
+ENCORE: Rocky Top
 
 Phish concert performed on November 22, 1997 at Hampton Coliseum, Hampton, VA
 ```

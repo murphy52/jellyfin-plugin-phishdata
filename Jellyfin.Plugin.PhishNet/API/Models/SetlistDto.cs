@@ -92,11 +92,11 @@ public class SetlistSongDto
         {
             return Set.ToUpperInvariant() switch
             {
-                "1" or "I" => "Set I",
-                "2" or "II" => "Set II", 
-                "3" or "III" => "Set III",
-                "E" or "ENCORE" => "Encore",
-                _ => $"Set {Set}"
+                "1" or "I" => "SET 1",
+                "2" or "II" => "SET 2", 
+                "3" or "III" => "SET 3",
+                "E" or "ENCORE" => "ENCORE",
+                _ => $"SET {Set}"
             };
         }
     }
@@ -203,10 +203,10 @@ public class SetlistDto : List<SetlistSongDto>
     {
         return setName switch
         {
-            "Set I" => 1,
-            "Set II" => 2,
-            "Set III" => 3,
-            "Encore" => 99,
+            "SET 1" => 1,
+            "SET 2" => 2,
+            "SET 3" => 3,
+            "ENCORE" => 99,
             _ => 50 // Unknown sets in the middle
         };
     }
@@ -215,10 +215,10 @@ public class SetlistDto : List<SetlistSongDto>
     {
         return setName switch
         {
-            "Set I" => 1,
-            "Set II" => 2,
-            "Set III" => 3,
-            "Encore" => 4,
+            "SET 1" => 1,
+            "SET 2" => 2,
+            "SET 3" => 3,
+            "ENCORE" => 4,
             _ => 1
         };
 }

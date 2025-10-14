@@ -176,9 +176,9 @@ Once configured, your Phish videos will display:
 **Overview**:
 ```
 Setlist (29 songs):
-Set 1: Makisupa Policeman > Llama, Divided Sky, Guelah Papyrus, Maze, Sparkle, Sample in a Jar, Limb By Limb, Bouncing Around the Room, Run Like an Antelope
-Set 2: Ghost > Isabella, Piper > Black-Eyed Katy, Harry Hood > Cavern
-Encore: Rocky Top
+SET 1: Makisupa Policeman > Llama, Divided Sky, Guelah Papyrus, Maze, Sparkle, Sample in a Jar, Limb By Limb, Bouncing Around the Room, Run Like an Antelope
+SET 2: Ghost > Isabella, Piper > Black-Eyed Katy, Harry Hood > Cavern
+ENCORE: Rocky Top
 
 Phish concert performed on November 22, 1997 at Hampton Coliseum, Hampton, VA
 ```

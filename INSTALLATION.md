@@ -130,8 +130,8 @@ Overview: Phish concert performed on August 6, 2024
 ```
 Title: N1 Phish Commerce City 8-30-2024
 Overview: Setlist (23 songs):
-Set I: Wilson > Simple, Harry Hood
-Set II: Ghost > Twenty Years Later...
+SET 1: Wilson > Simple, Harry Hood
+SET 2: Ghost > Twenty Years Later...
 
 Phish concert performed on August 30, 2024 at Dick's Sporting Goods Park, Commerce City, CO
 ```
