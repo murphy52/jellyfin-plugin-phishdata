@@ -10,6 +10,14 @@
     "repositoryUrl": "https://github.com/murphy52/jellyfin-plugin-phishnet",
     "versions": [
       {
+        "version": "1.1.12",
+        "changelog": "## 🔍 Raw API Response Debug v1.1.12\n\n### Debug Enhancement\n- **Added Raw JSON Response Logging**: Now logs the complete JSON response from Phish.net API\n- **Field Discovery**: Will show ALL fields available in API responses\n- **Missing Rating Investigation**: Helps identify if rating data exists under different field names\n- **Complete API Transparency**: Shows exactly what data the API returns\n\n### What's New\n- Raw JSON logging for shows endpoints (showdate and showid)\n- Truncates large responses to first 2000 characters for readability\n- Shows complete API response structure to identify missing fields\n- Helps determine if we're using wrong field names for rating data\n\n### For Users\n- This is a debug version to see the raw API response data\n- Look for 'DEBUG Raw JSON Response for shows/showdate/1997-11-22.json'\n- Will show if rating data exists under different field names\n- Once we identify the correct fields, we can fix the rating issue\n\nThis will finally show us exactly what fields the Phish.net API provides!",
+        "targetAbi": "10.8.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishnet/master/jellyfin-plugin-phishnet-1.1.12.zip",
+        "checksum": "551c5f125fc50eacf4514c00a03c9169",
+        "timestamp": "2024-10-14T00:08:00Z"
+      },
+      {
         "version": "1.1.11",
         "changelog": "## 🔧 API Endpoint Enhancement v1.1.11\n\n### Major Enhancement\n- **Added Show Details API Fallback**: Now tries `shows/showid/{id}.json` endpoint when rating data is missing\n- **Dual API Strategy**: Uses both show date and show ID endpoints for comprehensive data\n- **Better Rating Discovery**: Automatically attempts detailed show API if basic endpoint lacks rating\n- **Enhanced Debug Logging**: Shows which endpoint provided rating data\n\n### What's New\n- New `GetShowByIdAsync` method in API client\n- Automatic fallback when show date endpoint returns null ratings\n- Shows exactly which API call succeeded in logs\n- Uses ShowId (1252683584) to get detailed show information\n\n### For Users\n- Community ratings should now work if available in Phish.net detailed show data\n- Look for 'Rating not available from show date endpoint, trying show details endpoint'\n- Check logs for '✅ Found rating data in detailed show endpoint' success messages\n- Hampton 11/22/1997 should now get rating data if API provides it\n\nThis version tries harder to find community rating data from Phish.net!",
         "targetAbi": "10.8.0.0",

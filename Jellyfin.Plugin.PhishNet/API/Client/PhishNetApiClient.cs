@@ -229,6 +229,14 @@ public class PhishNetApiClient : IPhishNetApiClient, IDisposable
 
             var jsonContent = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
             
+            // DEBUG: Log raw JSON for shows endpoints to help debug missing rating data
+            if (endpoint.Contains("shows/showdate/") || endpoint.Contains("shows/showid/"))
+            {
+                _logger.LogInformation("DEBUG Raw JSON Response for {Endpoint}: {JsonContent}", 
+                    endpoint.Replace(_apiKey, "***"), 
+                    jsonContent.Length > 2000 ? jsonContent.Substring(0, 2000) + "..." : jsonContent);
+            }
+            
             if (string.IsNullOrEmpty(jsonContent))
             {
                 _logger.LogWarning("API returned empty response");
