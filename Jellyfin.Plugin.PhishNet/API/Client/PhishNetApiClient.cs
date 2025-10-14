@@ -146,11 +146,20 @@ public class PhishNetApiClient : IPhishNetApiClient, IDisposable
                 }
             }
             
-            // Extract permalink
-            if (root.TryGetProperty("permalink", out var permalinkElement))
+            // Extract permalink from the first song (all songs have the same permalink for a show)
+            if (songs.Count > 0 && !string.IsNullOrEmpty(songs[0].Permalink))
             {
-                permalink = permalinkElement.GetString();
-                _logger.LogDebug("Found setlist permalink: {Permalink}", permalink);
+                permalink = songs[0].Permalink;
+                _logger.LogDebug("Found setlist permalink from song data: {Permalink}", permalink);
+            }
+            else
+            {
+                // Try to extract from top-level (fallback)
+                if (root.TryGetProperty("permalink", out var permalinkElement))
+                {
+                    permalink = permalinkElement.GetString();
+                    _logger.LogDebug("Found setlist permalink from top-level: {Permalink}", permalink);
+                }
             }
             
             // Create SetlistDto with songs and permalink

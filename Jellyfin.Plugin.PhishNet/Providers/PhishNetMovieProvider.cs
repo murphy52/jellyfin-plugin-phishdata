@@ -697,8 +697,9 @@ namespace Jellyfin.Plugin.PhishNet.Providers
             // Set hard-coded genres
             movie.Genres = new[] { "Concert", "Live Music" };
             
-            // TODO: Add Phish band members as People - need to implement via PersonProvider
-            // Band members: Trey Anastasio, Mike Gordon, Jon Fishman, Page McConnell
+            // Note: Phish band members are handled by the separate PhishPersonProvider
+            // which provides metadata for Trey Anastasio, Mike Gordon, Jon Fishman, and Page McConnell
+            // when Jellyfin requests person information
 
             // Set genres/tags (including "Phish")
             var tags = new List<string> { "Phish", "Concert", "Live Music", "Jam Band" };
@@ -735,10 +736,8 @@ namespace Jellyfin.Plugin.PhishNet.Providers
             // Use permalink from setlist data if available, otherwise fall back to date-based URL
             if (setlistData?.Permalink != null && !string.IsNullOrEmpty(setlistData.Permalink))
             {
-                // Extract the path from the full permalink URL for the provider ID
-                var uri = new Uri(setlistData.Permalink);
-                var pathWithoutQuery = uri.GetLeftPart(UriPartial.Path);
-                movie.SetProviderId("PhishNet", pathWithoutQuery);
+                // Use the permalink directly - it should be a complete URL
+                movie.SetProviderId("PhishNet", setlistData.Permalink);
                 _logger.LogDebug("Using permalink for external link: {Permalink}", setlistData.Permalink);
             }
             else
@@ -763,17 +762,24 @@ namespace Jellyfin.Plugin.PhishNet.Providers
             }
             
             // Fix common character encoding issues from Phish.net API
-            // These are the exact malformed characters appearing in the text
+            // These include Windows-1252/UTF-8 mojibake seen in API content
             return text
+                // Apostrophes and possessives
                 .Replace("â’s", "'s")          // "Trey's" becomes "Trey's"
+                .Replace("âs", "'s")           // "Halleyâs" -> "Halley's"
                 .Replace("â’", "'")            // Other apostrophes
+                // Quotes
                 .Replace("â“", "\"")           // Opening quotes
                 .Replace("â”", "\"")           // Closing quotes  
+                // Dashes
                 .Replace("â–", "-")           // En dash
                 .Replace("â—", "—")           // Em dash
-                .Replace("Â", " ")             // Non-breaking space replacement
-                .Replace("\u00A0", " ")         // Non-breaking space
-                .Replace("  ", " ")            // Clean up double spaces
+                // Non-breaking spaces appearing as Â or NBSP
+                .Replace("Â ", " ")            // NBSP + space to space
+                .Replace("Â", " ")             // Lone Â to space
+                .Replace("\u00A0", " ")         // Unicode NBSP
+                // Collapse multiple spaces
+                .Replace("  ", " ")
                 .Trim();
         }
     }

@@ -77,6 +77,12 @@ public class SetlistSongDto
     public string? Footnote { get; set; }
 
     /// <summary>
+    /// Gets or sets the permalink URL to the setlist page on Phish.net.
+    /// </summary>
+    [JsonPropertyName("permalink")]
+    public string? Permalink { get; set; }
+
+    /// <summary>
     /// Gets the clean set name for display.
     /// </summary>
     [JsonIgnore]
