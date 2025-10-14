@@ -10,6 +10,14 @@
     "repositoryUrl": "https://github.com/murphy52/jellyfin-plugin-phishnet",
     "versions": [
       {
+        "version": "1.2.1",
+        "changelog": "## 🖼️ Plugin Image Fix v1.2.1\n\n### Bug Fix\n- **Fixed Missing Plugin Images**: Plugin icon now displays correctly in all Jellyfin UI locations\n- **Multi-Method Support**: Added both `GetPluginImage()` and `GetThumbImage()` methods for compatibility\n- **Embedded Resources**: Ensures plugin images are properly embedded and accessible\n\n### What's Fixed\n- ✅ Plugin icon shows in catalog repository\n- ✅ Plugin icon shows in plugin details/update screen\n- ✅ Plugin icon shows in 'My Plugins' screen\n- ✅ Supports different Jellyfin versions with multiple method signatures\n\n### Technical Details\n- Improved embedded resource loading with fallback support\n- Added compatibility methods for different Jellyfin plugin image APIs\n- Better error handling for missing image resources\n\n### For Users\n- Update to v1.2.1 to see the Phish.net plugin icon properly in all Jellyfin interfaces\n- No configuration changes needed - the fix is automatic\n- Plugin functionality remains the same with improved visual presentation\n\nThis is a small but important UX improvement for the plugin interface!",
+        "targetAbi": "10.8.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishnet/master/jellyfin-plugin-phishnet-1.2.1.zip",
+        "checksum": "a9a61384b1f6f957d142b49a2e950e3f",
+        "timestamp": "2024-10-14T00:27:00Z"
+      },
+      {
         "version": "1.2.0",
         "changelog": "## 🧹 Clean Production Release v1.2.0\n\n### Major Cleanup\n- **Removed Community Rating Feature**: Eliminated all community rating code and dependencies\n- **Simplified Configuration**: Removed rating-related settings and debug options\n- **Cleaner Codebase**: Removed unused ReviewDto model and reviews API calls\n- **Focus on Core Features**: Streamlined to essential metadata functionality\n\n### What's Removed\n- Community rating calculation and display\n- Reviews fetching and processing\n- Rating-related configuration options (IncludeReviews, MaxReviews, ShowRatingInTitle)\n- Debug logging for rating investigation\n- All rating-related documentation references\n\n### What's Improved\n- Cleaner, more maintainable codebase\n- Faster metadata processing (no review API calls)\n- Simplified configuration interface\n- Better focus on core plugin functionality\n\n### Core Features (Still Working Great!)\n- ✅ Smart title parsing for multi-night shows\n- ✅ Complete setlists with transitions\n- ✅ Venue information and metadata\n- ✅ Show dates, tours, and comprehensive tagging\n- ✅ Multi-night run detection (N1, N2, N3...)\n- ✅ Rich show overviews and descriptions\n\nThis is a production-ready version focused on what works best!",
         "targetAbi": "10.8.0.0",

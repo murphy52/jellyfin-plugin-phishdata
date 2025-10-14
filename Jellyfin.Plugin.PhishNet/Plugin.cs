@@ -77,14 +77,33 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     }
 
     /// <summary>
-    /// Gets the plugin icon as a stream.
+    /// Gets the plugin thumbnail image.
     /// </summary>
-    /// <returns>The plugin icon stream.</returns>
+    /// <returns>The plugin thumbnail stream.</returns>
+    public Stream GetThumbImage()
+    {
+        return GetPluginImageStream();
+    }
+    
+    /// <summary>
+    /// Gets the plugin image (alternative method name for compatibility).
+    /// </summary>
+    /// <returns>The plugin image stream.</returns>
     public Stream? GetPluginImage()
+    {
+        return GetPluginImageStream();
+    }
+    
+    /// <summary>
+    /// Internal method to get the plugin image stream.
+    /// </summary>
+    /// <returns>The plugin image stream.</returns>
+    private Stream GetPluginImageStream()
     {
         var assembly = Assembly.GetExecutingAssembly();
         return assembly.GetManifestResourceStream("Jellyfin.Plugin.PhishNet.thumb.png") 
-            ?? assembly.GetManifestResourceStream("Jellyfin.Plugin.PhishNet.logo.png");
+            ?? assembly.GetManifestResourceStream("Jellyfin.Plugin.PhishNet.logo.png")
+            ?? Stream.Null;
     }
 
     /// <inheritdoc />

@@ -4,7 +4,7 @@ set -e
 # Jellyfin Phish.net Plugin Build Script
 # Builds and packages the plugin for distribution
 
-VERSION="1.2.0"
+VERSION="1.2.1"
 PLUGIN_NAME="jellyfin-plugin-phishnet"
 PROJECT_DIR="Jellyfin.Plugin.PhishNet"
 OUTPUT_DIR="releases"
