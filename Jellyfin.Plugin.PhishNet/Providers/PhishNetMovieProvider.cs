@@ -731,17 +731,9 @@ namespace Jellyfin.Plugin.PhishNet.Providers
 
             movie.Tags = tags.Distinct().ToArray();
 
-            // Set external IDs for linking to Phish.net pages
+            // Set external ID for linking to Phish.net show page
             var showDateString = showDate.ToString("yyyy-MM-dd");
             movie.SetProviderId("PhishNet", showDateString);           // Main show page
-            movie.SetProviderId("PhishNetSetlist", showDateString);    // Setlist page
-            movie.SetProviderId("PhishNetReviews", showDateString);    // Reviews page
-            
-            // Add venue link if available
-            if (venueData?.VenueId > 0)
-            {
-                movie.SetProviderId("PhishNetVenue", venueData.VenueId.ToString());
-            }
         }
         
         /// <summary>
