@@ -10,6 +10,14 @@
     "repositoryUrl": "https://github.com/murphy52/jellyfin-plugin-phishdata",
     "versions": [
       {
+        "version": "1.3.0",
+        "changelog": "## Jellyfin Phish Data Plugin v1.3.0\n\n### 🚀 New Features\n- **User Feedback for Parsing Failures**: Files that can't be matched now show helpful error messages instead of silent failures\n- **Comprehensive Guidance**: Detailed instructions for fixing filename issues, including specific Jellyfin refresh mode guidance\n- **Enhanced User Experience**: Transform parsing failures into actionable learning opportunities\n\n### Core Features\n- Smart filename parsing for show identification\n- Complete setlists with proper transitions\n- Rich show information from Phish.net API\n- Venue details and location metadata\n- Proper external links to Phish.net show pages\n- Clean text encoding for show notes\n- Band member metadata support\n\nAddresses GitHub Issue #17 and dramatically improves user experience for edge cases.",
+        "targetAbi": "10.8.0.0",
+        "sourceUrl": "https://github.com/murphy52/jellyfin-plugin-phishdata/releases/download/v1.3.0/jellyfin-plugin-phishdata-v1.3.0.zip",
+        "checksum": "6ece72bff981d96f3149415d913d8cce",
+        "timestamp": "2025-01-14T16:42:00Z"
+      },
+      {
         "version": "1.2.9",
         "changelog": "## Jellyfin Phish Data Plugin v1.2.9\n\nA comprehensive metadata provider for Phish concert videos:\n- Smart filename parsing for show identification\n- Complete setlists with proper transitions\n- Rich show information from Phish.net API\n- Venue details and location metadata\n- Proper external links to Phish.net show pages\n- Clean text encoding for show notes\n- Band member metadata support\n\nInstall via Jellyfin plugin catalog or manual installation.",
         "targetAbi": "10.8.0.0",
