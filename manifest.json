@@ -10,13 +10,21 @@
     "repositoryUrl": "https://github.com/murphy52/jellyfin-plugin-phishnet",
     "versions": [
       {
+        "version": "1.2.7",
+        "changelog": "## Permalink Fix v1.2.7\n\nFixed external links to use proper Phish.net permalinks:\n- Now captures permalink URLs from setlist API responses\n- External links point to correct show pages instead of generic URLs\n- Smart fallback to date-based URLs if permalink unavailable\n- Better navigation experience to Phish.net\n\nUpdate via Jellyfin plugin catalog or manual install.",
+        "targetAbi": "10.8.0.0",
+        "sourceUrl": "https://github.com/murphy52/jellyfin-plugin-phishnet/releases/download/v1.2.7/jellyfin-plugin-phishnet-v1.2.7.zip",
+        "checksum": "0169387beb9340e6512abb699cfd00de",
+        "timestamp": "2024-12-29T16:20:00Z"
+      },
+      {
         "version": "1.2.6",
         "changelog": "## External Link URL Fix v1.2.6\n\nImproved external link URL format:\n- Fixed URL format for better Phish.net navigation\n- Uses more direct path to setlist pages (/setlists/{date}.html)\n- Better user experience with improved link targeting\n\nUpdate via Jellyfin plugin catalog or manual install.",
         "targetAbi": "10.8.0.0",
         "sourceUrl": "https://github.com/murphy52/jellyfin-plugin-phishnet/releases/download/v1.2.6/jellyfin-plugin-phishnet-v1.2.6.zip",
         "checksum": "0934cf45c1b2a9233fc2ed671a9930e3",
         "timestamp": "2024-12-29T15:22:00Z"
-      },
+      }
       {
         "version": "1.2.5",
         "changelog": "## External Link Fix v1.2.5\n\nFixed broken external links to Phish.net:\n- Removed non-working Setlist, Reviews, and Venue links\n- Single working Phish.net link that takes users to show page\n- Cleaned up 200+ lines of unused external ID code\n- Better user experience with reliable navigation\n\nUpdate via Jellyfin plugin catalog or manual install.",
