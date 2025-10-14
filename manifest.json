@@ -10,6 +10,14 @@
     "repositoryUrl": "https://github.com/murphy52/jellyfin-plugin-phishnet",
     "versions": [
       {
+        "version": "1.2.9",
+        "changelog": "## External Link & Text Fix v1.2.9\n\nFixed URL formatting and character encoding:\n- Resolved double URL prefix issue (no more /setlists/https://phish.net/setlists/...)\n- Enhanced text cleaning for specific API patterns (Treyâs -> Trey's)\n- Fixed external links to use proper single URLs\n- Improved show notes character rendering\n\nAddresses issues #15 and #16. Update via Jellyfin plugin catalog or manual install.",
+        "targetAbi": "10.8.0.0",
+        "sourceUrl": "https://github.com/murphy52/jellyfin-plugin-phishnet/releases/download/v1.2.9/jellyfin-plugin-phishnet-v1.2.9.zip",
+        "checksum": "fd75d1b5c80e7f84ab8be62e4250dad5",
+        "timestamp": "2024-12-29T20:55:00Z"
+      },
+      {
         "version": "1.2.8",
         "changelog": "## Text & Permalink Fix v1.2.8\n\nFixed text encoding and external link issues:\n- Enhanced text cleaning for show notes encoding problems (âs -> 's, Â -> space)\n- Fixed permalink extraction from setlist API song data\n- External links now use proper Phish.net setlist URLs\n- Comprehensive mojibake character cleaning\n\nAddresses issues #15 and #16. Update via Jellyfin plugin catalog or manual install.",
         "targetAbi": "10.8.0.0",
