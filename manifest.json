@@ -24,7 +24,7 @@
         "sourceUrl": "https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishnet/master/jellyfin-plugin-phishnet-1.2.5.zip",
         "checksum": "281accf08d0f9ac6fb3ab42f8c1907ac",
         "timestamp": "2024-10-14T01:40:00Z"
-      }
+      },
       {
         "version": "1.2.4",
         "changelog": "## Setlist Spacing Fix v1.2.4\n\nFixed Setlist Transition Spacing:\n- Proper spaces after transitions (Mike's Song > I Am Hydrogen)\n- Fixed comma spacing (Harry Hood > Train Song, Billy Breathes)\n- Removed TrimEnd() that was removing trailing spaces\n- Professional display matching expected Phish setlist formatting\n\nWhat's Fixed:\n- Setlist transitions now have proper spacing\n- DisplayTransition property works correctly\n- Clean, readable setlist format\n\nExample Fix:\nBefore: Mike's Song >I Am Hydrogen >Weekapaug Groove,Harry Hood\nAfter: Mike's Song > I Am Hydrogen > Weekapaug Groove, Harry Hood\n\nTechnical Fix:\n- Removed TrimEnd() call that was stripping trailing spaces\n- DisplayTransition property returns properly formatted spacing\n\nUpdate via Jellyfin plugin catalog or manual install.",
