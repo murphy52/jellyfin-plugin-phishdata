@@ -89,7 +89,16 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     /// Gets the plugin image (alternative method name for compatibility).
     /// </summary>
     /// <returns>The plugin image stream.</returns>
-    public Stream? GetPluginImage()
+    public Stream GetPluginImage()
+    {
+        return GetPluginImageStream();
+    }
+    
+    /// <summary>
+    /// Gets the plugin logo image.
+    /// </summary>
+    /// <returns>The plugin logo stream.</returns>
+    public Stream GetLogoImage()
     {
         return GetPluginImageStream();
     }
@@ -101,9 +110,47 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     private Stream GetPluginImageStream()
     {
         var assembly = Assembly.GetExecutingAssembly();
-        return assembly.GetManifestResourceStream("Jellyfin.Plugin.PhishNet.thumb.png") 
-            ?? assembly.GetManifestResourceStream("Jellyfin.Plugin.PhishNet.logo.png")
-            ?? Stream.Null;
+        
+        // Try thumb.png first (preferred), then logo.png as fallback
+        var thumbStream = assembly.GetManifestResourceStream("Jellyfin.Plugin.PhishNet.thumb.png");
+        if (thumbStream != null && thumbStream.Length > 0)
+        {
+            return thumbStream;
+        }
+        
+        var logoStream = assembly.GetManifestResourceStream("Jellyfin.Plugin.PhishNet.logo.png");
+        if (logoStream != null && logoStream.Length > 0)
+        {
+            return logoStream;
+        }
+        
+        // Return empty stream if no images found
+        return new MemoryStream();
+    }
+    
+    /// <summary>
+    /// Static method to get plugin image - used by some Jellyfin versions.
+    /// </summary>
+    /// <returns>The plugin image stream.</returns>
+    public static Stream GetStaticPluginImageStream()
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        
+        // Try thumb.png first (preferred), then logo.png as fallback
+        var thumbStream = assembly.GetManifestResourceStream("Jellyfin.Plugin.PhishNet.thumb.png");
+        if (thumbStream != null && thumbStream.Length > 0)
+        {
+            return thumbStream;
+        }
+        
+        var logoStream = assembly.GetManifestResourceStream("Jellyfin.Plugin.PhishNet.logo.png");
+        if (logoStream != null && logoStream.Length > 0)
+        {
+            return logoStream;
+        }
+        
+        // Return empty stream if no images found
+        return new MemoryStream();
     }
 
     /// <inheritdoc />

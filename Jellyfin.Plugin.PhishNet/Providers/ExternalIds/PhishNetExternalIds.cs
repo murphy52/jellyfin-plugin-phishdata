@@ -18,7 +18,7 @@ public class PhishNetExternalId : IExternalId
     public string Key => "PhishNet";
 
     /// <inheritdoc />
-    public ExternalIdMediaType Type => ExternalIdMediaType.Movie;
+    public ExternalIdMediaType? Type => ExternalIdMediaType.Movie;
 
     /// <inheritdoc />
     public string UrlFormatString => "https://phish.net/show/{0}";
@@ -42,7 +42,7 @@ public class PhishNetSetlistExternalId : IExternalId
     public string Key => "PhishNetSetlist";
 
     /// <inheritdoc />
-    public ExternalIdMediaType Type => ExternalIdMediaType.Movie;
+    public ExternalIdMediaType? Type => ExternalIdMediaType.Movie;
 
     /// <inheritdoc />
     public string UrlFormatString => "https://phish.net/setlists/{0}";
@@ -66,7 +66,7 @@ public class PhishNetVenueExternalId : IExternalId
     public string Key => "PhishNetVenue";
 
     /// <inheritdoc />
-    public ExternalIdMediaType Type => ExternalIdMediaType.Movie;
+    public ExternalIdMediaType? Type => ExternalIdMediaType.Movie;
 
     /// <inheritdoc />
     public string UrlFormatString => "https://phish.net/venue/{0}";
@@ -90,7 +90,7 @@ public class PhishNetReviewsExternalId : IExternalId
     public string Key => "PhishNetReviews";
 
     /// <inheritdoc />
-    public ExternalIdMediaType Type => ExternalIdMediaType.Movie;
+    public ExternalIdMediaType? Type => ExternalIdMediaType.Movie;
 
     /// <inheritdoc />
     public string UrlFormatString => "https://phish.net/show/{0}/reviews";
