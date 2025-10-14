@@ -19,7 +19,7 @@
       },
       {
         "version": "1.2.3",
-        "changelog": "## Text Encoding Fix v1.2.3\n\nFixed Character Encoding Issues:\n- Show notes now display properly without malformed characters\n- Fixed apostrophes appearing as bad characters\n- Fixed quotes appearing as malformed text\n- Cleaned non-breaking spaces and other encoding artifacts\n- Applied to all text - show notes, setlist notes, and footnotes\n\nCleanText Method:\n- Comprehensive text cleaning for Phish.net API responses\n- Handles common UTF-8 encoding issues from the API\n- Maintains text readability and formatting\n\nExample Fix:\nBefore: Text with malformed apostrophes and quotes\nAfter: Text with proper apostrophes and quotes\n\nUpdate via Jellyfin plugin catalog or manual install.",
+        "changelog": "## Text Encoding Fix v1.2.3\n\nFixed special character issues in show notes and setlist text.\n\n- Show notes now display properly\n- Fixed apostrophes and quotes formatting\n- Added CleanText method for API responses\n- Applied to all text content\n\nUpdate via Jellyfin plugin catalog or manual install.",
         "targetAbi": "10.8.0.0",
         "sourceUrl": "https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishnet/master/jellyfin-plugin-phishnet-1.2.3.zip",
         "checksum": "2206a1bb2718fcad3851475edd327a4a",
