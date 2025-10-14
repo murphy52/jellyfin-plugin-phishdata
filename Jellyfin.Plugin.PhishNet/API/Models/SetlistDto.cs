@@ -5,6 +5,24 @@ using System.Text.Json.Serialization;
 namespace Jellyfin.Plugin.PhishNet.API.Models;
 
 /// <summary>
+/// Represents a setlist API response that may contain a permalink.
+/// </summary>
+public class SetlistResponse
+{
+    /// <summary>
+    /// Gets or sets the permalink URL to the setlist on Phish.net.
+    /// </summary>
+    [JsonPropertyName("permalink")]
+    public string? Permalink { get; set; }
+    
+    /// <summary>
+    /// Gets or sets the setlist data (array of songs).
+    /// </summary>
+    [JsonPropertyName("data")]
+    public List<SetlistSongDto> Data { get; set; } = new();
+}
+
+/// <summary>
 /// Represents a song in a Phish setlist from the Phish.net API.
 /// </summary>
 public class SetlistSongDto
@@ -120,6 +138,11 @@ public class SetlistSongDto
 /// </summary>
 public class SetlistDto : List<SetlistSongDto>
 {
+    /// <summary>
+    /// Gets or sets the permalink URL to the setlist on Phish.net.
+    /// </summary>
+    [JsonPropertyName("permalink")]
+    public string? Permalink { get; set; }
     /// <summary>
     /// Gets the parsed setlist grouped by sets with proper transition marks.
     /// </summary>

@@ -732,8 +732,9 @@ namespace Jellyfin.Plugin.PhishNet.Providers
             movie.Tags = tags.Distinct().ToArray();
 
             // Set external ID for linking to Phish.net show page
+            // TODO: Use permalink from API response when available
             var showDateString = showDate.ToString("yyyy-MM-dd");
-            movie.SetProviderId("PhishNet", showDateString);           // Main show page
+            movie.SetProviderId("PhishNet", showDateString);
         }
         
         /// <summary>
