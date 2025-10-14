@@ -18,6 +18,14 @@ public interface IPhishNetApiClient
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A list of shows for the specified date.</returns>
     Task<List<ShowDto>> GetShowsAsync(string showDate, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Gets detailed show information by show ID.
+    /// </summary>
+    /// <param name="showId">The show ID.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>Detailed show information.</returns>
+    Task<ShowDto?> GetShowByIdAsync(long showId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets shows for a specific date range.

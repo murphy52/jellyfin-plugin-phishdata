@@ -55,6 +55,20 @@ public class PhishNetApiClient : IPhishNetApiClient, IDisposable
         
         return response?.Data ?? new List<ShowDto>();
     }
+    
+    /// <summary>
+    /// Gets detailed show information by show ID, which may include rating data.
+    /// </summary>
+    /// <param name="showId">The show ID.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>Show details.</returns>
+    public async Task<ShowDto?> GetShowByIdAsync(long showId, CancellationToken cancellationToken = default)
+    {
+        var endpoint = $"shows/showid/{showId}.json";
+        var response = await MakeApiRequestAsync<ShowDto>(endpoint, cancellationToken).ConfigureAwait(false);
+        
+        return response?.Data?.FirstOrDefault();
+    }
 
     /// <inheritdoc />
     public async Task<List<ShowDto>> GetShowsAsync(string startDate, string endDate, CancellationToken cancellationToken = default)

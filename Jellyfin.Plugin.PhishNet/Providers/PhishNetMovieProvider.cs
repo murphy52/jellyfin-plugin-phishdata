@@ -229,7 +229,7 @@ namespace Jellyfin.Plugin.PhishNet.Providers
                 }
 
                 // Populate full metadata
-                PopulateMetadataFromApiAsync(result.Item, parseResult, showData, setlistData?.FirstOrDefault(), venueData, runInfo, reviewsData);
+                await PopulateMetadataFromApiAsync(result.Item, parseResult, showData, setlistData?.FirstOrDefault(), venueData, runInfo, reviewsData, _apiClient, cancellationToken);
 
                 result.HasMetadata = true;
                 _logger.LogDebug("Successfully populated metadata for {Name}", info.Name);
@@ -570,14 +570,18 @@ namespace Jellyfin.Plugin.PhishNet.Providers
         /// <param name="venueData">The venue data from the API.</param>
         /// <param name="runInfo">The multi-night run information.</param>
         /// <param name="reviewsData">The reviews data from the API for community rating.</param>
-        private void PopulateMetadataFromApiAsync(
+        /// <param name="client">The API client for additional data requests.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        private async Task PopulateMetadataFromApiAsync(
             Movie movie, 
             PhishShowParseResult parseResult,
             ShowDto showData, 
             SetlistDto? setlistData, 
             VenueDto? venueData,
             RunInfo? runInfo,
-            List<ReviewDto>? reviewsData)
+            List<ReviewDto>? reviewsData,
+            IPhishNetApiClient client,
+            CancellationToken cancellationToken)
         {
             // Set title with official show information using format: [night] [band] [city] [date]
             var showDate = DateTime.Parse(showData.ShowDate);
@@ -641,6 +645,37 @@ namespace Jellyfin.Plugin.PhishNet.Providers
             // DEBUG: Log all show data fields to understand API response structure
             _logger.LogInformation("DEBUG Show Data: ShowId={ShowId}, Venue='{Venue}', City='{City}', State='{State}', Country='{Country}', VenueId={VenueId}, ArtistName='{ArtistName}', ArtistId={ArtistId}, ShowNotes='{ShowNotes}', SetlistData='{SetlistData}', Tour='{Tour}', Tags='{Tags}', ShowYear='{ShowYear}', ShowMonth={ShowMonth}, ShowDay={ShowDay}, TourId={TourId}, TourName='{TourName}'", 
                 showData.ShowId, showData.Venue, showData.City, showData.State, showData.Country, showData.VenueId, showData.ArtistName, showData.ArtistId, showData.ShowNotes ?? "null", showData.SetlistData ?? "null", showData.Tour ?? "null", showData.Tags ?? "null", showData.ShowYear ?? "null", showData.ShowMonth, showData.ShowDay, showData.TourId, showData.TourName ?? "null");
+            
+            // Try to get detailed show data if rating is null - some endpoints may have more complete data
+            if ((!showData.ParsedRating.HasValue || showData.ParsedRating.Value == 0) && showData.ShowId > 0)
+            {
+                _logger.LogInformation("Rating not available from show date endpoint, trying show details endpoint for ShowId={ShowId}", showData.ShowId);
+                
+                try
+                {
+                    var detailedShow = await client.GetShowByIdAsync(showData.ShowId, cancellationToken).ConfigureAwait(false);
+                    if (detailedShow != null)
+                    {
+                        _logger.LogInformation("DEBUG Detailed Show Data: Rating='{Rating}', ReviewCount='{ReviewCount}', ShowNotes='{ShowNotes}'", 
+                            detailedShow.Rating ?? "null", detailedShow.ReviewCount ?? "null", detailedShow.ShowNotes ?? "null");
+                        
+                        // Use detailed show data if it has rating information
+                        if (detailedShow.ParsedRating.HasValue && detailedShow.ParsedRating.Value > 0)
+                        {
+                            showData = detailedShow; // Replace with detailed data
+                            _logger.LogInformation("✅ Found rating data in detailed show endpoint: {Rating}/5", detailedShow.ParsedRating.Value);
+                        }
+                        else
+                        {
+                            _logger.LogInformation("❌ Detailed show endpoint also has no rating data");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to fetch detailed show data for ShowId={ShowId}", showData.ShowId);
+                }
+            }
             
             if (showData.ParsedRating.HasValue && showData.ParsedRating.Value > 0)
             {

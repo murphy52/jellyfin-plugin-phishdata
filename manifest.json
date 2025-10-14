@@ -10,6 +10,14 @@
     "repositoryUrl": "https://github.com/murphy52/jellyfin-plugin-phishnet",
     "versions": [
       {
+        "version": "1.1.11",
+        "changelog": "## 🔧 API Endpoint Enhancement v1.1.11\n\n### Major Enhancement\n- **Added Show Details API Fallback**: Now tries `shows/showid/{id}.json` endpoint when rating data is missing\n- **Dual API Strategy**: Uses both show date and show ID endpoints for comprehensive data\n- **Better Rating Discovery**: Automatically attempts detailed show API if basic endpoint lacks rating\n- **Enhanced Debug Logging**: Shows which endpoint provided rating data\n\n### What's New\n- New `GetShowByIdAsync` method in API client\n- Automatic fallback when show date endpoint returns null ratings\n- Shows exactly which API call succeeded in logs\n- Uses ShowId (1252683584) to get detailed show information\n\n### For Users\n- Community ratings should now work if available in Phish.net detailed show data\n- Look for 'Rating not available from show date endpoint, trying show details endpoint'\n- Check logs for '✅ Found rating data in detailed show endpoint' success messages\n- Hampton 11/22/1997 should now get rating data if API provides it\n\nThis version tries harder to find community rating data from Phish.net!",
+        "targetAbi": "10.8.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishnet/master/jellyfin-plugin-phishnet-1.1.11.zip",
+        "checksum": "414d03cf9fcff1aa90530bca1e6f2078",
+        "timestamp": "2024-10-14T00:06:00Z"
+      },
+      {
         "version": "1.1.10",
         "changelog": "## 🐛 Debug Version v1.1.10\n\n### Debug Enhancement\n- **Added Comprehensive API Response Logging**: Now logs all show data fields returned by Phish.net API\n- **Show Data Investigation**: Helps identify why community ratings are null\n- **Field-by-Field Analysis**: Logs ShowId, Venue, City, State, Rating, ReviewCount, and all other fields\n\n### Purpose\n- This is a debug build to understand the API response structure\n- Helps determine if rating data is missing from the API or if we're using the wrong field\n- Temporary version to diagnose Hampton 11/22/1997 rating issue\n\n### For Users\n- Install this version temporarily to help diagnose rating issues\n- Check logs for 'DEBUG Show Data:' entries after metadata refresh\n- This will show exactly what data Phish.net API is returning\n\nThis debug version will help us fix the community rating issue permanently!",
         "targetAbi": "10.8.0.0",
