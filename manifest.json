@@ -1,7 +1,7 @@
 [
   {
     "guid": "8a4d0e85-6f3c-4e5a-9b2c-3d7f8e9a1b4c",
-    "name": "Phish.net",
+    "name": "Phish Data",
     "overview": "Comprehensive metadata provider for Phish concert videos using the Phish.net API",
     "description": "This plugin provides rich metadata for your Phish concert video collection by integrating with the Phish.net API. Features include comprehensive show information with setlists, community ratings from reviews, venue details, band member profiles, and multi-source image provider for venue and show-specific photos. Perfect for organizing and enriching your Phish video library with official show data, fan ratings, and beautiful imagery.",
     "owner": "murphy52",
