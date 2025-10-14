@@ -632,7 +632,7 @@ namespace Jellyfin.Plugin.PhishNet.Providers
                         // DisplayTransition already has proper spacing (" > " or ", ")
                         if (i < set.Songs.Count - 1)
                         {
-                            songText += song.DisplayTransition.TrimEnd();
+                            songText += song.DisplayTransition;
                         }
                         
                         setString.Add(songText);
