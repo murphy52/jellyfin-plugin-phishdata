@@ -11,7 +11,7 @@
     "versions": [
       {
         "version": "1.2.9",
-        "changelog": "## Jellyfin Phish.net Plugin v1.2.9\n\nA comprehensive metadata provider for Phish concert videos:\n- Smart filename parsing for show identification\n- Complete setlists with proper transitions\n- Rich show information from Phish.net API\n- Venue details and location metadata\n- Proper external links to Phish.net show pages\n- Clean text encoding for show notes\n- Band member metadata support\n\nInstall via Jellyfin plugin catalog or manual installation.",
+        "changelog": "## Jellyfin Phish Data Plugin v1.2.9\n\nA comprehensive metadata provider for Phish concert videos:\n- Smart filename parsing for show identification\n- Complete setlists with proper transitions\n- Rich show information from Phish.net API\n- Venue details and location metadata\n- Proper external links to Phish.net show pages\n- Clean text encoding for show notes\n- Band member metadata support\n\nInstall via Jellyfin plugin catalog or manual installation.",
         "targetAbi": "10.8.0.0",
         "sourceUrl": "https://github.com/murphy52/jellyfin-plugin-phishnet/releases/download/v1.2.9/jellyfin-plugin-phishnet-v1.2.9.zip",
         "checksum": "fd75d1b5c80e7f84ab8be62e4250dad5",
