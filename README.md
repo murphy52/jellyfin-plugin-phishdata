@@ -1,4 +1,4 @@
-# Jellyfin Phish.net Metadata Plugin
+# Jellyfin Phish Data Metadata Plugin
 
 ## About
 
