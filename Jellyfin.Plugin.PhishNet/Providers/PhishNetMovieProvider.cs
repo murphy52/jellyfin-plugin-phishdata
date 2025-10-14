@@ -590,17 +590,38 @@ namespace Jellyfin.Plugin.PhishNet.Providers
             movie.DateCreated = showDate; // Release Date
             
 
-            // Build comprehensive overview with setlist at the top
+            // Build formatted overview with improved setlist formatting
             var overviewParts = new List<string>();
 
-            // Add setlist information first - this is what fans want to see immediately
+            // Start with venue name and location (prominent display)
+            if (venueData != null && !string.IsNullOrEmpty(venueData.Name))
+            {
+                overviewParts.Add(venueData.Name.ToUpperInvariant());
+                if (!string.IsNullOrEmpty(venueData.City) && !string.IsNullOrEmpty(venueData.State))
+                {
+                    overviewParts.Add($"{venueData.City}, {venueData.State}");
+                }
+            }
+            else if (locationParts.Count > 0)
+            {
+                // Fallback to basic location if no venue data
+                overviewParts.Add(string.Join(", ", locationParts).ToUpperInvariant());
+            }
+            
+            // Add blank line after venue information
+            if (overviewParts.Count > 0)
+            {
+                overviewParts.Add("");
+            }
+
+            // Add properly formatted setlist information 
             if (setlistData?.ParsedSetlist?.Sets != null && setlistData.ParsedSetlist.Sets.Any())
             {
-                overviewParts.Add($"Setlist ({setlistData.ParsedSetlist.TotalSongs} songs):");
+                var setListParts = new List<string>();
                 
                 foreach (var set in setlistData.ParsedSetlist.Sets)
                 {
-                    // Build the set string with proper transition marks
+                    // Build the set string with proper spacing after transitions
                     var setString = new List<string>();
                     for (int i = 0; i < set.Songs.Count; i++)
                     {
@@ -608,45 +629,69 @@ namespace Jellyfin.Plugin.PhishNet.Providers
                         var songText = song.Title;
                         
                         // Add transition mark if not the last song in the set
+                        // DisplayTransition already has proper spacing (" > " or ", ")
                         if (i < set.Songs.Count - 1)
                         {
-                            songText += song.DisplayTransition.TrimEnd(); // Remove trailing space
+                            songText += song.DisplayTransition.TrimEnd();
                         }
                         
                         setString.Add(songText);
                     }
                     
-                    overviewParts.Add($"{set.SetName}: {string.Join("", setString)}");
+                    // Add the formatted set with proper line breaks between sets
+                    setListParts.Add($"{set.SetName}: {string.Join("", setString)}");
                 }
                 
-                // Add separator before show details
-                overviewParts.Add("");
+                // Join sets with double line breaks for proper separation
+                overviewParts.Add(string.Join("\n\n", setListParts));
             }
-
-            // Add show details
-            var showDetailsLine = $"Phish concert performed on {showDate:MMMM d, yyyy}";
-            if (locationParts.Count > 0)
+            
+            // Collect all footnotes from songs
+            var allFootnotes = new List<string>();
+            if (setlistData?.ParsedSetlist?.Sets != null)
             {
-                showDetailsLine += $" at {string.Join(", ", locationParts)}";
-            }
-            overviewParts.Add(showDetailsLine);
-
-            // Add venue information if different from location
-            if (venueData != null && !string.IsNullOrEmpty(venueData.City))
-            {
-                var venueInfo = new List<string> { $"Venue: {venueData.Name}" };
-                
-                // Only add location if it's not already in the show details
-                if (!locationParts.Contains(venueData.Name))
+                foreach (var set in setlistData.ParsedSetlist.Sets)
                 {
-                    venueInfo.Add($"Location: {venueData.City}, {venueData.State}");
+                    foreach (var song in set.Songs)
+                    {
+                        if (!string.IsNullOrEmpty(song.Notes))
+                        {
+                            allFootnotes.Add(song.Notes);
+                        }
+                    }
                 }
-                
+            }
+            
+            // Add show notes if available (from ShowDto)
+            if (!string.IsNullOrEmpty(showData.ShowNotes))
+            {
+                overviewParts.Add(""); // Blank line before notes
+                overviewParts.Add(showData.ShowNotes);
+            }
+            
+            // Add setlist notes if available (from ShowDto)
+            if (!string.IsNullOrEmpty(showData.SetlistNotes))
+            {
+                overviewParts.Add(""); // Blank line before setlist notes
+                // Strip HTML if present in setlist notes
+                var cleanNotes = System.Text.RegularExpressions.Regex.Replace(showData.SetlistNotes, "<.*?>", string.Empty);
+                overviewParts.Add(cleanNotes);
+            }
+            
+            // Add footnotes if any exist
+            if (allFootnotes.Any())
+            {
+                overviewParts.Add(""); // Blank line before footnotes
+                overviewParts.Add("Notes:");
                 overviewParts.Add("");
-                overviewParts.AddRange(venueInfo);
+                
+                for (int i = 0; i < allFootnotes.Count; i++)
+                {
+                    overviewParts.Add($"[{i + 1}] {allFootnotes[i]}");
+                }
             }
 
-            movie.Overview = string.Join(" ", overviewParts);
+            movie.Overview = string.Join("\n", overviewParts);
 
             // Set hard-coded genres
             movie.Genres = new[] { "Concert", "Live Music" };
@@ -685,9 +730,13 @@ namespace Jellyfin.Plugin.PhishNet.Providers
 
             movie.Tags = tags.Distinct().ToArray();
 
-            // Set external IDs for linking
-            movie.SetProviderId("PhishNet", $"{showDate:yyyy-MM-dd}");
+            // Set external IDs for linking to Phish.net pages
+            var showDateString = showDate.ToString("yyyy-MM-dd");
+            movie.SetProviderId("PhishNet", showDateString);           // Main show page
+            movie.SetProviderId("PhishNetSetlist", showDateString);    // Setlist page
+            movie.SetProviderId("PhishNetReviews", showDateString);    // Reviews page
             
+            // Add venue link if available
             if (venueData?.VenueId > 0)
             {
                 movie.SetProviderId("PhishNetVenue", venueData.VenueId.ToString());
