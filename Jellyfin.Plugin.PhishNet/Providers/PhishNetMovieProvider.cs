@@ -656,7 +656,7 @@ namespace Jellyfin.Plugin.PhishNet.Providers
                     {
                         if (!string.IsNullOrEmpty(song.Notes))
                         {
-                            allFootnotes.Add(song.Notes);
+                            allFootnotes.Add(CleanText(song.Notes));
                         }
                     }
                 }
@@ -666,16 +666,16 @@ namespace Jellyfin.Plugin.PhishNet.Providers
             if (!string.IsNullOrEmpty(showData.ShowNotes))
             {
                 overviewParts.Add(""); // Blank line before notes
-                overviewParts.Add(showData.ShowNotes);
+                overviewParts.Add(CleanText(showData.ShowNotes));
             }
             
             // Add setlist notes if available (from ShowDto)
             if (!string.IsNullOrEmpty(showData.SetlistNotes))
             {
                 overviewParts.Add(""); // Blank line before setlist notes
-                // Strip HTML if present in setlist notes
+                // Strip HTML if present in setlist notes and clean character encoding
                 var cleanNotes = System.Text.RegularExpressions.Regex.Replace(showData.SetlistNotes, "<.*?>", string.Empty);
-                overviewParts.Add(cleanNotes);
+                overviewParts.Add(CleanText(cleanNotes));
             }
             
             // Add footnotes if any exist
@@ -687,6 +687,7 @@ namespace Jellyfin.Plugin.PhishNet.Providers
                 
                 for (int i = 0; i < allFootnotes.Count; i++)
                 {
+                    // Footnotes are already cleaned when added to allFootnotes
                     overviewParts.Add($"[{i + 1}] {allFootnotes[i]}");
                 }
             }
@@ -741,6 +742,33 @@ namespace Jellyfin.Plugin.PhishNet.Providers
             {
                 movie.SetProviderId("PhishNetVenue", venueData.VenueId.ToString());
             }
+        }
+        
+        /// <summary>
+        /// Cleans text by fixing common character encoding issues from the Phish.net API.
+        /// </summary>
+        /// <param name="text">The text to clean.</param>
+        /// <returns>The cleaned text with proper characters.</returns>
+        private static string CleanText(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                return text;
+            }
+            
+            // Fix common character encoding issues from Phish.net API
+            // These are the exact malformed characters appearing in the text
+            return text
+                .Replace("â’s", "'s")          // "Trey's" becomes "Trey's"
+                .Replace("â’", "'")            // Other apostrophes
+                .Replace("â“", "\"")           // Opening quotes
+                .Replace("â”", "\"")           // Closing quotes  
+                .Replace("â–", "-")           // En dash
+                .Replace("â—", "—")           // Em dash
+                .Replace("Â", " ")             // Non-breaking space replacement
+                .Replace("\u00A0", " ")         // Non-breaking space
+                .Replace("  ", " ")            // Clean up double spaces
+                .Trim();
         }
     }
 }
