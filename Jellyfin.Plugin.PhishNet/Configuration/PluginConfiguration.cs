@@ -15,12 +15,9 @@ public class PluginConfiguration : BasePluginConfiguration
         ApiKey = string.Empty;
         PreferOfficialReleases = false;
         IncludeJamCharts = true;
-        IncludeReviews = true;
-        MaxReviews = Constants.DefaultMaxReviews;
         CacheDurationHours = Constants.DefaultCacheDurationHours;
         EnableDebugLogging = false;
         DisableLocalCache = false;
-        ShowRatingInTitle = false;
         IncludeSetlistInDescription = true;
     }
 
@@ -39,15 +36,6 @@ public class PluginConfiguration : BasePluginConfiguration
     /// </summary>
     public bool IncludeJamCharts { get; set; }
 
-    /// <summary>
-    /// Gets or sets a value indicating whether to include community reviews.
-    /// </summary>
-    public bool IncludeReviews { get; set; }
-
-    /// <summary>
-    /// Gets or sets the maximum number of reviews to include in metadata.
-    /// </summary>
-    public int MaxReviews { get; set; } = 3;
     
     /// <summary>
     /// Gets or sets the Unsplash API key for venue images (optional).
@@ -89,10 +77,6 @@ public class PluginConfiguration : BasePluginConfiguration
     /// </summary>
     public bool DisableLocalCache { get; set; }
 
-    /// <summary>
-    /// Gets or sets a value indicating whether to show rating in the title.
-    /// </summary>
-    public bool ShowRatingInTitle { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether to include setlist in the description.

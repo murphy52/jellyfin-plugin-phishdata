@@ -55,20 +55,6 @@ public class PhishNetApiClient : IPhishNetApiClient, IDisposable
         
         return response?.Data ?? new List<ShowDto>();
     }
-    
-    /// <summary>
-    /// Gets detailed show information by show ID, which may include rating data.
-    /// </summary>
-    /// <param name="showId">The show ID.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>Show details.</returns>
-    public async Task<ShowDto?> GetShowByIdAsync(long showId, CancellationToken cancellationToken = default)
-    {
-        var endpoint = $"shows/showid/{showId}.json";
-        var response = await MakeApiRequestAsync<ShowDto>(endpoint, cancellationToken).ConfigureAwait(false);
-        
-        return response?.Data?.FirstOrDefault();
-    }
 
     /// <inheritdoc />
     public async Task<List<ShowDto>> GetShowsAsync(string startDate, string endDate, CancellationToken cancellationToken = default)
@@ -154,27 +140,6 @@ public class PhishNetApiClient : IPhishNetApiClient, IDisposable
         return response?.Data?.FirstOrDefault();
     }
 
-    /// <inheritdoc />
-    public async Task<List<ReviewDto>> GetReviewsAsync(string showDate, int limit = 5, CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrEmpty(showDate))
-        {
-            throw new ArgumentException("Show date cannot be null or empty", nameof(showDate));
-        }
-        if (limit < 1 || limit > 100)
-        {
-            throw new ArgumentException("Limit must be between 1 and 100", nameof(limit));
-        }
-
-        var endpoint = $"reviews/showdate/{showDate}.json";
-        var queryParams = new Dictionary<string, string>
-        {
-            ["limit"] = limit.ToString()
-        };
-        
-        var response = await MakeApiRequestAsync<ReviewDto>(endpoint, cancellationToken, queryParams).ConfigureAwait(false);
-        return response?.Data ?? new List<ReviewDto>();
-    }
 
     /// <inheritdoc />
     public async Task<bool> TestConnectionAsync(CancellationToken cancellationToken = default)
@@ -228,14 +193,6 @@ public class PhishNetApiClient : IPhishNetApiClient, IDisposable
             }
 
             var jsonContent = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-            
-            // DEBUG: Log raw JSON for shows endpoints to help debug missing rating data
-            if (endpoint.Contains("shows/showdate/") || endpoint.Contains("shows/showid/"))
-            {
-                _logger.LogInformation("DEBUG Raw JSON Response for {Endpoint}: {JsonContent}", 
-                    endpoint.Replace(_apiKey, "***"), 
-                    jsonContent.Length > 2000 ? jsonContent.Substring(0, 2000) + "..." : jsonContent);
-            }
             
             if (string.IsNullOrEmpty(jsonContent))
             {

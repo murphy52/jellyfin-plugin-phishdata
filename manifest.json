@@ -10,6 +10,14 @@
     "repositoryUrl": "https://github.com/murphy52/jellyfin-plugin-phishnet",
     "versions": [
       {
+        "version": "1.2.0",
+        "changelog": "## 🧹 Clean Production Release v1.2.0\n\n### Major Cleanup\n- **Removed Community Rating Feature**: Eliminated all community rating code and dependencies\n- **Simplified Configuration**: Removed rating-related settings and debug options\n- **Cleaner Codebase**: Removed unused ReviewDto model and reviews API calls\n- **Focus on Core Features**: Streamlined to essential metadata functionality\n\n### What's Removed\n- Community rating calculation and display\n- Reviews fetching and processing\n- Rating-related configuration options (IncludeReviews, MaxReviews, ShowRatingInTitle)\n- Debug logging for rating investigation\n- All rating-related documentation references\n\n### What's Improved\n- Cleaner, more maintainable codebase\n- Faster metadata processing (no review API calls)\n- Simplified configuration interface\n- Better focus on core plugin functionality\n\n### Core Features (Still Working Great!)\n- ✅ Smart title parsing for multi-night shows\n- ✅ Complete setlists with transitions\n- ✅ Venue information and metadata\n- ✅ Show dates, tours, and comprehensive tagging\n- ✅ Multi-night run detection (N1, N2, N3...)\n- ✅ Rich show overviews and descriptions\n\nThis is a production-ready version focused on what works best!",
+        "targetAbi": "10.8.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishnet/master/jellyfin-plugin-phishnet-1.2.0.zip",
+        "checksum": "66601e1a89f1ae9f76d05f4c9e3cc0f7",
+        "timestamp": "2024-10-14T00:15:00Z"
+      },
+      {
         "version": "1.1.12",
         "changelog": "## 🔍 Raw API Response Debug v1.1.12\n\n### Debug Enhancement\n- **Added Raw JSON Response Logging**: Now logs the complete JSON response from Phish.net API\n- **Field Discovery**: Will show ALL fields available in API responses\n- **Missing Rating Investigation**: Helps identify if rating data exists under different field names\n- **Complete API Transparency**: Shows exactly what data the API returns\n\n### What's New\n- Raw JSON logging for shows endpoints (showdate and showid)\n- Truncates large responses to first 2000 characters for readability\n- Shows complete API response structure to identify missing fields\n- Helps determine if we're using wrong field names for rating data\n\n### For Users\n- This is a debug version to see the raw API response data\n- Look for 'DEBUG Raw JSON Response for shows/showdate/1997-11-22.json'\n- Will show if rating data exists under different field names\n- Once we identify the correct fields, we can fix the rating issue\n\nThis will finally show us exactly what fields the Phish.net API provides!",
         "targetAbi": "10.8.0.0",

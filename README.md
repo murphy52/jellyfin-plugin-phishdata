@@ -16,8 +16,6 @@ This plugin adds a metadata provider for Phish concert videos using the [Phish.n
 - **Comprehensive Tags**: Including "Phish", venue, location, and show-specific tags
 
 ### Community Features
-- **Community Ratings**: Aggregate user ratings from Phish.net reviews (scaled 1-10)
-- **Review Integration**: Pull user reviews and show ratings from Phish.net (up to 50 per show)
 - **Jam Chart Data**: Access notable jams and performance ratings from the community
 
 ### Image Provider
@@ -94,8 +92,6 @@ Phish Videos/
 4. Configure other preferences as desired:
    - **Prefer Official Releases**: Prioritize official releases over audience recordings
    - **Include Jam Charts**: Fetch jam chart data for notable performances
-   - **Include Reviews**: Pull community reviews and ratings
-   - **Max Reviews**: Maximum number of reviews to display (default: 50)
    - **Cache Duration**: How long to cache API responses (default: 24 hours)
    - **Image Provider Settings**: Configure image sources and quality preferences
    - **Social Media API Keys**: Optional API keys for Instagram, Twitter, Flickr for enhanced image search
@@ -157,7 +153,6 @@ For complete metadata experience, **enable all three providers**:
 After scanning, verify your shows display:
 - ✅ **Smart Titles**: "N2 Phish Hampton 11-22-1997"
 - ✅ **Complete Setlists**: Full song lists in overview
-- ✅ **Community Ratings**: Average ratings from Phish.net (1-10)
 - ✅ **Rich Images**: Venue photos and show-specific artwork
 - ✅ **Band Members**: Individual profiles for Trey, Mike, Page, Fish
 - ✅ **Comprehensive Tags**: Venue, location, year-specific tags
@@ -167,7 +162,6 @@ After scanning, verify your shows display:
 Once configured, your Phish videos will display:
 - **Smart Titles**: "Phish - 1997-11-22 - Hampton Coliseum, Hampton, VA"
 - **Complete Setlists**: Full song lists with set breaks and transitions in the overview
-- **Community Ratings**: Average ratings from Phish.net reviews (1-10 scale)
 - **Rich Metadata**: Venue details, show dates, production years, and comprehensive tagging
 - **Band Member Info**: Individual profiles for Trey, Mike, Page, and Fish
 - **Quality Images**: Venue photos, show-specific images from multiple sources
@@ -274,11 +268,6 @@ This plugin is built with:
 - Some venues may not have images available from current sources
 - Check if images appear after a fresh library scan
 
-**Community Ratings Not Showing**
-- Ratings only appear for shows that have reviews on Phish.net
-- Check that "Include Reviews" is enabled in plugin configuration
-- Some older shows may have fewer or no community reviews
-- Verify the API key has proper permissions for review data
 
 **Performance Issues**
 - Adjust cache duration settings to reduce API calls

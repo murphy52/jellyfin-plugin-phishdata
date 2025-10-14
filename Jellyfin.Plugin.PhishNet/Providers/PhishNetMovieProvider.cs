@@ -173,53 +173,6 @@ namespace Jellyfin.Plugin.PhishNet.Providers
                     venueData = await _apiClient.GetVenueAsync(showData.VenueId.Value.ToString(), cancellationToken);
                 }
                 
-                // Get reviews for community rating calculation (if enabled)
-                List<ReviewDto>? reviewsData = null;
-                var config = Plugin.Instance?.Configuration;
-                
-                // Log configuration status
-                if (config == null)
-                {
-                    _logger.LogWarning("Plugin configuration is not available, reviews disabled");
-                }
-                else
-                {
-                    _logger.LogDebug("Configuration: IncludeReviews={IncludeReviews}, MaxReviews={MaxReviews}", 
-                        config.IncludeReviews, config.MaxReviews);
-                }
-                
-                if (parseResult.ShowDate.HasValue && config?.IncludeReviews == true)
-                {
-                    var dateString = parseResult.ShowDate.Value.ToString("yyyy-MM-dd");
-                    var maxReviews = config.MaxReviews > 0 ? config.MaxReviews : 50;
-                    _logger.LogInformation("Fetching reviews for {Date} (max: {MaxReviews})", dateString, maxReviews);
-                    
-                    try
-                    {
-                        reviewsData = await _apiClient.GetReviewsAsync(dateString, maxReviews, cancellationToken);
-                        
-                        if (reviewsData != null && reviewsData.Any())
-                        {
-                            _logger.LogInformation("Successfully fetched {Count} reviews for {Date}", reviewsData.Count, dateString);
-                        }
-                        else
-                        {
-                            _logger.LogInformation("No reviews found for {Date}", dateString);
-                        }
-                    }
-                    catch (Exception reviewEx)
-                    {
-                        _logger.LogError(reviewEx, "Failed to fetch reviews for {Date}", dateString);
-                    }
-                }
-                else if (parseResult.ShowDate.HasValue)
-                {
-                    var reason = config == null ? "configuration not available" 
-                        : config.IncludeReviews ? "unknown reason" 
-                        : "reviews disabled in configuration";
-                    _logger.LogDebug("Skipping reviews for {Date}: {Reason}", 
-                        parseResult.ShowDate.Value.ToString("yyyy-MM-dd"), reason);
-                }
 
                 // Detect if this show is part of a multi-night run
                 RunInfo? runInfo = null;
@@ -229,7 +182,7 @@ namespace Jellyfin.Plugin.PhishNet.Providers
                 }
 
                 // Populate full metadata
-                await PopulateMetadataFromApiAsync(result.Item, parseResult, showData, setlistData?.FirstOrDefault(), venueData, runInfo, reviewsData, _apiClient, cancellationToken);
+                PopulateMetadataFromApi(result.Item, parseResult, showData, setlistData?.FirstOrDefault(), venueData, runInfo, _apiClient, cancellationToken);
 
                 result.HasMetadata = true;
                 _logger.LogDebug("Successfully populated metadata for {Name}", info.Name);
@@ -569,17 +522,15 @@ namespace Jellyfin.Plugin.PhishNet.Providers
         /// <param name="setlistData">The setlist data from the API with transition marks.</param>
         /// <param name="venueData">The venue data from the API.</param>
         /// <param name="runInfo">The multi-night run information.</param>
-        /// <param name="reviewsData">The reviews data from the API for community rating.</param>
         /// <param name="client">The API client for additional data requests.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
-        private async Task PopulateMetadataFromApiAsync(
+        private void PopulateMetadataFromApi(
             Movie movie, 
             PhishShowParseResult parseResult,
             ShowDto showData, 
             SetlistDto? setlistData, 
             VenueDto? venueData,
             RunInfo? runInfo,
-            List<ReviewDto>? reviewsData,
             IPhishNetApiClient client,
             CancellationToken cancellationToken)
         {
@@ -638,84 +589,6 @@ namespace Jellyfin.Plugin.PhishNet.Providers
             movie.ProductionYear = showDate.Year;
             movie.DateCreated = showDate; // Release Date
             
-            // Calculate community rating from show's overall rating (not individual review ratings)
-            _logger.LogInformation("Processing community rating for show {ShowDate}. Show rating='{ShowRating}', Review count='{ReviewCount}'", 
-                showData.ShowDate, showData.Rating ?? "null", showData.ReviewCount ?? "null");
-            
-            // DEBUG: Log all show data fields to understand API response structure
-            _logger.LogInformation("DEBUG Show Data: ShowId={ShowId}, Venue='{Venue}', City='{City}', State='{State}', Country='{Country}', VenueId={VenueId}, ArtistName='{ArtistName}', ArtistId={ArtistId}, ShowNotes='{ShowNotes}', SetlistData='{SetlistData}', Tour='{Tour}', Tags='{Tags}', ShowYear='{ShowYear}', ShowMonth={ShowMonth}, ShowDay={ShowDay}, TourId={TourId}, TourName='{TourName}'", 
-                showData.ShowId, showData.Venue, showData.City, showData.State, showData.Country, showData.VenueId, showData.ArtistName, showData.ArtistId, showData.ShowNotes ?? "null", showData.SetlistData ?? "null", showData.Tour ?? "null", showData.Tags ?? "null", showData.ShowYear ?? "null", showData.ShowMonth, showData.ShowDay, showData.TourId, showData.TourName ?? "null");
-            
-            // Try to get detailed show data if rating is null - some endpoints may have more complete data
-            if ((!showData.ParsedRating.HasValue || showData.ParsedRating.Value == 0) && showData.ShowId > 0)
-            {
-                _logger.LogInformation("Rating not available from show date endpoint, trying show details endpoint for ShowId={ShowId}", showData.ShowId);
-                
-                try
-                {
-                    var detailedShow = await client.GetShowByIdAsync(showData.ShowId, cancellationToken).ConfigureAwait(false);
-                    if (detailedShow != null)
-                    {
-                        _logger.LogInformation("DEBUG Detailed Show Data: Rating='{Rating}', ReviewCount='{ReviewCount}', ShowNotes='{ShowNotes}'", 
-                            detailedShow.Rating ?? "null", detailedShow.ReviewCount ?? "null", detailedShow.ShowNotes ?? "null");
-                        
-                        // Use detailed show data if it has rating information
-                        if (detailedShow.ParsedRating.HasValue && detailedShow.ParsedRating.Value > 0)
-                        {
-                            showData = detailedShow; // Replace with detailed data
-                            _logger.LogInformation("✅ Found rating data in detailed show endpoint: {Rating}/5", detailedShow.ParsedRating.Value);
-                        }
-                        else
-                        {
-                            _logger.LogInformation("❌ Detailed show endpoint also has no rating data");
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to fetch detailed show data for ShowId={ShowId}", showData.ShowId);
-                }
-            }
-            
-            if (showData.ParsedRating.HasValue && showData.ParsedRating.Value > 0)
-            {
-                // Show has an overall rating - use this instead of individual review ratings
-                var showRating = showData.ParsedRating.Value;
-                // Phish.net uses 1-5 scale, Jellyfin uses 1-10, so multiply by 2
-                var communityRating = (float)(showRating * 2.0);
-                movie.CommunityRating = communityRating;
-                
-                _logger.LogInformation("✅ Set community rating for {ShowDate}: {Rating}/10 (show rating: {OriginalRating}/5, {ReviewCount} reviews)", 
-                    showData.ShowDate, communityRating.ToString("F1"), showRating.ToString("F2"), showData.ReviewCount ?? "?");
-            }
-            else
-            {
-                _logger.LogInformation("❌ No show rating available for {ShowDate}. Raw rating value: '{RawRating}'", 
-                    showData.ShowDate, showData.Rating ?? "null");
-                
-                // Fallback: Try to calculate from individual reviews if available (though they seem to have null ratings)
-                if (reviewsData != null && reviewsData.Any())
-                {
-                    var ratingsWithValues = reviewsData
-                        .Where(r => r.ParsedRating.HasValue && r.ParsedRating.Value > 0)
-                        .Select(r => r.ParsedRating!.Value)
-                        .ToList();
-                        
-                    if (ratingsWithValues.Any())
-                    {
-                        var averageRating = ratingsWithValues.Average();
-                        var communityRating = (float)(averageRating * 2.0);
-                        movie.CommunityRating = communityRating;
-                        
-                        _logger.LogInformation("✅ Fallback: Set community rating from {Count} individual reviews: {Rating}/10 (avg: {OriginalRating}/5)", 
-                            ratingsWithValues.Count, communityRating.ToString("F1"), averageRating.ToString("F1"));
-                    }
-                    else
-                    {
-                        _logger.LogInformation("❌ No valid ratings found in show data or {ReviewCount} individual reviews", reviewsData.Count);
-                    }
-                }
-            }
 
             // Build comprehensive overview with setlist at the top
             var overviewParts = new List<string>();

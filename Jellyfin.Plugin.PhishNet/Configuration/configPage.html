@@ -49,29 +49,11 @@
                                 Fetch jam chart data for notable performances (may increase loading time).
                             </div>
                         </div>
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label>
-                                <input id="chkIncludeReviews" name="chkIncludeReviews" type="checkbox" is="emby-checkbox" />
-                                <span>Include Reviews</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">
-                                Pull community reviews and ratings from Phish.net.
-                            </div>
-                        </div>
                     </div>
 
                     <div class="verticalSection">
                         <div class="sectionTitleContainer flex align-items-center">
                             <h3 class="sectionTitle">Display Options</h3>
-                        </div>
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label>
-                                <input id="chkShowRatingInTitle" name="chkShowRatingInTitle" type="checkbox" is="emby-checkbox" />
-                                <span>Show Rating in Title</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">
-                                Include community rating in the show title (e.g., "1997-11-22 Hampton (4.5/5)").
-                            </div>
                         </div>
                         <div class="checkboxContainer checkboxContainer-withDescription">
                             <label>
@@ -87,11 +69,6 @@
                     <div class="verticalSection">
                         <div class="sectionTitleContainer flex align-items-center">
                             <h3 class="sectionTitle">Advanced Settings</h3>
-                        </div>
-                        <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="txtMaxReviews">Max Reviews</label>
-                            <input id="txtMaxReviews" name="txtMaxReviews" type="number" min="0" max="50" step="1" is="emby-input" />
-                            <div class="fieldDescription">Maximum number of reviews to display per show (0 = unlimited).</div>
                         </div>
                         <div class="inputContainer">
                             <label class="inputLabel inputLabelUnfocused" for="txtCacheDurationHours">Cache Duration (Hours)</label>
@@ -135,10 +112,7 @@
                     page.querySelector('#txtApiKey').value = config.ApiKey || '';
                     page.querySelector('#chkPreferOfficialReleases').checked = config.PreferOfficialReleases || false;
                     page.querySelector('#chkIncludeJamCharts').checked = config.IncludeJamCharts !== false;
-                    page.querySelector('#chkIncludeReviews').checked = config.IncludeReviews !== false;
-                    page.querySelector('#chkShowRatingInTitle').checked = config.ShowRatingInTitle || false;
                     page.querySelector('#chkIncludeSetlistInDescription').checked = config.IncludeSetlistInDescription !== false;
-                    page.querySelector('#txtMaxReviews').value = config.MaxReviews || 5;
                     page.querySelector('#txtCacheDurationHours').value = config.CacheDurationHours || 24;
                     page.querySelector('#chkDisableLocalCache').checked = config.DisableLocalCache || false;
                     page.querySelector('#chkEnableDebugLogging').checked = config.EnableDebugLogging || false;
@@ -153,10 +127,7 @@
                         ApiKey: form.querySelector('#txtApiKey').value,
                         PreferOfficialReleases: form.querySelector('#chkPreferOfficialReleases').checked,
                         IncludeJamCharts: form.querySelector('#chkIncludeJamCharts').checked,
-                        IncludeReviews: form.querySelector('#chkIncludeReviews').checked,
-                        ShowRatingInTitle: form.querySelector('#chkShowRatingInTitle').checked,
                         IncludeSetlistInDescription: form.querySelector('#chkIncludeSetlistInDescription').checked,
-                        MaxReviews: parseInt(form.querySelector('#txtMaxReviews').value) || 5,
                         CacheDurationHours: parseInt(form.querySelector('#txtCacheDurationHours').value) || 24,
                         DisableLocalCache: form.querySelector('#chkDisableLocalCache').checked,
                         EnableDebugLogging: form.querySelector('#chkEnableDebugLogging').checked

@@ -63,17 +63,6 @@ public class ShowDto
     [JsonPropertyName("artistid")]
     public int? ArtistId { get; set; }
 
-    /// <summary>
-    /// Gets or sets the community rating for this show.
-    /// </summary>
-    [JsonPropertyName("rating")]
-    public string? Rating { get; set; }
-
-    /// <summary>
-    /// Gets or sets the number of reviews for this show.
-    /// </summary>
-    [JsonPropertyName("reviews")]
-    public string? ReviewCount { get; set; }
 
     /// <summary>
     /// Gets or sets additional show notes or description.
@@ -181,37 +170,4 @@ public class ShowDto
         }
     }
 
-    /// <summary>
-    /// Gets the parsed community rating as a double value.
-    /// </summary>
-    [JsonIgnore]
-    public double? ParsedRating
-    {
-        get
-        {
-            if (double.TryParse(Rating, out var rating))
-            {
-                return rating;
-            }
-
-            return null;
-        }
-    }
-
-    /// <summary>
-    /// Gets the parsed review count as an integer.
-    /// </summary>
-    [JsonIgnore]
-    public int? ParsedReviewCount
-    {
-        get
-        {
-            if (int.TryParse(ReviewCount, out var count))
-            {
-                return count;
-            }
-
-            return null;
-        }
-    }
 }

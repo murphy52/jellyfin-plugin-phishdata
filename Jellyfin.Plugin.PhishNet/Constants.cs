@@ -25,10 +25,6 @@ public static class Constants
     /// </summary>
     public const int DefaultCacheDurationHours = 24;
 
-    /// <summary>
-    /// Maximum number of reviews to fetch by default.
-    /// </summary>
-    public const int DefaultMaxReviews = 5;
 
     /// <summary>
     /// Phish artist name for API calls.
