@@ -14,7 +14,7 @@
         "changelog": "## External Link URL Fix v1.2.6\n\nImproved external link URL format:\n- Fixed URL format for better Phish.net navigation\n- Uses more direct path to setlist pages (/setlists/{date}.html)\n- Better user experience with improved link targeting\n\nUpdate via Jellyfin plugin catalog or manual install.",
         "targetAbi": "10.8.0.0",
         "sourceUrl": "https://github.com/murphy52/jellyfin-plugin-phishnet/releases/download/v1.2.6/jellyfin-plugin-phishnet-v1.2.6.zip",
-        "checksum": "33d2e122a1c32cce0f5e267343eeec7a014e93ce6903dd4e919878324a1102db",
+        "checksum": "0934cf45c1b2a9233fc2ed671a9930e3",
         "timestamp": "2024-12-29T15:22:00Z"
       },
       {
