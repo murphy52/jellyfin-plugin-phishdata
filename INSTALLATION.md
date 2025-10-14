@@ -16,7 +16,7 @@
 1. Navigate to **Admin Dashboard > Plugins > Repositories**
 2. Click **+** to add a new repository
 3. **Repository Name**: `Phish.net Plugin Repository`
-4. **Repository URL**: `https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishnet/master/manifest.json`
+4. **Repository URL**: `https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishdata/master/manifest.json`
 5. Click **Save**
 
 #### Step 2: Install Plugin from Catalog
@@ -47,7 +47,7 @@
 ### Method 2: Manual Installation
 
 1. **Download the plugin:**
-   - Get the latest release from [GitHub Releases](https://github.com/murphy52/jellyfin-plugin-phishnet/releases)
+   - Get the latest release from [GitHub Releases](https://github.com/murphy52/jellyfin-plugin-phishdata/releases)
    - Extract the zip file
 
 2. **Install plugin files:**
@@ -170,7 +170,7 @@ Look for these log messages:
 
 ## 🆘 Support
 
-- **GitHub Issues:** [Create an issue](https://github.com/your-repo/jellyfin-plugin-phishnet/issues)
+- **GitHub Issues:** [Create an issue](https://github.com/murphy52/jellyfin-plugin-phishdata/issues)
 - **Jellyfin Community:** [Plugin Support Forum](https://forum.jellyfin.org/)
 - **Phish.net API:** [API Documentation](https://phish.net/api/)
 

@@ -12,7 +12,7 @@ The main plugin icon displayed in Jellyfin's plugin catalog.
 
 **Current URL in manifest:**
 ```
-https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishnet/master/images/plugin-icon.png
+https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishdata/master/images/plugin-icon.png
 ```
 
 ## Design Suggestions

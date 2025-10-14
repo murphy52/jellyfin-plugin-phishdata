@@ -5,7 +5,7 @@ set -e
 # Builds and packages the plugin for distribution
 
 VERSION="1.2.1"
-PLUGIN_NAME="jellyfin-plugin-phishnet"
+PLUGIN_NAME="jellyfin-plugin-phishdata"
 PROJECT_DIR="Jellyfin.Plugin.PhishNet"
 OUTPUT_DIR="releases"
 BUILD_DIR="build"
@@ -102,7 +102,7 @@ cat > "$OUTPUT_DIR/release-notes-v${VERSION}.md" << EOF
 
 #### Via Plugin Catalog (Recommended)
 1. In Jellyfin, go to **Admin Dashboard** → **Plugins** → **Repositories**
-2. Add repository URL: \`https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishnet/master/manifest.json\`
+2. Add repository URL: \`https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishdata/master/manifest.json\`
 3. Go to **Catalog** and install "Phish.net" plugin
 4. Restart Jellyfin Server
 
@@ -118,9 +118,9 @@ cat > "$OUTPUT_DIR/release-notes-v${VERSION}.md" << EOF
 - **Checksum (MD5)**: \`${CHECKSUM}\`
 
 ### Documentation
-- [Installation Guide](https://github.com/murphy52/jellyfin-plugin-phishnet/blob/master/INSTALLATION.md)
-- [Configuration Guide](https://github.com/murphy52/jellyfin-plugin-phishnet/blob/master/README.md#configuration)
-- [Troubleshooting](https://github.com/murphy52/jellyfin-plugin-phishnet/blob/master/README.md#troubleshooting)
+- [Installation Guide](https://github.com/murphy52/jellyfin-plugin-phishdata/blob/master/INSTALLATION.md)
+- [Configuration Guide](https://github.com/murphy52/jellyfin-plugin-phishdata/blob/master/README.md#configuration)
+- [Troubleshooting](https://github.com/murphy52/jellyfin-plugin-phishdata/blob/master/README.md#troubleshooting)
 EOF
 
 echo "📝 Release notes created: $OUTPUT_DIR/release-notes-v${VERSION}.md"

@@ -45,7 +45,7 @@ var knownVenues = new Dictionary<string, VenueImageInfo>
 ### **Step 3: Test Results**
 ```bash
 # Rebuild plugin
-cd /tmp/jellyfin-plugin-phishnet/Jellyfin.Plugin.PhishNet && dotnet build
+cd /tmp/jellyfin-plugin-phishdata/Jellyfin.Plugin.PhishNet && dotnet build
 
 # Deploy to Jellyfin
 # cp bin/Debug/net8.0/Jellyfin.Plugin.PhishNet.dll /path/to/jellyfin/plugins/

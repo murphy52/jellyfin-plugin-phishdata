@@ -73,7 +73,7 @@ Phish Videos/
 1. Navigate to **Admin Dashboard > Plugins > Repositories**
 2. Click **+** to add a new repository
 3. **Repository Name**: `Phish.net Plugin Repository`
-4. **Repository URL**: `https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishnet/master/manifest.json`
+4. **Repository URL**: `https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishdata/master/manifest.json`
 5. Click **Save**
 
 #### Step 2: Install Plugin
@@ -118,7 +118,7 @@ Phish Videos/
 
 ### Manual Installation
 
-1. Download the latest release from [GitHub Releases](https://github.com/murphy52/jellyfin-plugin-phishnet/releases)
+1. Download the latest release from [GitHub Releases](https://github.com/murphy52/jellyfin-plugin-phishdata/releases)
 2. Extract the zip file
 3. Copy the `.dll` files to your Jellyfin plugins directory under `plugins/phishnet/`
 4. Restart Jellyfin Server
@@ -233,7 +233,7 @@ This plugin is built with:
 ### Common Issues
 
 **Plugin Repository Not Loading**
-- Double-check the repository URL is exactly: `https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishnet/master/manifest.json`
+- Double-check the repository URL is exactly: `https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishdata/master/manifest.json`
 - Try refreshing the Catalog page after adding the repository
 - Ensure your Jellyfin server has internet access
 - Check Admin Dashboard > Logs for repository loading errors
@@ -293,7 +293,7 @@ Enable debug logging in Jellyfin for detailed troubleshooting:
 
 For experienced users, here's the essential setup checklist:
 
-1. ➕ **Add Repository**: `https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishnet/master/manifest.json`
+1. ➕ **Add Repository**: `https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishdata/master/manifest.json`
 2. 📦 **Install Plugin** from Catalog → **Restart Jellyfin**
 3. 🔑 **Get API Key** from [Phish.net](https://phish.net/api/keys)
 4. ⚙️ **Configure Plugin** in Admin Dashboard > Plugins > My Plugins
@@ -333,8 +333,8 @@ For experienced users, here's the essential setup checklist:
 ## Support
 
 ### Getting Help
-- **Issues**: Report bugs or request features on [GitHub Issues](https://github.com/murphy52/jellyfin-plugin-phishnet/issues)
-- **Discussions**: Join the conversation on [GitHub Discussions](https://github.com/murphy52/jellyfin-plugin-phishnet/discussions)
+- **Issues**: Report bugs or request features on [GitHub Issues](https://github.com/murphy52/jellyfin-plugin-phishdata/issues)
+- **Discussions**: Join the conversation on [GitHub Discussions](https://github.com/murphy52/jellyfin-plugin-phishdata/discussions)
 - **Documentation**: Check out the comprehensive guides in the repository
 
 ### Performance Tips

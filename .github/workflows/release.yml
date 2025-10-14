@@ -31,7 +31,7 @@ jobs:
     - name: Create plugin package
       run: |
         cd build
-        zip -r ../jellyfin-plugin-phishnet-${{ github.ref_name }}.zip \
+        zip -r ../jellyfin-plugin-phishdata-${{ github.ref_name }}.zip \
           Jellyfin.Plugin.PhishNet.dll \
           Jellyfin.Plugin.PhishNet.pdb \
           -x "*.deps.json" "*.runtimeconfig.json" "*Microsoft*" "*System*"
@@ -40,7 +40,7 @@ jobs:
     - name: Calculate checksum
       id: checksum
       run: |
-        CHECKSUM=$(md5sum jellyfin-plugin-phishnet-${{ github.ref_name }}.zip | cut -d' ' -f1)
+        CHECKSUM=$(md5sum jellyfin-plugin-phishdata-${{ github.ref_name }}.zip | cut -d' ' -f1)
         echo "checksum=$CHECKSUM" >> $GITHUB_OUTPUT
         echo "Checksum: $CHECKSUM"
         
@@ -48,7 +48,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
       with:
-        files: jellyfin-plugin-phishnet-${{ github.ref_name }}.zip
+        files: jellyfin-plugin-phishdata-${{ github.ref_name }}.zip
         body: |
           # Jellyfin Phish.net Plugin ${{ github.ref_name }}
           
@@ -56,12 +56,12 @@ jobs:
           
           ### Via Plugin Catalog (Recommended)
           1. In Jellyfin, go to **Admin Dashboard** → **Plugins** → **Repositories**
-          2. Add repository URL: `https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishnet/master/manifest.json`
+          2. Add repository URL: `https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishdata/master/manifest.json`
           3. Go to **Catalog** and install "Phish.net" plugin
           4. Restart Jellyfin Server
           
           ### Manual Installation
-          1. Download the attached `jellyfin-plugin-phishnet-${{ github.ref_name }}.zip`
+          1. Download the attached `jellyfin-plugin-phishdata-${{ github.ref_name }}.zip`
           2. Extract to your Jellyfin `plugins/` directory
           3. Restart Jellyfin Server
           
@@ -70,9 +70,9 @@ jobs:
           - **Target Jellyfin**: 10.8.0+
           
           ## Documentation
-          - [Setup Guide](https://github.com/murphy52/jellyfin-plugin-phishnet#installation)
-          - [Configuration](https://github.com/murphy52/jellyfin-plugin-phishnet#configuration)
-          - [Troubleshooting](https://github.com/murphy52/jellyfin-plugin-phishnet#troubleshooting)
+          - [Setup Guide](https://github.com/murphy52/jellyfin-plugin-phishdata#installation)
+          - [Configuration](https://github.com/murphy52/jellyfin-plugin-phishdata#configuration)
+          - [Troubleshooting](https://github.com/murphy52/jellyfin-plugin-phishdata#troubleshooting)
         draft: false
         prerelease: false
       env:

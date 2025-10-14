@@ -3,7 +3,7 @@ using System.Reflection;
 using System.IO;
 
 // Simple test to check if embedded resources are accessible
-var assembly = Assembly.LoadFrom("/tmp/jellyfin-plugin-phishnet/Jellyfin.Plugin.PhishNet/bin/Debug/net8.0/Jellyfin.Plugin.PhishNet.dll");
+var assembly = Assembly.LoadFrom("/tmp/jellyfin-plugin-phishdata/Jellyfin.Plugin.PhishNet/bin/Debug/net8.0/Jellyfin.Plugin.PhishNet.dll");
 
 Console.WriteLine("Available embedded resources:");
 foreach (var name in assembly.GetManifestResourceNames())
