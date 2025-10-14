@@ -21,7 +21,7 @@ public class PhishNetExternalId : IExternalId
     public ExternalIdMediaType? Type => ExternalIdMediaType.Movie;
 
     /// <inheritdoc />
-    public string UrlFormatString => "https://phish.net/setlists/{0}.html";
+    public string UrlFormatString => "{0}";
 
     /// <inheritdoc />
     public bool Supports(IHasProviderIds item)

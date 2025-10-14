@@ -184,6 +184,9 @@ namespace Jellyfin.Plugin.PhishNet.Providers
                 // Populate full metadata
                 PopulateMetadataFromApi(result.Item, parseResult, showData, setlistData?.FirstOrDefault(), venueData, runInfo, _apiClient, cancellationToken);
 
+                // TODO: Add Phish band members to People - need to research correct Jellyfin API
+                // The PhishPersonProvider handles individual member lookups
+
                 result.HasMetadata = true;
                 _logger.LogDebug("Successfully populated metadata for {Name}", info.Name);
 
@@ -762,23 +765,26 @@ namespace Jellyfin.Plugin.PhishNet.Providers
             }
             
             // Fix common character encoding issues from Phish.net API
-            // These include Windows-1252/UTF-8 mojibake seen in API content
+            // Based on actual API response data showing Windows-1252 to UTF-8 mojibake
             return text
-                // Apostrophes and possessives
-                .Replace("â’s", "'s")          // "Trey's" becomes "Trey's"
-                .Replace("âs", "'s")           // "Halleyâs" -> "Halley's"
-                .Replace("â’", "'")            // Other apostrophes
-                // Quotes
-                .Replace("â“", "\"")           // Opening quotes
-                .Replace("â”", "\"")           // Closing quotes  
-                // Dashes
-                .Replace("â–", "-")           // En dash
-                .Replace("â—", "—")           // Em dash
-                // Non-breaking spaces appearing as Â or NBSP
-                .Replace("Â ", " ")            // NBSP + space to space
-                .Replace("Â", " ")             // Lone Â to space
-                .Replace("\u00A0", " ")         // Unicode NBSP
-                // Collapse multiple spaces
+                // Fix specific possessive apostrophes from API: "Treyâs" -> "Trey's"
+                .Replace("Treyâs", "Trey's")
+                .Replace("Halleyâs", "Halley's")
+                .Replace("Mikeâs", "Mike's")
+                .Replace("Pageâs", "Page's")
+                .Replace("Fishâs", "Fish's")
+                // Generic patterns
+                .Replace("âs ", "'s ")          // Generic possessive
+                .Replace("âs,", "'s,")          // Possessive before comma
+                .Replace("âs.", "'s.")          // Possessive before period
+                .Replace("â’", "'")            // Right single quote
+                .Replace("â“", "\"")
+                .Replace("â”", "\"")
+                // Non-breaking spaces: "theÂ <em>" -> "the <em>"
+                .Replace("Â ", " ")
+                .Replace("Â", " ")
+                .Replace("\u00A0", " ")          // Unicode NBSP
+                // Clean up multiple spaces
                 .Replace("  ", " ")
                 .Trim();
         }
