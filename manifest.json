@@ -24,7 +24,7 @@
         "sourceUrl": "https://github.com/murphy52/jellyfin-plugin-phishnet/releases/download/v1.2.6/jellyfin-plugin-phishnet-v1.2.6.zip",
         "checksum": "0934cf45c1b2a9233fc2ed671a9930e3",
         "timestamp": "2024-12-29T15:22:00Z"
-      }
+      },
       {
         "version": "1.2.5",
         "changelog": "## External Link Fix v1.2.5\n\nFixed broken external links to Phish.net:\n- Removed non-working Setlist, Reviews, and Venue links\n- Single working Phish.net link that takes users to show page\n- Cleaned up 200+ lines of unused external ID code\n- Better user experience with reliable navigation\n\nUpdate via Jellyfin plugin catalog or manual install.",
