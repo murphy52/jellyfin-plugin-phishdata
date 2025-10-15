@@ -826,20 +826,30 @@ namespace Jellyfin.Plugin.PhishNet.Providers
             // Fix common character encoding issues from Phish.net API
             // Based on actual API response data showing Windows-1252 to UTF-8 mojibake
             return text
-                // Fix specific possessive apostrophes from API: "Treyâs" -> "Trey's"
+                // Global possessive fix for mojibake pattern
+                .Replace("âs", "'s")
+                // Specific possessive cases seen in API content
                 .Replace("Treyâs", "Trey's")
                 .Replace("Halleyâs", "Halley's")
                 .Replace("Mikeâs", "Mike's")
                 .Replace("Pageâs", "Page's")
                 .Replace("Fishâs", "Fish's")
-                // Generic patterns
-                .Replace("âs ", "'s ")          // Generic possessive
+                .Replace("crowdâs", "crowd's")
+                .Replace("bandâs", "band's")
+                .Replace("showâs", "show's")
+                // Additional punctuation variants
+                .Replace("âs ", "'s ")          // Possessive before space
                 .Replace("âs,", "'s,")          // Possessive before comma
                 .Replace("âs.", "'s.")          // Possessive before period
-                .Replace("â’", "'")            // Right single quote
-                .Replace("â“", "\"")
-                .Replace("â”", "\"")
-                // Non-breaking spaces: "theÂ <em>" -> "the <em>"
+                .Replace("âs\n", "'s\n")        // Possessive before newline
+                // Quotes variants
+                .Replace("â€™", "'")            // Right single quote (UTF-8 mojibake)
+                .Replace("â€˜", "'")            // Left single quote (UTF-8 mojibake)
+                .Replace("â€œ", "\"")           // Left double quote (UTF-8 mojibake)
+                .Replace("â€\"", "\"")          // Right double quote (UTF-8 mojibake)
+                .Replace("â“", "\"")            // Legacy left double quote
+                .Replace("â”", "\"")            // Legacy right double quote
+                // Non-breaking spaces and stray bytes
                 .Replace("Â ", " ")
                 .Replace("Â", " ")
                 .Replace("\u00A0", " ")          // Unicode NBSP
