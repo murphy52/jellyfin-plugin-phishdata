@@ -823,12 +823,25 @@ namespace Jellyfin.Plugin.PhishNet.Providers
                 return text;
             }
             
+            var originalText = text;
+            
             // Fix common character encoding issues from Phish.net API
             // Based on actual API response data showing Windows-1252 to UTF-8 mojibake
-            return text
-                // Global possessive fix for mojibake pattern
+            
+            // First try: Handle UTF-8 byte sequences that look like mojibake
+            // The sequence 'â' (U+00E2) is often part of UTF-8 mojibake
+            var bytes = System.Text.Encoding.UTF8.GetBytes(text);
+            var fixedText = System.Text.Encoding.UTF8.GetString(bytes);
+            
+            // Apply comprehensive character replacements
+            fixedText = fixedText
+                // Most aggressive fix: any â followed by s becomes 's (covers all possessive cases)
                 .Replace("âs", "'s")
-                // Specific possessive cases seen in API content
+                // Handle the specific UTF-8 mojibake sequence for right single quote
+                .Replace("\u00E2\u0080\u0099", "'")    // â -> '
+                .Replace("\u00E2\u0080\u009C", "\"")   // â -> "
+                .Replace("\u00E2\u0080\u009D", "\"")   // â -> "
+                // Backup: specific word fixes in case global doesn't work
                 .Replace("Treyâs", "Trey's")
                 .Replace("Halleyâs", "Halley's")
                 .Replace("Mikeâs", "Mike's")
@@ -837,18 +850,13 @@ namespace Jellyfin.Plugin.PhishNet.Providers
                 .Replace("crowdâs", "crowd's")
                 .Replace("bandâs", "band's")
                 .Replace("showâs", "show's")
+                .Replace("fanâs", "fan's")
+                .Replace("songâs", "song's")
                 // Additional punctuation variants
                 .Replace("âs ", "'s ")          // Possessive before space
                 .Replace("âs,", "'s,")          // Possessive before comma
                 .Replace("âs.", "'s.")          // Possessive before period
                 .Replace("âs\n", "'s\n")        // Possessive before newline
-                // Quotes variants
-                .Replace("â€™", "'")            // Right single quote (UTF-8 mojibake)
-                .Replace("â€˜", "'")            // Left single quote (UTF-8 mojibake)
-                .Replace("â€œ", "\"")           // Left double quote (UTF-8 mojibake)
-                .Replace("â€\"", "\"")          // Right double quote (UTF-8 mojibake)
-                .Replace("â“", "\"")            // Legacy left double quote
-                .Replace("â”", "\"")            // Legacy right double quote
                 // Non-breaking spaces and stray bytes
                 .Replace("Â ", " ")
                 .Replace("Â", " ")
@@ -856,6 +864,8 @@ namespace Jellyfin.Plugin.PhishNet.Providers
                 // Clean up multiple spaces
                 .Replace("  ", " ")
                 .Trim();
+            
+            return fixedText;
         }
     }
 }
