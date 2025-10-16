@@ -17,14 +17,14 @@ A comprehensive metadata provider for Phish concert videos using the Phish.net A
 ### Via Plugin Catalog (Recommended)
 
 1. **Add Repository**
-   - Navigate to **Admin Dashboard > Plugins > Repositories**
+   - Navigate to **Dashboard > Catalog > then click the ⚙️ icon**
    - Click **+** to add a new repository
    - **Repository Name**: `Phish Data Plugin Repository`
    - **Repository URL**: `https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishdata/master/manifest.json`
    - Click **Save**
 
 2. **Install Plugin**
-   - Go to **Admin Dashboard > Plugins > Catalog**
+   - Go to **Dashboard > Plugins **
    - Find "Phish Data" and click **Install**
    - **Restart Jellyfin Server**
 
@@ -33,17 +33,15 @@ A comprehensive metadata provider for Phish concert videos using the Phish.net A
    - Complete registration and note your API key
 
 4. **Configure Plugin**
-   - Go to **Admin Dashboard > Plugins > My Plugins**
+   - Go to **Dashboard > Plugins > My Plugins**
    - Find "Phish Data" and click **Settings**
    - Enter your Phish.net API key
    - Click **Save**
 
 5. **Configure Library**
-   - Set your Phish video library **Content Type** to "Movies"
-   - Under **Metadata downloaders**, enable all three Phish Data providers:
-     - ✅ **Phish Data** (movie metadata)
-     - ✅ **Phish Data** (image provider)  
-     - ✅ **Phish Data** (person provider)
+   - Go to **Dashboard > Libraries/Libraries > For each library that will contain Phish videos open the menu and click Manage Library**
+   - Under **Metadata downloaders**, enable the Phish Data providers:
+   - ✅ **Phish Data** (movie metadata)
    - Click **OK** and **Scan Library**
 
 ## File Naming
