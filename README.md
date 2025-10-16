@@ -85,6 +85,12 @@ If you find this plugin useful, consider supporting its development:
 
 Your support helps maintain and improve the plugin with new features and enhancements!
 
+## About Phish.net
+
+This plugin is not affiliated with Phish.net, but we highly encourage supporting their incredible work! Phish.net is run by The Mockingbird Foundation, a non-profit organization that has awarded hundreds of grants to music education programs. Consider supporting them at:
+
+**[Support Phish.net & The Mockingbird Foundation](https://donate.mbird.org/forms/mbird-donations-via-the-phishnet-frontpage)**
+
 ## Support
 
 For issues, questions, or feature requests, please visit the [GitHub repository](https://github.com/murphy52/jellyfin-plugin-phishdata).
