@@ -15,9 +15,6 @@ A comprehensive metadata provider for Phish concert videos using the Phish.net A
 - **Smart Filename Parsing**: Automatically identifies Phish shows from various filename formats
 - **Complete Setlists**: Displays full song lists with set breaks and transitions
 - **Rich Metadata**: Show dates, venues, locations, and production years
-- **Community Ratings**: Aggregated ratings from Phish.net user reviews
-- **Band Member Profiles**: Individual profiles for Trey, Mike, Page, and Fish
-- **Plugin Images**: Works correctly in all Jellyfin UI locations
 - **Clean Configuration**: Simple setup with just your Phish.net API key
 
 ## Installation
