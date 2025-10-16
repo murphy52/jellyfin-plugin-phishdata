@@ -27,73 +27,8 @@
                         </div>
                     </div>
 
-                    <div class="verticalSection">
-                        <div class="sectionTitleContainer flex align-items-center">
-                            <h3 class="sectionTitle">Metadata Preferences</h3>
-                        </div>
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label>
-                                <input id="chkPreferOfficialReleases" name="chkPreferOfficialReleases" type="checkbox" is="emby-checkbox" />
-                                <span>Prefer Official Releases</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">
-                                When enabled, prioritizes official releases over audience recordings in search results.
-                            </div>
-                        </div>
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label>
-                                <input id="chkIncludeJamCharts" name="chkIncludeJamCharts" type="checkbox" is="emby-checkbox" />
-                                <span>Include Jam Charts</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">
-                                Fetch jam chart data for notable performances (may increase loading time).
-                            </div>
-                        </div>
-                    </div>
 
-                    <div class="verticalSection">
-                        <div class="sectionTitleContainer flex align-items-center">
-                            <h3 class="sectionTitle">Display Options</h3>
-                        </div>
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label>
-                                <input id="chkIncludeSetlistInDescription" name="chkIncludeSetlistInDescription" type="checkbox" is="emby-checkbox" />
-                                <span>Include Setlist in Description</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">
-                                Add the complete setlist to the show description.
-                            </div>
-                        </div>
-                    </div>
 
-                    <div class="verticalSection">
-                        <div class="sectionTitleContainer flex align-items-center">
-                            <h3 class="sectionTitle">Advanced Settings</h3>
-                        </div>
-                        <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="txtCacheDurationHours">Cache Duration (Hours)</label>
-                            <input id="txtCacheDurationHours" name="txtCacheDurationHours" type="number" min="1" max="168" step="1" is="emby-input" />
-                            <div class="fieldDescription">How long to cache API responses (1-168 hours). Longer cache improves performance.</div>
-                        </div>
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label>
-                                <input id="chkDisableLocalCache" name="chkDisableLocalCache" type="checkbox" is="emby-checkbox" />
-                                <span>Disable Local Cache</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">
-                                Always fetch fresh data from the API (not recommended for regular use).
-                            </div>
-                        </div>
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label>
-                                <input id="chkEnableDebugLogging" name="chkEnableDebugLogging" type="checkbox" is="emby-checkbox" />
-                                <span>Enable Debug Logging</span>
-                            </label>
-                            <div class="fieldDescription checkboxFieldDescription">
-                                Enable verbose logging for troubleshooting (may impact performance).
-                            </div>
-                        </div>
-                    </div>
 
                     <div>
                         <button is="emby-button" type="submit" class="raised button-submit block">
@@ -110,12 +45,6 @@
 
                 function loadPage(page, config) {
                     page.querySelector('#txtApiKey').value = config.ApiKey || '';
-                    page.querySelector('#chkPreferOfficialReleases').checked = config.PreferOfficialReleases || false;
-                    page.querySelector('#chkIncludeJamCharts').checked = config.IncludeJamCharts !== false;
-                    page.querySelector('#chkIncludeSetlistInDescription').checked = config.IncludeSetlistInDescription !== false;
-                    page.querySelector('#txtCacheDurationHours').value = config.CacheDurationHours || 24;
-                    page.querySelector('#chkDisableLocalCache').checked = config.DisableLocalCache || false;
-                    page.querySelector('#chkEnableDebugLogging').checked = config.EnableDebugLogging || false;
                 }
 
                 function onSubmit(e) {
@@ -124,13 +53,7 @@
 
                     var form = this;
                     var config = {
-                        ApiKey: form.querySelector('#txtApiKey').value,
-                        PreferOfficialReleases: form.querySelector('#chkPreferOfficialReleases').checked,
-                        IncludeJamCharts: form.querySelector('#chkIncludeJamCharts').checked,
-                        IncludeSetlistInDescription: form.querySelector('#chkIncludeSetlistInDescription').checked,
-                        CacheDurationHours: parseInt(form.querySelector('#txtCacheDurationHours').value) || 24,
-                        DisableLocalCache: form.querySelector('#chkDisableLocalCache').checked,
-                        EnableDebugLogging: form.querySelector('#chkEnableDebugLogging').checked
+                        ApiKey: form.querySelector('#txtApiKey').value
                     };
 
                     ApiClient.updatePluginConfiguration(pluginId, config).then(function(result) {

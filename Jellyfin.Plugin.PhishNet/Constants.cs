@@ -20,11 +20,6 @@ public static class Constants
     /// </summary>
     public const string PhishNetApiBaseUrl = "https://api.phish.net/v5/";
 
-    /// <summary>
-    /// Default cache duration in hours.
-    /// </summary>
-    public const int DefaultCacheDurationHours = 24;
-
 
     /// <summary>
     /// Phish artist name for API calls.

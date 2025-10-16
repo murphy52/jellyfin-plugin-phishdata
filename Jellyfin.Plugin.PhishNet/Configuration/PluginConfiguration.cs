@@ -13,12 +13,6 @@ public class PluginConfiguration : BasePluginConfiguration
     public PluginConfiguration()
     {
         ApiKey = string.Empty;
-        PreferOfficialReleases = false;
-        IncludeJamCharts = true;
-        CacheDurationHours = Constants.DefaultCacheDurationHours;
-        EnableDebugLogging = false;
-        DisableLocalCache = false;
-        IncludeSetlistInDescription = true;
     }
 
     /// <summary>
@@ -26,15 +20,6 @@ public class PluginConfiguration : BasePluginConfiguration
     /// </summary>
     public string ApiKey { get; set; }
 
-    /// <summary>
-    /// Gets or sets a value indicating whether to prefer official releases over audience recordings.
-    /// </summary>
-    public bool PreferOfficialReleases { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether to include jam chart data.
-    /// </summary>
-    public bool IncludeJamCharts { get; set; }
 
     
     /// <summary>
@@ -62,24 +47,4 @@ public class PluginConfiguration : BasePluginConfiguration
     /// </summary>
     public string? FlickrApiKey { get; set; }
 
-    /// <summary>
-    /// Gets or sets the cache duration in hours.
-    /// </summary>
-    public int CacheDurationHours { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether to enable debug logging.
-    /// </summary>
-    public bool EnableDebugLogging { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether to disable local caching.
-    /// </summary>
-    public bool DisableLocalCache { get; set; }
-
-
-    /// <summary>
-    /// Gets or sets a value indicating whether to include setlist in the description.
-    /// </summary>
-    public bool IncludeSetlistInDescription { get; set; }
 }
