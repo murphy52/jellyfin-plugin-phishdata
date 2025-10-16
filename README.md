@@ -305,7 +305,8 @@ For experienced users, here's the essential setup checklist:
 
 ## Version History
 
-- **v1.3.0** (Current): User feedback for parsing failures, comprehensive error guidance, enhanced UX
+- **v1.4.0** (Current): Complete formatting and encoding fixes, professional setlist display, character encoding resolution
+- **v1.3.0**: User feedback for parsing failures, comprehensive error guidance, enhanced UX
 - **v1.1.5**: Enhanced plugin icons, JSON deserialization fixes, full metadata functionality
 - **v1.1.4**: Embedded plugin icons, provider registration improvements
 - **v1.1.3**: JSON parsing fixes for review data
