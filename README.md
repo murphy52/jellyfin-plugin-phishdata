@@ -1,6 +1,6 @@
 # Phish Data Plugin for Jellyfin
 
-A comprehensive metadata provider for Phish concert videos using the Phish.net API. ![Phish Data Jellyfin Plugin]([https://github.com/murphy52/jellyfin-plugin-phishdata/blob/master/thumb.png])
+A comprehensive metadata provider for Phish concert videos using the Phish.net API. ![Phish Data Jellyfin Plugin](https://github.com/murphy52/jellyfin-plugin-phishdata/blob/master/thumb.png)
 
 ## Features
 
