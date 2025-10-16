@@ -3,9 +3,9 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>Jellyfin.Plugin.PhishNet</RootNamespace>
-    <Version>1.4.4.1</Version>
-    <AssemblyVersion>1.4.4.1</AssemblyVersion>
-    <FileVersion>1.4.4.1</FileVersion>
+    <Version>1.4.4.2</Version>
+    <AssemblyVersion>1.4.4.2</AssemblyVersion>
+    <FileVersion>1.4.4.2</FileVersion>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsNotAsErrors>CS1591</WarningsNotAsErrors>
@@ -33,6 +33,8 @@
   <ItemGroup>
     <None Remove="Configuration\configPage.html" />
     <EmbeddedResource Include="Configuration\configPage.html" />
+    <None Remove="thumb.png" />
+    <EmbeddedResource Include="thumb.png" />
   </ItemGroup>
 
 </Project>
