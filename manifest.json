@@ -10,6 +10,14 @@
     "repositoryUrl": "https://github.com/murphy52/jellyfin-plugin-phishdata",
     "versions": [
       {
+        "version": "1.4.4.0",
+        "changelog": "## Jellyfin Phish Data Plugin v1.4.4.0\n\n### ✅ MAJOR FIXES - Plugin Images & Configuration\n\n#### 🖼️ Plugin Image Display Fix (Issue #14)\n- **FIXED**: Plugin images now display correctly in all 3 Jellyfin UI locations:\n  - ✅ Plugin Catalog\n  - ✅ Plugin Details/Update Screen\n  - ✅ My Plugins Screen\n- **Technical**: Switched from non-working Plugin.cs methods to proper manifest-based approach\n- **Key Change**: Uses `imagePath` instead of `imageUrl` for local file serving\n\n#### 🧹 Configuration Cleanup (Issue #19)\n- **Removed Non-Functional Settings**: Cleaned up configuration options that didn't work:\n  - Removed: PreferOfficialReleases, IncludeJamCharts, CacheDurationHours\n  - Removed: DisableLocalCache, EnableDebugLogging, IncludeSetlistInDescription\n- **Result**: Much cleaner configuration UI showing only the working API Key setting\n\n#### 🏷️ Plugin Branding Fix (Issue #20)\n- **Consistent Naming**: Plugin now shows as 'Phish Data' everywhere\n- **Clean UI**: Removed unnecessary API Documentation link from settings\n\n### Core Features (Unchanged)\n- Smart filename parsing for show identification\n- Complete setlists with proper transitions and formatting\n- Rich show information from Phish.net API\n- Venue details and location metadata\n- Community ratings from Phish.net reviews\n- Clean text encoding for show notes\n- Band member metadata support\n\nThis release focuses on fixing long-standing UI issues and providing a much cleaner user experience.",
+        "targetAbi": "10.8.0.0",
+        "sourceUrl": "https://github.com/murphy52/jellyfin-plugin-phishdata/releases/download/v1.4.4.0/jellyfin-plugin-phishdata-v1.4.4.0.zip",
+        "checksum": "ff0d0a04d370718d61355b8bf12904af",
+        "timestamp": "2025-10-16T02:30:00Z"
+      },
+      {
         "version": "1.4.0",
         "changelog": "## Jellyfin Phish Data Plugin v1.4.0\n\n### 🎉 Complete Formatting and Encoding Fixes\n- **Character Encoding**: Fixed mojibake display issues (Treyâs → Trey's, crowdâs → crowd's)\n- **Professional Setlist Format**: SET 1, SET 2, ENCORE (instead of Set I, Set II, Encore)\n- **User Feedback**: Helpful error messages for parsing failures with step-by-step guidance\n- **Enhanced UX**: Clean, readable text throughout with comprehensive UTF-8 encoding fixes\n\n### Complete Feature Set\n- Smart filename parsing for show identification\n- Professional setlist formatting with proper transitions\n- Rich show information from Phish.net API\n- Venue details and location metadata\n- Clean text encoding for show notes and setlist data\n- Band member metadata support\n- User feedback for parsing failures\n\nAddresses Issues #16, #17, and #18 with professional display and proper character encoding.",
         "targetAbi": "10.8.0.0",
