@@ -8,7 +8,7 @@ public static class Constants
     /// <summary>
     /// Plugin name.
     /// </summary>
-    public const string PluginName = "Phish.net";
+    public const string PluginName = "Phish Data";
 
     /// <summary>
     /// Plugin GUID.
