@@ -77,6 +77,14 @@ Phish Videos/
 - Jellyfin 10.8.0 and newer
 - Compatible with all major platforms (Windows, Linux, macOS, Docker)
 
+## Support this project
+
+If you find this plugin useful, consider supporting its development:
+
+[![Buy me a coffee](https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=murphy52&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff)](https://www.buymeacoffee.com/murphy52)
+
+Your support helps maintain and improve the plugin with new features and enhancements!
+
 ## Support
 
 For issues, questions, or feature requests, please visit the [GitHub repository](https://github.com/murphy52/jellyfin-plugin-phishdata).
