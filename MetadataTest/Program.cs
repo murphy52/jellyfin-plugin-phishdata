@@ -151,10 +151,7 @@ namespace MetadataTest
             // Create a mock plugin configuration
             var config = new PluginConfiguration
             {
-                ApiKey = "YOUR_API_KEY_HERE", // This will be replaced when testing with real API
-                IncludeSetlistInDescription = true,
-                IncludeReviews = true,  // Enable reviews to test community ratings
-                MaxReviews = 10         // Get more reviews for better rating accuracy
+                ApiKey = "YOUR_API_KEY_HERE" // This will be replaced when testing with real API
             };
 
             // For testing purposes, we'll need to mock the Plugin.Instance

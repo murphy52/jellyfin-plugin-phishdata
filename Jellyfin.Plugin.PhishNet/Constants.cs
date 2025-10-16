@@ -8,7 +8,7 @@ public static class Constants
     /// <summary>
     /// Plugin name.
     /// </summary>
-    public const string PluginName = "Phish.net";
+    public const string PluginName = "Phish Data";
 
     /// <summary>
     /// Plugin GUID.
@@ -19,11 +19,6 @@ public static class Constants
     /// Phish.net API base URL.
     /// </summary>
     public const string PhishNetApiBaseUrl = "https://api.phish.net/v5/";
-
-    /// <summary>
-    /// Default cache duration in hours.
-    /// </summary>
-    public const int DefaultCacheDurationHours = 24;
 
 
     /// <summary>
