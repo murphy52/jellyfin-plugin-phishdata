@@ -11,68 +11,12 @@
     "versions": [
       {
         "version": "1.4.4.3",
-        "changelog": "## Jellyfin Phish Data Plugin v1.4.4.3\n\n### 🎯 FOUND THE ISSUE - meta.json Missing!\n\n- **FIXED**: Added missing meta.json file with imagePath to plugin package\n- **Root Cause**: Working dev version had meta.json, production releases were missing it\n- **Result**: Plugin images should now display correctly in all Jellyfin UI locations\n\nThis includes the complete file structure that Jellyfin needs:\n- Jellyfin.Plugin.PhishNet.dll\n- thumb.png (image file)\n- meta.json (with imagePath reference)\n\nFinal fix for the plugin image display issue!",
+        "changelog": "## Jellyfin Phish Data Plugin v1.4.4.3\n\n### ✅ Complete Plugin Image & Configuration Fix\n\n#### 🖼️ Plugin Image Display (Issue #14) - FIXED\n- Plugin images now display correctly in all 3 Jellyfin UI locations:\n  - ✅ Plugin Catalog\n  - ✅ Plugin Details/Update Screen\n  - ✅ My Plugins Screen\n- Complete file structure with meta.json, DLL, and image file\n\n#### 🧹 Configuration Cleanup (Issue #19) - FIXED\n- Removed all non-functional settings for cleaner UI\n- Only essential API Key setting remains\n\n#### 🏷️ Plugin Branding (Issue #20) - FIXED\n- Consistent 'Phish Data' naming throughout\n- Clean configuration interface\n\n### Core Features\n- Smart filename parsing for show identification\n- Complete setlists with proper formatting\n- Rich show metadata from Phish.net API\n- Venue details and location information\n- Community ratings and reviews\n- Band member profiles\n- Clean text encoding\n\nA fully functional, polished plugin ready for production use.",
         "targetAbi": "10.8.0.0",
         "sourceUrl": "https://github.com/murphy52/jellyfin-plugin-phishdata/releases/download/v1.4.4.3/jellyfin-plugin-phishdata-v1.4.4.3.zip",
         "checksum": "ed4fc74165ecc9401d92ab6f599d440f",
         "timestamp": "2025-10-16T03:56:00Z"
-      },
-      {
-        "version": "1.4.4.2",
-        "changelog": "## Jellyfin Phish Data Plugin v1.4.4.2\n\n### 🧪 HYBRID TEST - Plugin Image Fix\n\n- **TEST**: Hybrid approach with both embedded resources AND external image file\n- **Theory**: Some Jellyfin versions may need both approaches working together\n- **Goal**: Restore plugin image functionality that worked in dev version\n\nThis is a test version to solve the plugin image display issue.",
-        "targetAbi": "10.8.0.0",
-        "sourceUrl": "https://github.com/murphy52/jellyfin-plugin-phishdata/releases/download/v1.4.4.2/jellyfin-plugin-phishdata-v1.4.4.2.zip",
-        "checksum": "3906f2d674219ca2df9e46c5799efe5d",
-        "timestamp": "2025-10-16T03:46:00Z"
-      },
-      {
-        "version": "1.4.4.1",
-        "changelog": "## Jellyfin Phish Data Plugin v1.4.4.1\n\n### 🔧 HOTFIX - Plugin Image ZIP Structure\n\n- **FIXED**: Corrected ZIP file structure for plugin images to work properly\n- **Technical**: Files now at root level of ZIP instead of subdirectory\n- **Result**: Plugin images should now display correctly in Jellyfin UI\n\nThis is a hotfix for v1.4.4.0 to resolve the plugin image display issue.",
-        "targetAbi": "10.8.0.0",
-        "sourceUrl": "https://github.com/murphy52/jellyfin-plugin-phishdata/releases/download/v1.4.4.1/jellyfin-plugin-phishdata-v1.4.4.1.zip",
-        "checksum": "cd15500609fda54d9fedc3459e6507e0",
-        "timestamp": "2025-10-16T03:39:00Z"
-      },
-      {
-        "version": "1.4.4.0",
-        "changelog": "## Jellyfin Phish Data Plugin v1.4.4.0\n\n### ✅ MAJOR FIXES - Plugin Images & Configuration\n\n#### 🖼️ Plugin Image Display Fix (Issue #14)\n- **FIXED**: Plugin images now display correctly in all 3 Jellyfin UI locations:\n  - ✅ Plugin Catalog\n  - ✅ Plugin Details/Update Screen\n  - ✅ My Plugins Screen\n- **Technical**: Switched from non-working Plugin.cs methods to proper manifest-based approach\n- **Key Change**: Uses `imagePath` instead of `imageUrl` for local file serving\n\n#### 🧹 Configuration Cleanup (Issue #19)\n- **Removed Non-Functional Settings**: Cleaned up configuration options that didn't work:\n  - Removed: PreferOfficialReleases, IncludeJamCharts, CacheDurationHours\n  - Removed: DisableLocalCache, EnableDebugLogging, IncludeSetlistInDescription\n- **Result**: Much cleaner configuration UI showing only the working API Key setting\n\n#### 🏷️ Plugin Branding Fix (Issue #20)\n- **Consistent Naming**: Plugin now shows as 'Phish Data' everywhere\n- **Clean UI**: Removed unnecessary API Documentation link from settings\n\n### Core Features (Unchanged)\n- Smart filename parsing for show identification\n- Complete setlists with proper transitions and formatting\n- Rich show information from Phish.net API\n- Venue details and location metadata\n- Community ratings from Phish.net reviews\n- Clean text encoding for show notes\n- Band member metadata support\n\nThis release focuses on fixing long-standing UI issues and providing a much cleaner user experience.",
-        "targetAbi": "10.8.0.0",
-        "sourceUrl": "https://github.com/murphy52/jellyfin-plugin-phishdata/releases/download/v1.4.4.0/jellyfin-plugin-phishdata-v1.4.4.0.zip",
-        "checksum": "ff0d0a04d370718d61355b8bf12904af",
-        "timestamp": "2025-10-16T02:30:00Z"
-      },
-      {
-        "version": "1.4.0",
-        "changelog": "## Jellyfin Phish Data Plugin v1.4.0\n\n### 🎉 Complete Formatting and Encoding Fixes\n- **Character Encoding**: Fixed mojibake display issues (Treyâs → Trey's, crowdâs → crowd's)\n- **Professional Setlist Format**: SET 1, SET 2, ENCORE (instead of Set I, Set II, Encore)\n- **User Feedback**: Helpful error messages for parsing failures with step-by-step guidance\n- **Enhanced UX**: Clean, readable text throughout with comprehensive UTF-8 encoding fixes\n\n### Complete Feature Set\n- Smart filename parsing for show identification\n- Professional setlist formatting with proper transitions\n- Rich show information from Phish.net API\n- Venue details and location metadata\n- Clean text encoding for show notes and setlist data\n- Band member metadata support\n- User feedback for parsing failures\n\nAddresses Issues #16, #17, and #18 with professional display and proper character encoding.",
-        "targetAbi": "10.8.0.0",
-        "sourceUrl": "https://github.com/murphy52/jellyfin-plugin-phishdata/releases/download/v1.4.0/jellyfin-plugin-phishdata-v1.4.0.zip",
-        "checksum": "73efcb0495162b2160eaa9a006048edf",
-        "timestamp": "2025-01-16T00:13:00Z"
-      },
-      {
-        "version": "1.3.2",
-        "changelog": "## Jellyfin Phish Data Plugin v1.3.2\n\n### 🔧 Enhanced Character Encoding Fixes\n- **Comprehensive Mojibake Handling**: Global possessive apostrophe fix (âs → ’s) catches all patterns\n- **Specific Pattern Fixes**: Treyâs → Trey's, crowdâs → crowd's, Halleyâs → Halley's\n- **Enhanced UTF-8 Processing**: Improved handling of quotes, punctuation, and stray characters\n- **Show Notes Display**: Clean, readable text in show notes and setlist data\n\n### Complete Feature Set\n- Professional setlist formatting (SET 1, SET 2, ENCORE)\n- User feedback for parsing failures with comprehensive guidance\n- Smart filename parsing for show identification\n- Rich show information from Phish.net API\n- Clean text encoding throughout\n\nAddresses Issues #16, #17, and #18 with professional display and proper character encoding.",
-        "targetAbi": "10.8.0.0",
-        "sourceUrl": "https://github.com/murphy52/jellyfin-plugin-phishdata/releases/download/v1.3.2/jellyfin-plugin-phishdata-v1.3.2.zip",
-        "checksum": "7a4085bba7bef05c289d539383930096",
-        "timestamp": "2025-01-15T19:17:00Z"
-      },
-      {
-        "version": "1.3.1",
-        "changelog": "## Jellyfin Phish Data Plugin v1.3.1\n\n### 🎵 Complete Formatting Improvements\n- **Setlist Formatting**: Professional uppercase format (SET 1, SET 2, ENCORE instead of Set I, Set II, Encore)\n- **Character Encoding Fixes**: Proper apostrophes and special characters (Trey's not Treyâs)\n- **User Feedback for Parsing Failures**: Comprehensive error guidance with step-by-step instructions\n\n### Core Features\n- Smart filename parsing for show identification\n- Complete setlists with proper transitions and improved formatting\n- Rich show information from Phish.net API\n- Venue details and location metadata\n- Clean text encoding for show notes and setlists\n- Band member metadata support\n\nAddresses GitHub Issues #16, #17, and #18 with professional display and proper character encoding.",
-        "targetAbi": "10.8.0.0",
-        "sourceUrl": "https://github.com/murphy52/jellyfin-plugin-phishdata/releases/download/v1.3.1/jellyfin-plugin-phishdata-v1.3.1.zip",
-        "checksum": "1aaf420a79605a06ec74d9e490303e08",
-        "timestamp": "2025-01-15T19:08:00Z"
-      },
-      {
-        "version": "1.3.0",
-        "changelog": "## Jellyfin Phish Data Plugin v1.3.0\n\n### 🚀 New Features\n- **User Feedback for Parsing Failures**: Files that can't be matched now show helpful error messages instead of silent failures\n- **Comprehensive Guidance**: Detailed instructions for fixing filename issues, including specific Jellyfin refresh mode guidance\n- **Enhanced User Experience**: Transform parsing failures into actionable learning opportunities\n\n### Core Features\n- Smart filename parsing for show identification\n- Complete setlists with proper transitions\n- Rich show information from Phish.net API\n- Venue details and location metadata\n- Proper external links to Phish.net show pages\n- Clean text encoding for show notes\n- Band member metadata support\n\nAddresses GitHub Issue #17 and dramatically improves user experience for edge cases.",
-        "targetAbi": "10.8.0.0",
-        "sourceUrl": "https://github.com/murphy52/jellyfin-plugin-phishdata/releases/download/v1.3.0/jellyfin-plugin-phishdata-v1.3.0.zip",
-        "checksum": "6ece72bff981d96f3149415d913d8cce",
-        "timestamp": "2025-01-14T16:42:00Z"
-      },
+      }
       {
         "version": "1.2.9",
         "changelog": "## Jellyfin Phish Data Plugin v1.2.9\n\nA comprehensive metadata provider for Phish concert videos:\n- Smart filename parsing for show identification\n- Complete setlists with proper transitions\n- Rich show information from Phish.net API\n- Venue details and location metadata\n- Proper external links to Phish.net show pages\n- Clean text encoding for show notes\n- Band member metadata support\n\nInstall via Jellyfin plugin catalog or manual installation.",
