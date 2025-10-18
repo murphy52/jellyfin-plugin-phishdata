@@ -11,6 +11,7 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
 using Microsoft.Extensions.Logging;
+using Jellyfin.Data.Enums;
 using Jellyfin.Plugin.PhishNet.API.Client;
 using Jellyfin.Plugin.PhishNet.API.Models;
 using Jellyfin.Plugin.PhishNet.Parsers;
@@ -141,6 +142,7 @@ namespace Jellyfin.Plugin.PhishNet.Providers
                     
                     // Still create basic metadata from parsed filename
                     PopulateBasicMetadata(result.Item, parseResult, info.Name);
+                    AddPhishBandMembers(result);
                     result.HasMetadata = true;
                     return result;
                 }
@@ -160,6 +162,7 @@ namespace Jellyfin.Plugin.PhishNet.Providers
                     
                     // Still create basic metadata from parsed filename
                     PopulateBasicMetadata(result.Item, parseResult, info.Name);
+                    AddPhishBandMembers(result);
                     result.HasMetadata = true;
                     return result;
                 }
@@ -187,9 +190,7 @@ namespace Jellyfin.Plugin.PhishNet.Providers
 
                 // Populate full metadata
                 PopulateMetadataFromApi(result.Item, parseResult, showData, setlistData?.FirstOrDefault(), venueData, runInfo, _apiClient, cancellationToken);
-
-                // TODO: Add Phish band members to People - need to research correct Jellyfin API
-                // The PhishPersonProvider handles individual member lookups
+                AddPhishBandMembers(result);
 
                 result.HasMetadata = true;
                 _logger.LogDebug("Successfully populated metadata for {Name}", info.Name);
@@ -436,6 +437,42 @@ namespace Jellyfin.Plugin.PhishNet.Providers
         }
 
         /// <summary>
+        /// Adds the four Phish band members to the metadata result.
+        /// Jellyfin will automatically look up their details from IMDB when these are added.
+        /// </summary>
+        /// <param name="result">The metadata result to populate with band members.</param>
+        private static void AddPhishBandMembers(MetadataResult<Movie> result)
+        {
+            var bandMembers = new[]
+            {
+                "Trey Anastasio",
+                "Mike Gordon", 
+                "Jon Fishman",
+                "Page McConnell"
+            };
+
+            var people = new List<PersonInfo>();
+            foreach (var member in bandMembers)
+            {
+                people.Add(new PersonInfo
+                {
+                    Name = member,
+                    Type = PersonKind.Actor,
+                    Role = "Self"
+                });
+            }
+
+            if (result.People == null)
+            {
+                result.People = people;
+            }
+            else
+            {
+                result.People.AddRange(people);
+            }
+        }
+
+        /// <summary>
         /// Populates basic metadata from the parsed filename when API data is unavailable.
         /// </summary>
         /// <param name="movie">The movie item to populate.</param>
@@ -502,9 +539,6 @@ namespace Jellyfin.Plugin.PhishNet.Providers
             
             // Set hard-coded genres
             movie.Genres = new[] { "Concert", "Live Music" };
-            
-            // TODO: Add Phish band members as People - need to implement via PersonProvider
-            // Band members: Trey Anastasio, Mike Gordon, Jon Fishman, Page McConnell
             
             // Add tags for organization (including "Phish")
             movie.Tags = new[] { "Phish", "Concert", "Live Music" }.ToArray();
@@ -703,10 +737,6 @@ namespace Jellyfin.Plugin.PhishNet.Providers
 
             // Set hard-coded genres
             movie.Genres = new[] { "Concert", "Live Music" };
-            
-            // Note: Phish band members are handled by the separate PhishPersonProvider
-            // which provides metadata for Trey Anastasio, Mike Gordon, Jon Fishman, and Page McConnell
-            // when Jellyfin requests person information
 
             // Set genres/tags (including "Phish")
             var tags = new List<string> { "Phish", "Concert", "Live Music", "Jam Band" };

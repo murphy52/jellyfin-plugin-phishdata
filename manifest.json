@@ -10,6 +10,14 @@
     "repositoryUrl": "https://github.com/murphy52/jellyfin-plugin-phishdata",
     "versions": [
       {
+        "version": "1.4.5.0",
+        "changelog": "## Jellyfin Phish Data Plugin v1.4.5.0\n\n### 👥 People Population Fix (Issue #12) - FIXED\n\n#### ✅ Band Members Now Auto-Populate\n- Added all 4 Phish band members to movie metadata:\n  - Trey Anastasio (Guitar, Vocals)\n  - Mike Gordon (Bass, Vocals)\n  - Jon Fishman (Drums)\n  - Page McConnell (Keyboards, Piano, Vocals)\n- Jellyfin automatically looks up member details from IMDB\n- Type: Actor, Role: Self (matches manual entry format)\n- Removed unnecessary PhishPersonProvider for cleaner implementation\n\n### How It Works\n- Plugin now adds band members to each concert video automatically\n- Native Jellyfin + IMDB integration handles photos, bios, and details\n- No manual entry required - works immediately after metadata refresh\n\n### Core Features (Unchanged)\n- Smart filename parsing for show identification\n- Complete setlists with proper formatting\n- Rich show metadata from Phish.net API\n- Venue details and location information\n- Community ratings and reviews\n- Clean text encoding\n\nA major improvement making your Phish video collection even more complete!",
+        "targetAbi": "10.8.0.0",
+        "sourceUrl": "https://github.com/murphy52/jellyfin-plugin-phishdata/releases/download/v1.4.5.0/jellyfin-plugin-phishdata-v1.4.5.0.zip",
+        "checksum": "272a276d5e81a93a55db749353e57ecb",
+        "timestamp": "2025-10-18T21:00:00Z"
+      },
+      {
         "version": "1.4.4.3",
         "changelog": "## Jellyfin Phish Data Plugin v1.4.4.3\n\n### ✅ Complete Plugin Image & Configuration Fix\n\n#### 🖼️ Plugin Image Display (Issue #14) - FIXED\n- Plugin images now display correctly in all 3 Jellyfin UI locations:\n  - ✅ Plugin Catalog\n  - ✅ Plugin Details/Update Screen\n  - ✅ My Plugins Screen\n- Complete file structure with meta.json, DLL, and image file\n\n#### 🧹 Configuration Cleanup (Issue #19) - FIXED\n- Removed all non-functional settings for cleaner UI\n- Only essential API Key setting remains\n\n#### 🏷️ Plugin Branding (Issue #20) - FIXED\n- Consistent 'Phish Data' naming throughout\n- Clean configuration interface\n\n### Core Features\n- Smart filename parsing for show identification\n- Complete setlists with proper formatting\n- Rich show metadata from Phish.net API\n- Venue details and location information\n- Community ratings and reviews\n- Band member profiles\n- Clean text encoding\n\nA fully functional, polished plugin ready for production use.",
         "targetAbi": "10.8.0.0",
