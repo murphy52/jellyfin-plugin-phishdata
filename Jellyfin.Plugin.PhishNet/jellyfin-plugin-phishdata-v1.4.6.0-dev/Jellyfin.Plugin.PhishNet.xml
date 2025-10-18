@@ -1,0 +1,1080 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Jellyfin.Plugin.PhishNet</name>
+    </assembly>
+    <members>
+        <member name="T:Jellyfin.Plugin.PhishNet.API.Client.IPhishNetApiClient">
+            <summary>
+            Interface for Phish.net API client operations.
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.API.Client.IPhishNetApiClient.GetShowsAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets shows for a specific date.
+            </summary>
+            <param name="showDate">The show date in YYYY-MM-DD format.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>A list of shows for the specified date.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.API.Client.IPhishNetApiClient.GetShowsAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets shows for a specific date range.
+            </summary>
+            <param name="startDate">The start date in YYYY-MM-DD format.</param>
+            <param name="endDate">The end date in YYYY-MM-DD format.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>A list of shows in the specified date range.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.API.Client.IPhishNetApiClient.GetShowsByYearAsync(System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Gets shows for a specific year.
+            </summary>
+            <param name="year">The year to get shows for.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>A list of shows for the specified year.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.API.Client.IPhishNetApiClient.GetSetlistAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets setlist information for a specific show date.
+            </summary>
+            <param name="showDate">The show date in YYYY-MM-DD format.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>The setlist for the specified show.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.API.Client.IPhishNetApiClient.GetVenueAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets venue information by venue ID.
+            </summary>
+            <param name="venueId">The venue ID.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>Venue information.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.API.Client.IPhishNetApiClient.GetVenueAsync(System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Gets venue information by venue ID.
+            </summary>
+            <param name="venueId">The venue ID.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>Venue information.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.API.Client.IPhishNetApiClient.TestConnectionAsync(System.Threading.CancellationToken)">
+            <summary>
+            Tests the API connection and validates the API key.
+            </summary>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>True if the connection is successful and API key is valid.</returns>
+        </member>
+        <member name="T:Jellyfin.Plugin.PhishNet.API.Client.PhishNetApiClient">
+            <summary>
+            Implementation of the Phish.net API client.
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.API.Client.PhishNetApiClient.#ctor(System.Net.Http.HttpClient,Microsoft.Extensions.Logging.ILogger{Jellyfin.Plugin.PhishNet.API.Client.PhishNetApiClient},System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Jellyfin.Plugin.PhishNet.API.Client.PhishNetApiClient"/> class.
+            </summary>
+            <param name="httpClient">The HTTP client to use for API requests.</param>
+            <param name="logger">The logger instance.</param>
+            <param name="apiKey">The Phish.net API key.</param>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.API.Client.PhishNetApiClient.GetShowsAsync(System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.API.Client.PhishNetApiClient.GetShowsAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.API.Client.PhishNetApiClient.GetShowsByYearAsync(System.Int32,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.API.Client.PhishNetApiClient.GetSetlistAsync(System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.API.Client.PhishNetApiClient.GetVenueAsync(System.String,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.API.Client.PhishNetApiClient.GetVenueAsync(System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Gets venue information by venue ID.
+            </summary>
+            <param name="venueId">The venue ID.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>Venue information.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.API.Client.PhishNetApiClient.TestConnectionAsync(System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.API.Client.PhishNetApiClient.MakeApiRequestAsync``1(System.String,System.Threading.CancellationToken,System.Collections.Generic.Dictionary{System.String,System.String})">
+            <summary>
+            Makes a request to the Phish.net API with rate limiting and error handling.
+            </summary>
+            <typeparam name="T">The type of data expected in the response.</typeparam>
+            <param name="endpoint">The API endpoint to call.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <param name="additionalParams">Additional query parameters.</param>
+            <returns>The API response.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.API.Client.PhishNetApiClient.BuildApiUrl(System.String,System.Collections.Generic.Dictionary{System.String,System.String})">
+            <summary>
+            Builds the complete API URL with query parameters.
+            </summary>
+            <param name="endpoint">The API endpoint.</param>
+            <param name="additionalParams">Additional query parameters.</param>
+            <returns>The complete URL.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.API.Client.PhishNetApiClient.ApplyRateLimitAsync(System.Threading.CancellationToken)">
+            <summary>
+            Applies rate limiting to prevent API abuse.
+            </summary>
+            <param name="cancellationToken">The cancellation token.</param>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.API.Client.PhishNetApiClient.Dispose">
+            <summary>
+            Disposes the HTTP client and other resources.
+            </summary>
+        </member>
+        <member name="T:Jellyfin.Plugin.PhishNet.API.Models.ApiResponse`1">
+            <summary>
+            Generic response wrapper for all Phish.net API calls.
+            </summary>
+            <typeparam name="T">The type of data returned in the response.</typeparam>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.ApiResponse`1.Error">
+            <summary>
+            Gets or sets the error flag. false indicates success.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.ApiResponse`1.ErrorMessage">
+            <summary>
+            Gets or sets the error message. Empty if no error occurred.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.ApiResponse`1.Data">
+            <summary>
+            Gets or sets the response data.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.ApiResponse`1.IsSuccess">
+            <summary>
+            Gets a value indicating whether the API call was successful.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.ApiResponse`1.HasData">
+            <summary>
+            Gets a value indicating whether the response contains any data.
+            </summary>
+        </member>
+        <member name="T:Jellyfin.Plugin.PhishNet.API.Models.ApiResponse">
+            <summary>
+            Non-generic API response for single-item responses.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.ApiResponse.Data">
+            <summary>
+            Gets or sets the single item response data.
+            </summary>
+        </member>
+        <member name="T:Jellyfin.Plugin.PhishNet.API.Models.SetlistResponse">
+            <summary>
+            Represents a setlist API response that may contain a permalink.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.SetlistResponse.Permalink">
+            <summary>
+            Gets or sets the permalink URL to the setlist on Phish.net.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.SetlistResponse.Data">
+            <summary>
+            Gets or sets the setlist data (array of songs).
+            </summary>
+        </member>
+        <member name="T:Jellyfin.Plugin.PhishNet.API.Models.SetlistSongDto">
+            <summary>
+            Represents a song in a Phish setlist from the Phish.net API.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.SetlistSongDto.SongId">
+            <summary>
+            Gets or sets the unique song identifier.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.SetlistSongDto.ShowDate">
+            <summary>
+            Gets or sets the show date in YYYY-MM-DD format.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.SetlistSongDto.ShowId">
+            <summary>
+            Gets or sets the show ID.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.SetlistSongDto.Song">
+            <summary>
+            Gets or sets the song title.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.SetlistSongDto.Set">
+            <summary>
+            Gets or sets the set number (1, 2, 3, E for encore).
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.SetlistSongDto.Position">
+            <summary>
+            Gets or sets the position of the song within the set.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.SetlistSongDto.TransMark">
+            <summary>
+            Gets or sets the transition mark that follows this song.
+            Common values: "," (no transition), ">" (segue), "->" (direct segue)
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.SetlistSongDto.Footnote">
+            <summary>
+            Gets or sets additional notes about the song performance.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.SetlistSongDto.Permalink">
+            <summary>
+            Gets or sets the permalink URL to the setlist page on Phish.net.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.SetlistSongDto.SetName">
+            <summary>
+            Gets the clean set name for display.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.SetlistSongDto.HasTransition">
+            <summary>
+            Gets whether this song transitions/segues into the next song.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.SetlistSongDto.DisplayTransition">
+            <summary>
+            Gets the transition symbol for display (sanitized).
+            </summary>
+        </member>
+        <member name="T:Jellyfin.Plugin.PhishNet.API.Models.SetlistDto">
+            <summary>
+            Represents a Phish show setlist from the Phish.net API.
+            This is now a collection of individual song objects with transition marks.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.SetlistDto.Permalink">
+            <summary>
+            Gets or sets the permalink URL to the setlist on Phish.net.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.SetlistDto.ParsedSetlist">
+            <summary>
+            Gets the parsed setlist grouped by sets with proper transition marks.
+            </summary>
+        </member>
+        <member name="T:Jellyfin.Plugin.PhishNet.API.Models.ParsedSetlist">
+            <summary>
+            Represents a parsed setlist with structured set and song information.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.ParsedSetlist.Sets">
+            <summary>
+            Gets or sets the list of sets in the show.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.ParsedSetlist.TotalSongs">
+            <summary>
+            Gets the total number of songs played.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.ParsedSetlist.AllSongs">
+            <summary>
+            Gets all songs from all sets as a flat list.
+            </summary>
+        </member>
+        <member name="T:Jellyfin.Plugin.PhishNet.API.Models.SetInfo">
+            <summary>
+            Represents information about a set within a show.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.SetInfo.SetNumber">
+            <summary>
+            Gets or sets the set number (1, 2, 3, etc.).
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.SetInfo.SetName">
+            <summary>
+            Gets or sets the set name (Set I, Set II, Encore, etc.).
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.SetInfo.Songs">
+            <summary>
+            Gets or sets the list of songs in this set.
+            </summary>
+        </member>
+        <member name="T:Jellyfin.Plugin.PhishNet.API.Models.SongInfo">
+            <summary>
+            Represents information about a song within a set.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.SongInfo.Title">
+            <summary>
+            Gets or sets the cleaned song title.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.SongInfo.OriginalText">
+            <summary>
+            Gets or sets the original text from the setlist (may include annotations).
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.SongInfo.TransitionMark">
+            <summary>
+            Gets or sets the transition mark for this song.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.SongInfo.HasTransition">
+            <summary>
+            Gets or sets whether this song has a transition to the next song.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.SongInfo.Notes">
+            <summary>
+            Gets or sets any special notes about this song performance.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.SongInfo.DisplayTransition">
+            <summary>
+            Gets the transition symbol for display.
+            </summary>
+        </member>
+        <member name="T:Jellyfin.Plugin.PhishNet.API.Models.ShowDto">
+            <summary>
+            Represents a Phish show from the Phish.net API.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.ShowDto.ShowId">
+            <summary>
+            Gets or sets the unique show identifier.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.ShowDto.ShowDate">
+            <summary>
+            Gets or sets the show date in YYYY-MM-DD format.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.ShowDto.Venue">
+            <summary>
+            Gets or sets the venue name.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.ShowDto.City">
+            <summary>
+            Gets or sets the city where the show took place.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.ShowDto.State">
+            <summary>
+            Gets or sets the state or province where the show took place.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.ShowDto.Country">
+            <summary>
+            Gets or sets the country where the show took place.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.ShowDto.VenueId">
+            <summary>
+            Gets or sets the venue ID for cross-referencing venue information.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.ShowDto.ArtistName">
+            <summary>
+            Gets or sets the artist name (typically "Phish").
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.ShowDto.ArtistId">
+            <summary>
+            Gets or sets the artist ID.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.ShowDto.ShowNotes">
+            <summary>
+            Gets or sets additional show notes or description.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.ShowDto.SetlistData">
+            <summary>
+            Gets or sets a value indicating whether this show has a setlist available.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.ShowDto.Tour">
+            <summary>
+            Gets or sets the tour name or identifier.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.ShowDto.Tags">
+            <summary>
+            Gets or sets additional tags associated with the show.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.ShowDto.ShowYear">
+            <summary>
+            Gets or sets the show year.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.ShowDto.ShowMonth">
+            <summary>
+            Gets or sets the show month.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.ShowDto.ShowDay">
+            <summary>
+            Gets or sets the show day.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.ShowDto.TourId">
+            <summary>
+            Gets or sets the tour ID.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.ShowDto.TourName">
+            <summary>
+            Gets or sets the tour name.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.ShowDto.SetlistNotes">
+            <summary>
+            Gets or sets the setlist notes with HTML formatting.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.ShowDto.ParsedShowDate">
+            <summary>
+            Gets the parsed show date as a DateTime object.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.ShowDto.FullLocation">
+            <summary>
+            Gets the full venue location as a formatted string.
+            </summary>
+        </member>
+        <member name="T:Jellyfin.Plugin.PhishNet.API.Models.VenueDto">
+            <summary>
+            Represents a venue from the Phish.net API.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.VenueDto.VenueId">
+            <summary>
+            Gets or sets the venue ID.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.VenueDto.Name">
+            <summary>
+            Gets or sets the venue name.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.VenueDto.City">
+            <summary>
+            Gets or sets the city where the venue is located.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.VenueDto.State">
+            <summary>
+            Gets or sets the state where the venue is located.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.VenueDto.Country">
+            <summary>
+            Gets or sets the country where the venue is located.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.VenueDto.VenueInfo">
+            <summary>
+            Gets or sets additional venue information or notes.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.VenueDto.Capacity">
+            <summary>
+            Gets or sets the venue capacity if available.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.VenueDto.FullAddress">
+            <summary>
+            Gets the full address of the venue.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.API.Models.VenueDto.ParsedCapacity">
+            <summary>
+            Gets the parsed capacity as an integer value.
+            </summary>
+        </member>
+        <member name="T:Jellyfin.Plugin.PhishNet.Configuration.PluginConfiguration">
+            <summary>
+            Plugin configuration class.
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Configuration.PluginConfiguration.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Jellyfin.Plugin.PhishNet.Configuration.PluginConfiguration"/> class.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Configuration.PluginConfiguration.ApiKey">
+            <summary>
+            Gets or sets the Phish.net API key.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Configuration.PluginConfiguration.UnsplashApiKey">
+            <summary>
+            Gets or sets the Unsplash API key for venue images (optional).
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Configuration.PluginConfiguration.GooglePlacesApiKey">
+            <summary>
+            Gets or sets the Google Places API key for venue images (optional).
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Configuration.PluginConfiguration.InstagramApiKey">
+            <summary>
+            Gets or sets the Instagram API key for show-specific photos (optional).
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Configuration.PluginConfiguration.TwitterApiKey">
+            <summary>
+            Gets or sets the Twitter API key for show-specific photos (optional).
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Configuration.PluginConfiguration.FlickrApiKey">
+            <summary>
+            Gets or sets the Flickr API key for show-specific photos (optional).
+            </summary>
+        </member>
+        <member name="T:Jellyfin.Plugin.PhishNet.Constants">
+            <summary>
+            Plugin constants.
+            </summary>
+        </member>
+        <member name="F:Jellyfin.Plugin.PhishNet.Constants.PluginName">
+            <summary>
+            Plugin name.
+            </summary>
+        </member>
+        <member name="F:Jellyfin.Plugin.PhishNet.Constants.PluginGuid">
+            <summary>
+            Plugin GUID.
+            </summary>
+        </member>
+        <member name="F:Jellyfin.Plugin.PhishNet.Constants.PhishNetApiBaseUrl">
+            <summary>
+            Phish.net API base URL.
+            </summary>
+        </member>
+        <member name="F:Jellyfin.Plugin.PhishNet.Constants.PhishArtistName">
+            <summary>
+            Phish artist name for API calls.
+            </summary>
+        </member>
+        <member name="F:Jellyfin.Plugin.PhishNet.Constants.HttpClientTimeoutSeconds">
+            <summary>
+            HTTP client timeout in seconds.
+            </summary>
+        </member>
+        <member name="T:Jellyfin.Plugin.PhishNet.Parsers.PhishShowParseResult">
+            <summary>
+            Represents the result of parsing a Phish show filename.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Parsers.PhishShowParseResult.ShowDate">
+            <summary>
+            Gets or sets the show date.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Parsers.PhishShowParseResult.Venue">
+            <summary>
+            Gets or sets the venue name.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Parsers.PhishShowParseResult.City">
+            <summary>
+            Gets or sets the city.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Parsers.PhishShowParseResult.State">
+            <summary>
+            Gets or sets the state/province.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Parsers.PhishShowParseResult.ShowType">
+            <summary>
+            Gets or sets the show type (e.g., "Secret Set", "Tiny Desk", "Tonight Show").
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Parsers.PhishShowParseResult.SetNumber">
+            <summary>
+            Gets or sets the set number for multi-set shows.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Parsers.PhishShowParseResult.DayNumber">
+            <summary>
+            Gets or sets the day number for multi-day runs.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Parsers.PhishShowParseResult.IsSpecialEvent">
+            <summary>
+            Gets or sets a value indicating whether this is a special event.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Parsers.PhishShowParseResult.Confidence">
+            <summary>
+            Gets or sets the confidence score of the parsing (0.0 to 1.0).
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Parsers.PhishShowParseResult.OriginalFilename">
+            <summary>
+            Gets or sets the raw filename that was parsed.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Parsers.PhishShowParseResult.Metadata">
+            <summary>
+            Gets or sets additional metadata found during parsing.
+            </summary>
+        </member>
+        <member name="T:Jellyfin.Plugin.PhishNet.Parsers.PhishFileNameParser">
+            <summary>
+            Parses Phish show filenames to extract show information.
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Parsers.PhishFileNameParser.#ctor(Microsoft.Extensions.Logging.ILogger{Jellyfin.Plugin.PhishNet.Parsers.PhishFileNameParser})">
+            <summary>
+            Initializes a new instance of the <see cref="T:Jellyfin.Plugin.PhishNet.Parsers.PhishFileNameParser"/> class.
+            </summary>
+            <param name="logger">The logger.</param>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Parsers.PhishFileNameParser.Parse(System.String,System.String)">
+            <summary>
+            Parses a filename to extract Phish show information.
+            </summary>
+            <param name="filename">The filename to parse.</param>
+            <param name="directoryPath">Optional directory path for additional context.</param>
+            <returns>The parse result.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Parsers.PhishFileNameParser.ApplyDirectoryContext(Jellyfin.Plugin.PhishNet.Parsers.PhishShowParseResult,System.String)">
+            <summary>
+            Applies additional context from the directory path.
+            </summary>
+            <param name="result">The parse result to enhance.</param>
+            <param name="directoryPath">The directory path.</param>
+        </member>
+        <member name="T:Jellyfin.Plugin.PhishNet.Plugin">
+            <summary>
+            The main plugin class for the Phish.net metadata provider.
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Plugin.#ctor(MediaBrowser.Common.Configuration.IApplicationPaths,MediaBrowser.Model.Serialization.IXmlSerializer,System.Net.Http.IHttpClientFactory)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Jellyfin.Plugin.PhishNet.Plugin"/> class.
+            </summary>
+            <param name="applicationPaths">Instance of the <see cref="T:MediaBrowser.Common.Configuration.IApplicationPaths"/> interface.</param>
+            <param name="xmlSerializer">Instance of the <see cref="T:MediaBrowser.Model.Serialization.IXmlSerializer"/> interface.</param>
+            <param name="httpClientFactory">Instance of the <see cref="T:System.Net.Http.IHttpClientFactory"/> interface.</param>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Plugin.Instance">
+            <summary>
+            Gets the current plugin instance.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Plugin.Name">
+            <inheritdoc />
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Plugin.Id">
+            <inheritdoc />
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Plugin.DataFolderPath">
+            <summary>
+            Gets the plugin's data folder path.
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Plugin.GetHttpClient">
+            <summary>
+            Creates an HTTP client with proper user agent headers.
+            </summary>
+            <returns>An HTTP client configured for Phish.net API calls.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Plugin.GetPages">
+            <inheritdoc />
+        </member>
+        <member name="T:Jellyfin.Plugin.PhishNet.PluginServiceRegistrator">
+            <summary>
+            Plugin service registrator to ensure all providers are properly registered.
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.PluginServiceRegistrator.RegisterServices(Microsoft.Extensions.DependencyInjection.IServiceCollection,MediaBrowser.Controller.IServerApplicationHost)">
+            <inheritdoc />
+        </member>
+        <member name="T:Jellyfin.Plugin.PhishNet.Providers.ExternalIds.PhishNetExternalId">
+            <summary>
+            External ID provider for Phish.net show pages.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Providers.ExternalIds.PhishNetExternalId.ProviderName">
+            <inheritdoc />
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Providers.ExternalIds.PhishNetExternalId.Key">
+            <inheritdoc />
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Providers.ExternalIds.PhishNetExternalId.Type">
+            <inheritdoc />
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Providers.ExternalIds.PhishNetExternalId.UrlFormatString">
+            <inheritdoc />
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Providers.ExternalIds.PhishNetExternalId.Supports(MediaBrowser.Model.Entities.IHasProviderIds)">
+            <inheritdoc />
+        </member>
+        <member name="T:Jellyfin.Plugin.PhishNet.Providers.PhishImageProvider">
+            <summary>
+            Provides images for Phish concert videos using multiple sources.
+            Priority: Venue photos > Generic concert images > Placeholder images
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Providers.PhishImageProvider.Name">
+            <summary>
+            Gets the provider name.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Providers.PhishImageProvider.Order">
+            <summary>
+            Gets the provider order (lower = higher priority).
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Providers.PhishImageProvider.#ctor(Microsoft.Extensions.Logging.ILogger{Jellyfin.Plugin.PhishNet.Providers.PhishImageProvider},System.Net.Http.IHttpClientFactory)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Jellyfin.Plugin.PhishNet.Providers.PhishImageProvider"/> class.
+            </summary>
+            <param name="logger">The logger.</param>
+            <param name="httpClientFactory">The HTTP client factory.</param>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Providers.PhishImageProvider.GetSupportedImages(MediaBrowser.Controller.Entities.BaseItem)">
+            <summary>
+            Gets the supported image types for this provider.
+            </summary>
+            <param name="item">The item to get images for.</param>
+            <returns>The supported image types.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Providers.PhishImageProvider.Supports(MediaBrowser.Controller.Entities.BaseItem)">
+            <summary>
+            Determines if this provider supports the given item.
+            </summary>
+            <param name="item">The item to check.</param>
+            <returns>True if the item is supported.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Providers.PhishImageProvider.GetImages(MediaBrowser.Controller.Entities.BaseItem,System.Threading.CancellationToken)">
+            <summary>
+            Gets available images for a Phish show.
+            </summary>
+            <param name="item">The movie item.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>Available remote image info.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Providers.PhishImageProvider.GetImageResponse(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets the image response for a given URL.
+            </summary>
+            <param name="url">The image URL.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>The HTTP response for the image.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Providers.PhishImageProvider.AddShowSpecificPhotosAsync(System.Collections.Generic.List{MediaBrowser.Model.Providers.RemoteImageInfo},Jellyfin.Plugin.PhishNet.Parsers.PhishShowParseResult,System.Threading.CancellationToken)">
+            <summary>
+            Adds show-specific photos of Phish performing at this actual show.
+            This is the highest priority - real photos from the actual performance!
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Providers.PhishImageProvider.AddVenueImagesAsync(System.Collections.Generic.List{MediaBrowser.Model.Providers.RemoteImageInfo},Jellyfin.Plugin.PhishNet.Parsers.PhishShowParseResult,System.Threading.CancellationToken)">
+            <summary>
+            Adds venue-based images using various venue photo APIs.
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Providers.PhishImageProvider.AddVenuePhotosFromApisAsync(System.Collections.Generic.List{MediaBrowser.Model.Providers.RemoteImageInfo},System.String,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Adds venue photos from external APIs (Google Places, Unsplash, etc.).
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Providers.PhishImageProvider.AddKnownVenueImagesAsync(System.Collections.Generic.List{MediaBrowser.Model.Providers.RemoteImageInfo},System.String)">
+            <summary>
+            Adds images for well-known Phish venues with reliable image sources.
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Providers.PhishImageProvider.AddGenericPhishImagesAsync(System.Collections.Generic.List{MediaBrowser.Model.Providers.RemoteImageInfo},Jellyfin.Plugin.PhishNet.Parsers.PhishShowParseResult,System.Threading.CancellationToken)">
+            <summary>
+            Adds generic Phish concert images for fallback.
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Providers.PhishImageProvider.AddSpecialEventImagesAsync(System.Collections.Generic.List{MediaBrowser.Model.Providers.RemoteImageInfo},Jellyfin.Plugin.PhishNet.Parsers.PhishShowParseResult,System.Threading.CancellationToken)">
+            <summary>
+            Adds special event or date-specific images.
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Providers.PhishImageProvider.EnsureApiClientAsync(System.Threading.CancellationToken)">
+            <summary>
+            Ensures the API client is initialized.
+            </summary>
+        </member>
+        <member name="T:Jellyfin.Plugin.PhishNet.Providers.VenueImageInfo">
+            <summary>
+            Information about venue images.
+            </summary>
+        </member>
+        <member name="T:Jellyfin.Plugin.PhishNet.Providers.RunInfo">
+            <summary>
+            Information about a multi-night run at a venue.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Providers.RunInfo.IsPartOfRun">
+            <summary>
+            Gets or sets whether this show is part of a multi-night run.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Providers.RunInfo.NightNumber">
+            <summary>
+            Gets or sets the night number within the run (1, 2, 3, etc.).
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Providers.RunInfo.TotalNights">
+            <summary>
+            Gets or sets the total number of nights in the run.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Providers.RunInfo.RunDates">
+            <summary>
+            Gets or sets the dates of all shows in the run.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Providers.RunInfo.NightIndicator">
+            <summary>
+            Gets the formatted night indicator (e.g., "N1", "N2", "N3").
+            </summary>
+        </member>
+        <member name="T:Jellyfin.Plugin.PhishNet.Providers.PhishNetMovieProvider">
+            <summary>
+            Provides metadata for Phish concert videos by parsing filenames and querying the Phish.net API.
+            This provider is automatically registered by Jellyfin through reflection.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Providers.PhishNetMovieProvider.Name">
+            <summary>
+            Gets the provider name.
+            </summary>
+        </member>
+        <member name="P:Jellyfin.Plugin.PhishNet.Providers.PhishNetMovieProvider.Order">
+            <summary>
+            Gets the provider order (lower = higher priority).
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Providers.PhishNetMovieProvider.#ctor(Microsoft.Extensions.Logging.ILogger{Jellyfin.Plugin.PhishNet.Providers.PhishNetMovieProvider},System.Net.Http.IHttpClientFactory)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Jellyfin.Plugin.PhishNet.Providers.PhishNetMovieProvider"/> class.
+            </summary>
+            <param name="logger">The logger.</param>
+            <param name="httpClientFactory">The HTTP client factory.</param>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Providers.PhishNetMovieProvider.GetSupportedImages(MediaBrowser.Controller.Entities.BaseItem)">
+            <summary>
+            Gets the supported images for Phish shows.
+            </summary>
+            <param name="item">The movie item.</param>
+            <returns>The supported image types.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Providers.PhishNetMovieProvider.GetMetadata(MediaBrowser.Controller.Providers.MovieInfo,System.Threading.CancellationToken)">
+            <summary>
+            Gets metadata for a Phish concert video.
+            </summary>
+            <param name="info">The movie info containing filename and path information.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>The metadata result.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Providers.PhishNetMovieProvider.GetImageInfos(MediaBrowser.Controller.Entities.BaseItem,System.Threading.CancellationToken)">
+            <summary>
+            Gets available images for a Phish show.
+            </summary>
+            <param name="item">The movie item.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>The available remote image info.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Providers.PhishNetMovieProvider.GetSearchResults(MediaBrowser.Controller.Providers.MovieInfo,System.Threading.CancellationToken)">
+            <summary>
+            Searches for Phish shows based on the provided movie info.
+            </summary>
+            <param name="searchInfo">The search information.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>The search results.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Providers.PhishNetMovieProvider.GetImageResponse(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets an image response from a URL.
+            </summary>
+            <param name="url">The image URL.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>The HTTP response for the image.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Providers.PhishNetMovieProvider.GetHttpClient">
+            <summary>
+            Gets the HTTP client for this provider.
+            </summary>
+            <returns>The HTTP client.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Providers.PhishNetMovieProvider.DetectRunInfoAsync(Jellyfin.Plugin.PhishNet.API.Models.ShowDto,System.DateTime,System.Threading.CancellationToken)">
+            <summary>
+            Detects if a show is part of a multi-night run and determines the night number.
+            </summary>
+            <param name="currentShow">The current show data.</param>
+            <param name="showDate">The show date.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>Run information for the show.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Providers.PhishNetMovieProvider.FindConsecutiveRuns(System.Collections.Generic.List{System.DateTime})">
+            <summary>
+            Finds groups of consecutive dates that represent multi-night runs.
+            </summary>
+            <param name="dates">The list of show dates to analyze.</param>
+            <returns>A list of consecutive date runs.</returns>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Providers.PhishNetMovieProvider.EnsureApiClientAsync(System.Threading.CancellationToken)">
+            <summary>
+            Ensures the API client is initialized with configuration.
+            </summary>
+            <param name="cancellationToken">The cancellation token.</param>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Providers.PhishNetMovieProvider.AddPhishBandMembers(MediaBrowser.Controller.Providers.MetadataResult{MediaBrowser.Controller.Entities.Movies.Movie})">
+            <summary>
+            Adds the four Phish band members to the metadata result.
+            Jellyfin will automatically look up their details from IMDB when these are added.
+            </summary>
+            <param name="result">The metadata result to populate with band members.</param>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Providers.PhishNetMovieProvider.PopulateBasicMetadata(MediaBrowser.Controller.Entities.Movies.Movie,Jellyfin.Plugin.PhishNet.Parsers.PhishShowParseResult,System.String)">
+            <summary>
+            Populates basic metadata from the parsed filename when API data is unavailable.
+            </summary>
+            <param name="movie">The movie item to populate.</param>
+            <param name="parseResult">The filename parse result.</param>
+            <param name="originalName">The original filename.</param>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Providers.PhishNetMovieProvider.PopulateMetadataFromApi(MediaBrowser.Controller.Entities.Movies.Movie,Jellyfin.Plugin.PhishNet.Parsers.PhishShowParseResult,Jellyfin.Plugin.PhishNet.API.Models.ShowDto,Jellyfin.Plugin.PhishNet.API.Models.SetlistDto,Jellyfin.Plugin.PhishNet.API.Models.VenueDto,Jellyfin.Plugin.PhishNet.Providers.RunInfo,Jellyfin.Plugin.PhishNet.API.Client.IPhishNetApiClient,System.Threading.CancellationToken)">
+            <summary>
+            Populates comprehensive metadata using API data.
+            </summary>
+            <param name="movie">The movie item to populate.</param>
+            <param name="parseResult">The filename parse result.</param>
+            <param name="showData">The show data from the API.</param>
+            <param name="setlistData">The setlist data from the API with transition marks.</param>
+            <param name="venueData">The venue data from the API.</param>
+            <param name="runInfo">The multi-night run information.</param>
+            <param name="client">The API client for additional data requests.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Providers.PhishNetMovieProvider.PopulateLowConfidenceGuidance(MediaBrowser.Controller.Entities.Movies.Movie,System.String,System.Double)">
+            <summary>
+            Populates metadata with user guidance when parsing confidence is too low.
+            </summary>
+            <param name="movie">The movie item to populate with guidance.</param>
+            <param name="originalName">The original name/title that failed to parse.</param>
+            <param name="confidence">The confidence score that was too low.</param>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Providers.PhishNetMovieProvider.CleanText(System.String)">
+            <summary>
+            Cleans text by fixing common character encoding issues from the Phish.net API.
+            </summary>
+            <param name="text">The text to clean.</param>
+            <returns>The cleaned text with proper characters.</returns>
+        </member>
+        <member name="T:Jellyfin.Plugin.PhishNet.Services.ExternalImageService">
+            <summary>
+            Service for fetching images from external APIs.
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Services.ExternalImageService.GetWikipediaImagesAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets venue images from Wikipedia API.
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Services.ExternalImageService.GetUnsplashImagesAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets venue images from Unsplash API (requires API key).
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Services.ExternalImageService.GetGooglePlacesImagesAsync(System.String,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets venue images from Google Places API (requires API key).
+            </summary>
+        </member>
+        <member name="T:Jellyfin.Plugin.PhishNet.Services.ShowPhotoService">
+            <summary>
+            Service for fetching show-specific photos of Phish performing.
+            Priority: Official photos > High-quality fan photos > Social media photos
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Services.ShowPhotoService.GetShowPhotosAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Gets photos of Phish performing at a specific show.
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Services.ShowPhotoService.AddPhishNetPhotosAsync(System.Collections.Generic.List{MediaBrowser.Model.Providers.RemoteImageInfo},System.String,System.Threading.CancellationToken)">
+            <summary>
+            Scrapes Phish.net show page for any embedded photos or photo gallery links.
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Services.ShowPhotoService.AddSocialMediaPhotosAsync(System.Collections.Generic.List{MediaBrowser.Model.Providers.RemoteImageInfo},System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Searches social media platforms for show-specific photos using hashtags and date filters.
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Services.ShowPhotoService.AddFanPhotosAsync(System.Collections.Generic.List{MediaBrowser.Model.Providers.RemoteImageInfo},System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Searches fan photography platforms like Flickr, Reddit, etc.
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Services.ShowPhotoService.AddLivePhishPhotosAsync(System.Collections.Generic.List{MediaBrowser.Model.Providers.RemoteImageInfo},System.String,System.Threading.CancellationToken)">
+            <summary>
+            Searches LivePhish.com for official show artwork/photos.
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Services.ShowPhotoService.SearchInstagramHashtagsAsync(System.Collections.Generic.List{MediaBrowser.Model.Providers.RemoteImageInfo},System.Collections.Generic.List{System.String},System.String,System.Threading.CancellationToken)">
+            <summary>
+            Searches Instagram hashtags for show photos (requires Instagram API key).
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Services.ShowPhotoService.SearchTwitterHashtagsAsync(System.Collections.Generic.List{MediaBrowser.Model.Providers.RemoteImageInfo},System.Collections.Generic.List{System.String},System.String,System.Threading.CancellationToken)">
+            <summary>
+            Searches Twitter/X for show photos (requires Twitter API key).
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Services.ShowPhotoService.SearchFlickrAsync(System.Collections.Generic.List{MediaBrowser.Model.Providers.RemoteImageInfo},System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Searches Flickr for Creative Commons show photos.
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Services.ShowPhotoService.SearchRedditAsync(System.Collections.Generic.List{MediaBrowser.Model.Providers.RemoteImageInfo},System.String,System.Threading.CancellationToken)">
+            <summary>
+            Searches Reddit r/phish for show photos.
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Services.ShowPhotoService.ExtractPhotoUrlsFromHtml(System.String)">
+            <summary>
+            Extracts photo URLs from HTML content.
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Services.ShowPhotoService.IsValidPhotoUrl(System.String)">
+            <summary>
+            Validates if a URL appears to be a valid photo.
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Services.ShowPhotoService.FilterAndRankPhotos(System.Collections.Generic.List{MediaBrowser.Model.Providers.RemoteImageInfo})">
+            <summary>
+            Filters and ranks photos by quality and relevance.
+            </summary>
+        </member>
+        <member name="M:Jellyfin.Plugin.PhishNet.Services.ShowPhotoService.GetPhotoQualityScore(MediaBrowser.Model.Providers.RemoteImageInfo)">
+            <summary>
+            Calculates a quality score for photo ranking.
+            </summary>
+        </member>
+    </members>
+</doc>

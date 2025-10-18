@@ -10,6 +10,7 @@ using Microsoft.Extensions.Http;
 using Jellyfin.Plugin.PhishNet.Providers;
 using Jellyfin.Plugin.PhishNet.Configuration;
 using Jellyfin.Plugin.PhishNet;
+using Jellyfin.Plugin.PhishNet.Services;
 
 namespace MetadataTest
 {
@@ -29,12 +30,16 @@ namespace MetadataTest
 
             var logger = loggerFactory.CreateLogger<PhishNetMovieProvider>();
             var httpClientFactory = services.GetRequiredService<IHttpClientFactory>();
+            var collectionLogger = loggerFactory.CreateLogger<PhishCollectionService>();
 
             // Initialize the plugin instance with configuration
             InitializePluginInstance();
 
+            // Create a mock collection service (will not work without real ILibraryManager)
+            var mockCollectionService = new PhishCollectionService(null!, collectionLogger);
+
             // Create the metadata provider
-            var provider = new PhishNetMovieProvider(logger, httpClientFactory);
+            var provider = new PhishNetMovieProvider(logger, httpClientFactory, mockCollectionService);
 
             // Test cases from your actual collection
             var testCases = new List<(string name, string path)>

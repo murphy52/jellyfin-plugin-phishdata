@@ -15,6 +15,7 @@ using Jellyfin.Data.Enums;
 using Jellyfin.Plugin.PhishNet.API.Client;
 using Jellyfin.Plugin.PhishNet.API.Models;
 using Jellyfin.Plugin.PhishNet.Parsers;
+using Jellyfin.Plugin.PhishNet.Services;
 
 namespace Jellyfin.Plugin.PhishNet.Providers
 {
@@ -57,6 +58,7 @@ namespace Jellyfin.Plugin.PhishNet.Providers
     {
         private readonly ILogger<PhishNetMovieProvider> _logger;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly PhishCollectionService _collectionService;
         private readonly PhishFileNameParser _filenameParser;
         private PhishNetApiClient? _apiClient;
 
@@ -75,10 +77,12 @@ namespace Jellyfin.Plugin.PhishNet.Providers
         /// </summary>
         /// <param name="logger">The logger.</param>
         /// <param name="httpClientFactory">The HTTP client factory.</param>
-        public PhishNetMovieProvider(ILogger<PhishNetMovieProvider> logger, IHttpClientFactory httpClientFactory)
+        /// <param name="collectionService">The collection service.</param>
+        public PhishNetMovieProvider(ILogger<PhishNetMovieProvider> logger, IHttpClientFactory httpClientFactory, PhishCollectionService collectionService)
         {
             _logger = logger;
             _httpClientFactory = httpClientFactory;
+            _collectionService = collectionService;
             var parseLogger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<PhishFileNameParser>();
             _filenameParser = new PhishFileNameParser(parseLogger);
         }
@@ -207,6 +211,12 @@ namespace Jellyfin.Plugin.PhishNet.Providers
                 // Populate full metadata
                 PopulateMetadataFromApi(result.Item, parseResult, showData, setlistData?.FirstOrDefault(), venueData, runInfo, _apiClient, cancellationToken);
                 AddPhishBandMembers(result);
+
+                // Process multi-night run collections (async, non-blocking)
+                if (runInfo != null && runInfo.IsPartOfRun && runInfo.TotalNights > 1)
+                {
+                    _ = Task.Run(async () => await ProcessCollectionAsync(result.Item, showData, runInfo));
+                }
 
                 result.HasMetadata = true;
                 _logger.LogDebug("Successfully populated metadata for {Name}", info.Name);
@@ -858,6 +868,40 @@ namespace Jellyfin.Plugin.PhishNet.Providers
             
             // Set a generic date to avoid null reference issues
             movie.DateCreated = DateTime.Now;
+        }
+        
+        /// <summary>
+        /// Processes collection creation for multi-night runs.
+        /// </summary>
+        /// <param name="movie">The movie to process.</param>
+        /// <param name="showData">The show data from the API.</param>
+        /// <param name="runInfo">The run information.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        private async Task ProcessCollectionAsync(Movie movie, ShowDto showData, RunInfo runInfo)
+        {
+            try
+            {
+                // Extract city name and year from show data
+                var cityName = showData.City;
+                var year = DateTime.Parse(showData.ShowDate).Year;
+                
+                // Skip if we don't have required information
+                if (string.IsNullOrEmpty(cityName) || runInfo.RunDates.Count == 0)
+                {
+                    _logger.LogDebug("Skipping collection processing - missing city name or run dates");
+                    return;
+                }
+                
+                _logger.LogInformation("Processing collection for {MovieName} - {City} {Year} run ({NightCount} nights)",
+                    movie.Name, cityName, year, runInfo.TotalNights);
+                    
+                // Use the collection service to process the multi-night run
+                await _collectionService.ProcessMultiNightRunCollectionAsync(movie, cityName, year, runInfo.RunDates);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing collection for movie {MovieName}", movie.Name);
+            }
         }
         
         /// <summary>

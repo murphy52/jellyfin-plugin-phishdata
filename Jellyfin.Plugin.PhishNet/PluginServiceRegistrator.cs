@@ -3,6 +3,7 @@ using MediaBrowser.Controller.Plugins;
 using Microsoft.Extensions.DependencyInjection;
 using Jellyfin.Plugin.PhishNet.Providers;
 using Jellyfin.Plugin.PhishNet.Providers.ExternalIds;
+using Jellyfin.Plugin.PhishNet.Services;
 
 namespace Jellyfin.Plugin.PhishNet
 {
@@ -19,6 +20,9 @@ namespace Jellyfin.Plugin.PhishNet
             
             // Register external ID provider for Phish.net links
             serviceCollection.AddTransient<PhishNetExternalId>();
+            
+            // Register collection service for multi-night runs
+            serviceCollection.AddTransient<PhishCollectionService>();
         }
     }
 }
