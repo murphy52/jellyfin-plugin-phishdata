@@ -114,10 +114,26 @@ namespace Jellyfin.Plugin.PhishNet.Providers
 
             try
             {
-                _logger.LogDebug("Processing movie info for: {Name}", info.Name);
+                _logger.LogDebug("Processing movie info for: {Name} (Path: {Path})", info.Name, info.Path);
 
-                // Parse the filename to extract show information
+                // Parse using the Name first (which could be metadata title or filename), then fallback to filename from path
                 var parseResult = _filenameParser.Parse(info.Name, info.Path);
+                
+                // If Name parsing failed and it doesn't look like a filename, try parsing the actual filename from path
+                if (parseResult.Confidence < 0.25 && !string.IsNullOrEmpty(info.Path))
+                {
+                    var filename = System.IO.Path.GetFileNameWithoutExtension(info.Path);
+                    if (!string.Equals(info.Name, filename, StringComparison.OrdinalIgnoreCase))
+                    {
+                        _logger.LogDebug("Name '{Name}' failed to parse, trying filename '{Filename}'", info.Name, filename);
+                        var fallbackResult = _filenameParser.Parse(filename, info.Path);
+                        if (fallbackResult.Confidence > parseResult.Confidence)
+                        {
+                            parseResult = fallbackResult;
+                            _logger.LogInformation("Using filename-based parsing instead of Name field");
+                        }
+                    }
+                }
                 
                 if (parseResult.Confidence < 0.25)
                 {
@@ -787,10 +803,10 @@ namespace Jellyfin.Plugin.PhishNet.Providers
         }
         
         /// <summary>
-        /// Populates metadata with user guidance when filename parsing confidence is too low.
+        /// Populates metadata with user guidance when parsing confidence is too low.
         /// </summary>
         /// <param name="movie">The movie item to populate with guidance.</param>
-        /// <param name="originalName">The original filename that failed to parse.</param>
+        /// <param name="originalName">The original name/title that failed to parse.</param>
         /// <param name="confidence">The confidence score that was too low.</param>
         private static void PopulateLowConfidenceGuidance(Movie movie, string originalName, double confidence)
         {
@@ -802,40 +818,43 @@ namespace Jellyfin.Plugin.PhishNet.Providers
             {
                 "⚠️ PHISH.NET METADATA MATCHING FAILED",
                 "",
-                $"Based on the filename \"{originalName}\", we were unable to automatically match this video to a show in the Phish.net database (confidence: {confidence:P0}).",
+                $"Based on the title/filename \"{originalName}\", we were unable to automatically match this video to a show in the Phish.net database (confidence: {confidence:P0}).",
                 "",
-                "TO FIX THIS ISSUE:",
+                "TO FIX THIS ISSUE (Choose the easier option):",
                 "",
-                "1. Rename your file to include the show date in one of these formats:",
+                "📝 OPTION 1 - Edit Metadata Title (EASIER):",
+                "1. Right-click this video in Jellyfin → Manage → Edit Metadata",
+                "2. Change the Title to include the show date in one of these formats:",
                 "   • Phish 1997-11-22 (recommended)",
-                "   • ph1997-11-22", 
+                "   • ph1997-11-22",
                 "   • Phish Albany 11-22-97",
                 "   • 1997.11.22 Phish",
-                "   • Phish 1997-11-22 Foo Bar Venue",
+                "   • Phish 1997-11-22 Hampton Coliseum",
+                "3. Save changes",
+                "4. Refresh metadata: More → Refresh Metadata → Replace all metadata",
                 "",
-                "2. After renaming, refresh the metadata:",
-                "   • Right-click this video in Jellyfin",
-                "   • Select \"Refresh Metadata\"",
-                "   • Choose \"Replace all metadata\" (recommended)",
-                "   • Click \"OK\"",
+                "📁 OPTION 2 - Rename File (Alternative):",
+                "1. Rename your file to include the show date (same formats as above)",
+                "2. Refresh the library to detect the renamed file",
+                "3. Refresh metadata: More → Refresh Metadata → Replace all metadata",
                 "",
                 "REFRESH MODE GUIDE:",
+                "• \"Search for missing metadata\" - Only fills in missing data",
+                "• \"Replace all metadata\" - Completely refreshes all data (RECOMMENDED)",
                 "• \"Scan for new and updated files\" - Only scans file system changes",
-                "• \"Search for missing metadata\" - Only fills in missing data", 
-                "• \"Replace all metadata\" - Completely refreshes all data (use this!)",
                 "",
                 "NEED HELP FINDING THE SHOW DATE?",
                 "Visit https://phish.net to search for shows by venue, city, or approximate date.",
                 "",
-                "Once you've renamed the file with a proper date format, this plugin will automatically",
-                "fetch detailed show information, setlists, and venue data from Phish.net."
+                "Once you've updated the title or filename with a proper date format, this plugin",
+                "will automatically fetch detailed show information, setlists, and venue data from Phish.net."
             };
             
             movie.Overview = string.Join("\n", guidanceLines);
             
             // Set basic metadata 
             movie.Genres = new[] { "Concert", "Live Music" };
-            movie.Tags = new[] { "Phish", "Parsing Error", "Needs Rename" };
+            movie.Tags = new[] { "Phish", "Parsing Error", "Needs Title Fix" };
             
             // Set a generic date to avoid null reference issues
             movie.DateCreated = DateTime.Now;

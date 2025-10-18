@@ -47,7 +47,9 @@ namespace MetadataTest
                 ("ph2023-08-31.Dicks.CO.vod.trimmed.6800BR.1080.sky.mkv", "/test/Dicks 2023/ph2023-08-31.Dicks.CO.vod.trimmed.6800BR.1080.sky.mkv"),
                 // Processed title format (the problematic case)
                 ("N2 Phish Hampton 11-22-1997", "/test/Concerts/Phish/Alpharetta 2025/ph1997-11-22.mkv"),
-                ("ph1997-11-22.mkv", "/test/Concerts/Phish/Alpharetta 2025/ph1997-11-22.mkv")
+                ("ph1997-11-22.mkv", "/test/Concerts/Phish/Alpharetta 2025/ph1997-11-22.mkv"),
+                // Test case: metadata title different from filename (Issue #22 scenario)
+                ("Charleston 2025", "/test/ph2025-04-18.Charleston.SC.mkv")
             };
 
             Console.WriteLine("=== Phish.net Metadata Provider Test ===\n");
@@ -116,8 +118,16 @@ namespace MetadataTest
                             Console.WriteLine($"🔗 Provider IDs: (none)");
                         }
                         
-                        // Display People information (note: band members need PersonProvider)
-                        Console.WriteLine($"👥 People: Band members will be populated via separate PersonProvider");
+                        // Display People information
+                        if (result.People?.Count > 0)
+                        {
+                            var peopleList = result.People.Select(p => $"{p.Name} ({p.Type}: {p.Role})");
+                            Console.WriteLine($"👥 People: {string.Join(", ", peopleList)}");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"👥 People: (none)");
+                        }
                     }
 
                     // Test image support
