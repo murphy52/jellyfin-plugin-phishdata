@@ -23,6 +23,9 @@ namespace Jellyfin.Plugin.PhishNet
             
             // Register collection service for multi-night runs
             serviceCollection.AddTransient<PhishCollectionService>();
+            
+            // Register library event handler for post-save collection processing
+            serviceCollection.AddSingleton<PhishCollectionLibraryHandler>();
         }
     }
 }

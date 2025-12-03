@@ -8,6 +8,7 @@ using System.Net.Http;
 using Jellyfin.Plugin.PhishNet.Providers;
 using Jellyfin.Plugin.PhishNet.API.Client;
 using Jellyfin.Plugin.PhishNet.API.Models;
+using Jellyfin.Plugin.PhishNet.Services;
 
 namespace Jellyfin.Plugin.PhishNet.Tests.Providers;
 
@@ -16,6 +17,7 @@ public class PhishNetMovieProviderTests
     private readonly Mock<ILogger<PhishNetMovieProvider>> _mockLogger;
     private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly Mock<HttpClient> _mockHttpClient;
+    private readonly Mock<PhishCollectionService> _mockCollectionService;
     private readonly PhishNetMovieProvider _provider;
 
     public PhishNetMovieProviderTests()
@@ -23,11 +25,12 @@ public class PhishNetMovieProviderTests
         _mockLogger = new Mock<ILogger<PhishNetMovieProvider>>();
         _mockHttpClientFactory = new Mock<IHttpClientFactory>();
         _mockHttpClient = new Mock<HttpClient>();
+        _mockCollectionService = new Mock<PhishCollectionService>();
         
         _mockHttpClientFactory.Setup(x => x.CreateClient())
             .Returns(_mockHttpClient.Object);
             
-        _provider = new PhishNetMovieProvider(_mockLogger.Object, _mockHttpClientFactory.Object);
+        _provider = new PhishNetMovieProvider(_mockLogger.Object, _mockHttpClientFactory.Object, _mockCollectionService.Object);
     }
 
     [Fact]

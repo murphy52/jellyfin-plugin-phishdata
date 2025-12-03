@@ -212,10 +212,24 @@ namespace Jellyfin.Plugin.PhishNet.Providers
                 PopulateMetadataFromApi(result.Item, parseResult, showData, setlistData?.FirstOrDefault(), venueData, runInfo, _apiClient, cancellationToken);
                 AddPhishBandMembers(result);
 
-                // Process multi-night run collections (async, non-blocking)
-                if (runInfo != null && runInfo.IsPartOfRun && runInfo.TotalNights > 1)
+                // Store collection metadata in the movie's metadata for later processing by library events
+                if (parseResult.DayNumber.HasValue && parseResult.DayNumber > 0 && parseResult.ShowDate.HasValue)
                 {
-                    _ = Task.Run(async () => await ProcessCollectionAsync(result.Item, showData, runInfo));
+                    _logger.LogInformation("COLLECTION DEBUG: Storing collection metadata for later processing - DayNumber {DayNumber}", parseResult.DayNumber);
+                    
+                    // Store collection info in custom metadata that library events can read
+                    result.Item.SetProviderId("PhishCollectionCity", parseResult.City ?? showData?.City ?? "Unknown");
+                    result.Item.SetProviderId("PhishCollectionYear", (parseResult.ShowDate.Value.Year).ToString());
+                    result.Item.SetProviderId("PhishCollectionDayNumber", parseResult.DayNumber.Value.ToString());
+                    result.Item.SetProviderId("PhishCollectionDate", parseResult.ShowDate.Value.ToString("yyyy-MM-dd"));
+                    
+                    _logger.LogInformation("COLLECTION DEBUG: Stored collection metadata - City: {City}, Year: {Year}, Day: {Day}", 
+                        parseResult.City ?? showData?.City ?? "Unknown", parseResult.ShowDate.Value.Year, parseResult.DayNumber);
+                }
+                else
+                {
+                    _logger.LogDebug("COLLECTION DEBUG: Not storing collection metadata - DayNumber is {DayNumber}, ShowDate is {ShowDate}", 
+                        parseResult.DayNumber, parseResult.ShowDate?.ToString("yyyy-MM-dd"));
                 }
 
                 result.HasMetadata = true;
@@ -871,36 +885,72 @@ namespace Jellyfin.Plugin.PhishNet.Providers
         }
         
         /// <summary>
-        /// Processes collection creation for multi-night runs.
+        /// Processes collection creation for multi-night runs with delay to ensure valid movie ID.
         /// </summary>
         /// <param name="movie">The movie to process.</param>
         /// <param name="showData">The show data from the API.</param>
-        /// <param name="runInfo">The run information.</param>
+        /// <param name="parseResult">The parse result with show information.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
-        private async Task ProcessCollectionAsync(Movie movie, ShowDto showData, RunInfo runInfo)
+        private async Task ProcessCollectionWithDelayAsync(Movie movie, ShowDto showData, PhishShowParseResult parseResult)
         {
             try
             {
-                // Extract city name and year from show data
-                var cityName = showData.City;
-                var year = DateTime.Parse(showData.ShowDate).Year;
+                _logger.LogInformation("COLLECTION DEBUG: Starting deferred collection processing for {MovieName}", movie.Name);
                 
-                // Skip if we don't have required information
-                if (string.IsNullOrEmpty(cityName) || runInfo.RunDates.Count == 0)
+                // Wait for the movie to get a valid ID (retry with backoff)
+                for (int attempt = 1; attempt <= 10; attempt++)
                 {
-                    _logger.LogDebug("Skipping collection processing - missing city name or run dates");
+                    _logger.LogInformation("COLLECTION DEBUG: Attempt {Attempt}/10 - Movie ID is {MovieId}", attempt, movie.Id);
+                    
+                    if (movie.Id != Guid.Empty)
+                    {
+                        _logger.LogInformation("COLLECTION DEBUG: Movie {MovieName} now has valid ID ({MovieId}) after {Attempts} attempts, processing collection", 
+                            movie.Name, movie.Id, attempt);
+                        break;
+                    }
+                    
+                    _logger.LogInformation("COLLECTION DEBUG: Movie {MovieName} still has empty ID, waiting {DelayMs}ms... (attempt {Attempt}/10)", 
+                        movie.Name, 100 * (1 << (attempt - 1)), attempt);
+                    
+                    // Exponential backoff: 100ms, 200ms, 400ms, 800ms, 1600ms, etc.
+                    await Task.Delay(100 * (1 << (attempt - 1)));
+                }
+                
+                // Final check - if still no valid ID, give up
+                if (movie.Id == Guid.Empty)
+                {
+                    _logger.LogWarning("COLLECTION DEBUG: Movie {MovieName} never received a valid ID after 10 attempts, skipping collection processing", 
+                        movie.Name);
                     return;
                 }
                 
-                _logger.LogInformation("Processing collection for {MovieName} - {City} {Year} run ({NightCount} nights)",
-                    movie.Name, cityName, year, runInfo.TotalNights);
+                // Extract city name and year - use parseResult instead of showData if needed
+                var cityName = parseResult.City ?? showData?.City ?? "Unknown";
+                var year = parseResult.ShowDate?.Year ?? DateTime.Now.Year;
+                
+                _logger.LogInformation("COLLECTION DEBUG: Creating collection for {City} {Year} with movie {MovieName} (DayNumber: {DayNumber})",
+                    cityName, year, movie.Name, parseResult.DayNumber);
+                
+                // Create simple run dates based on the day number
+                var runDates = new List<DateTime>();
+                if (parseResult.ShowDate.HasValue && parseResult.DayNumber.HasValue)
+                {
+                    var baseDate = parseResult.ShowDate.Value;
+                    // Add dates for a simple 2-night run
+                    runDates.Add(baseDate.AddDays(-parseResult.DayNumber.Value + 1));
+                    runDates.Add(baseDate.AddDays(-parseResult.DayNumber.Value + 2));
+                }
+                
+                _logger.LogInformation("COLLECTION DEBUG: Using run dates: {RunDates}", string.Join(", ", runDates.Select(d => d.ToString("yyyy-MM-dd"))));
                     
                 // Use the collection service to process the multi-night run
-                await _collectionService.ProcessMultiNightRunCollectionAsync(movie, cityName, year, runInfo.RunDates);
+                await _collectionService.ProcessMultiNightRunCollectionAsync(movie, cityName, year, runDates);
+                
+                _logger.LogInformation("COLLECTION DEBUG: Successfully completed collection processing for {MovieName}", movie.Name);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error processing collection for movie {MovieName}", movie.Name);
+                _logger.LogError(ex, "COLLECTION DEBUG: Error processing deferred collection for movie {MovieName}", movie.Name);
             }
         }
         

@@ -4,11 +4,14 @@ using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using Jellyfin.Plugin.PhishNet.Configuration;
+using Jellyfin.Plugin.PhishNet.Services;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Common.Plugins;
 using MediaBrowser.Model.Plugins;
 using MediaBrowser.Model.Serialization;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.PhishNet;
 
@@ -18,6 +21,8 @@ namespace Jellyfin.Plugin.PhishNet;
 public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 {
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ILogger<Plugin> _logger;
+    private PhishCollectionLibraryHandler? _libraryHandler;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Plugin"/> class.
@@ -25,14 +30,37 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     /// <param name="applicationPaths">Instance of the <see cref="IApplicationPaths"/> interface.</param>
     /// <param name="xmlSerializer">Instance of the <see cref="IXmlSerializer"/> interface.</param>
     /// <param name="httpClientFactory">Instance of the <see cref="IHttpClientFactory"/> interface.</param>
+    /// <param name="serviceProvider">Instance of the <see cref="IServiceProvider"/> interface.</param>
+    /// <param name="logger">Instance of the <see cref="ILogger{Plugin}"/> interface.</param>
     public Plugin(
         IApplicationPaths applicationPaths,
         IXmlSerializer xmlSerializer,
-        IHttpClientFactory httpClientFactory)
+        IHttpClientFactory httpClientFactory,
+        IServiceProvider serviceProvider,
+        ILogger<Plugin> logger)
         : base(applicationPaths, xmlSerializer)
     {
         Instance = this;
         _httpClientFactory = httpClientFactory;
+        _logger = logger;
+
+        // Initialize the library event handler
+        try
+        {
+            _libraryHandler = serviceProvider.GetService<PhishCollectionLibraryHandler>();
+            if (_libraryHandler != null)
+            {
+                _logger.LogInformation("PLUGIN DEBUG: Successfully initialized PhishCollectionLibraryHandler");
+            }
+            else
+            {
+                _logger.LogWarning("PLUGIN DEBUG: Failed to get PhishCollectionLibraryHandler from service provider");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "PLUGIN DEBUG: Error initializing PhishCollectionLibraryHandler");
+        }
     }
 
     /// <summary>
@@ -88,4 +116,5 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
             }
         };
     }
+
 }

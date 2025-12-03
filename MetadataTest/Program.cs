@@ -35,8 +35,8 @@ namespace MetadataTest
             // Initialize the plugin instance with configuration
             InitializePluginInstance();
 
-            // Create a mock collection service (will not work without real ILibraryManager)
-            var mockCollectionService = new PhishCollectionService(null!, collectionLogger);
+            // Create a mock collection service (will not work without real ILibraryManager and ICollectionManager)
+            var mockCollectionService = new PhishCollectionService(null!, null!, collectionLogger);
 
             // Create the metadata provider
             var provider = new PhishNetMovieProvider(logger, httpClientFactory, mockCollectionService);

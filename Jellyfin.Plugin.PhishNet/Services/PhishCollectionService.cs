@@ -5,10 +5,12 @@ using System.Threading.Tasks;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Library;
+using MediaBrowser.Controller.Collections;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Model.Querying;
 using Microsoft.Extensions.Logging;
 using Jellyfin.Data.Enums;
+using MediaBrowser.Model.Entities;
 
 namespace Jellyfin.Plugin.PhishNet.Services
 {
@@ -19,16 +21,19 @@ namespace Jellyfin.Plugin.PhishNet.Services
     public class PhishCollectionService
     {
         private readonly ILibraryManager _libraryManager;
+        private readonly ICollectionManager _collectionManager;
         private readonly ILogger<PhishCollectionService> _logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PhishCollectionService"/> class.
         /// </summary>
         /// <param name="libraryManager">The library manager.</param>
+        /// <param name="collectionManager">The collection manager.</param>
         /// <param name="logger">The logger.</param>
-        public PhishCollectionService(ILibraryManager libraryManager, ILogger<PhishCollectionService> logger)
+        public PhishCollectionService(ILibraryManager libraryManager, ICollectionManager collectionManager, ILogger<PhishCollectionService> logger)
         {
             _libraryManager = libraryManager;
+            _collectionManager = collectionManager;
             _logger = logger;
         }
 
@@ -77,37 +82,34 @@ namespace Jellyfin.Plugin.PhishNet.Services
         /// <param name="cityName">The city name.</param>
         /// <param name="year">The year.</param>
         /// <returns>The created BoxSet collection.</returns>
-        public Task<BoxSet> CreateCollectionAsync(string cityName, int year)
+        public async Task<BoxSet> CreateCollectionAsync(string cityName, int year)
         {
             try
             {
                 var collectionName = GetCollectionName(cityName, year);
                 _logger.LogInformation("Creating new collection: {CollectionName}", collectionName);
 
-                var boxSet = new BoxSet
+                // Use the proper collection manager to create the collection
+                var boxSet = await _collectionManager.CreateCollectionAsync(new CollectionCreationOptions
                 {
                     Name = collectionName,
-                    Id = Guid.NewGuid(),
-                    DateCreated = DateTime.UtcNow,
-                    SortName = collectionName,
-                    ForcedSortName = collectionName,
-                    Overview = $"Multi-night Phish run in {cityName} during {year}"
-                };
+                    ParentId = null, // Root level collection
+                    IsLocked = false
+                });
 
-                // Set basic metadata
+                // Set additional metadata after creation
+                boxSet.Overview = $"Multi-night Phish run in {cityName} during {year}";
                 boxSet.Genres = new[] { "Concert", "Live Music" };
                 boxSet.Tags = new[] { "Phish", "Multi-Night Run", cityName, year.ToString() };
-
-                // Get the root folder to create the collection under
-                var rootFolder = _libraryManager.RootFolder;
                 
-                // Create the collection in Jellyfin
-                _libraryManager.CreateItem(boxSet, rootFolder);
+                // Update with the metadata
+                await _libraryManager.UpdateItemAsync(boxSet, boxSet.GetParent(), 
+                    ItemUpdateType.MetadataEdit, cancellationToken: default);
 
                 _logger.LogInformation("Successfully created collection: {CollectionName} (ID: {CollectionId})", 
                     boxSet.Name, boxSet.Id);
 
-                return Task.FromResult(boxSet);
+                return boxSet;
             }
             catch (Exception ex)
             {
@@ -126,6 +128,14 @@ namespace Jellyfin.Plugin.PhishNet.Services
         {
             try
             {
+                // Check if the movie has a valid ID - if not, it hasn't been saved to the library yet
+                if (movie.Id == Guid.Empty)
+                {
+                    _logger.LogWarning("Cannot add movie {MovieName} to collection {CollectionName} - movie has empty GUID (not yet saved to library). This is expected during initial metadata refresh.", 
+                        movie.Name, collection.Name);
+                    return false;
+                }
+
                 // Check if movie is already in the collection
                 if (collection.ContainsLinkedChildByItemId(movie.Id))
                 {
@@ -134,20 +144,44 @@ namespace Jellyfin.Plugin.PhishNet.Services
                     return false;
                 }
 
-                _logger.LogInformation("Adding movie {MovieName} to collection {CollectionName}", 
-                    movie.Name, collection.Name);
+                _logger.LogInformation("Adding movie {MovieName} (ID: {MovieId}) to collection {CollectionName} (ID: {CollectionId})", 
+                    movie.Name, movie.Id, collection.Name, collection.Id);
 
-                // Add the movie to the collection
-                collection.AddChild(movie);
+                // Use the proper collection manager to add the item
+                await _collectionManager.AddToCollectionAsync(collection.Id, new[] { movie.Id });
 
-                // Update the collection in the library
-                await _libraryManager.UpdateItemAsync(collection, collection.GetParent(), 
-                    ItemUpdateType.MetadataEdit, cancellationToken: default);
-
-                _logger.LogDebug("Successfully added movie {MovieName} to collection {CollectionName}", 
-                    movie.Name, collection.Name);
-
-                return true;
+                // Verify the movie was actually added by checking again
+                // Reload the collection to get the updated state
+                // Extract city name from collection name (format: "Phish CityName Year")
+                var cityName = ExtractCityFromCollectionName(collection.Name);
+                var year = collection.ProductionYear ?? DateTime.Now.Year;
+                var updatedCollection = await FindExistingCollectionAsync(cityName, year);
+                    
+                if (updatedCollection != null && updatedCollection.ContainsLinkedChildByItemId(movie.Id))
+                {
+                    _logger.LogInformation("Successfully verified movie {MovieName} was added to collection {CollectionName}", 
+                        movie.Name, collection.Name);
+                    return true;
+                }
+                else
+                {
+                    _logger.LogWarning("Movie {MovieName} was not found in collection {CollectionName} after add operation - this may indicate a Jellyfin API issue", 
+                        movie.Name, collection.Name);
+                        
+                    // Try alternative approach: refresh the collection
+                    try
+                    {
+                        await _libraryManager.UpdateItemAsync(collection, collection.GetParent(), 
+                            ItemUpdateType.MetadataEdit, cancellationToken: default);
+                        _logger.LogInformation("Refreshed collection {CollectionName} metadata after add operation", collection.Name);
+                    }
+                    catch (Exception refreshEx)
+                    {
+                        _logger.LogWarning(refreshEx, "Failed to refresh collection {CollectionName} after add operation", collection.Name);
+                    }
+                    
+                    return false;
+                }
             }
             catch (Exception ex)
             {
@@ -264,6 +298,40 @@ namespace Jellyfin.Plugin.PhishNet.Services
         private static string GetCollectionName(string cityName, int year)
         {
             return $"Phish {cityName} {year}";
+        }
+
+        /// <summary>
+        /// Extracts the city name from a collection name in the format "Phish CityName Year".
+        /// </summary>
+        /// <param name="collectionName">The collection name.</param>
+        /// <returns>The extracted city name.</returns>
+        private static string ExtractCityFromCollectionName(string collectionName)
+        {
+            if (string.IsNullOrEmpty(collectionName) || !collectionName.StartsWith("Phish "))
+            {
+                return string.Empty;
+            }
+
+            // Remove "Phish " prefix
+            var withoutPrefix = collectionName.Substring(6);
+            
+            // Find the last space followed by a 4-digit year
+            var parts = withoutPrefix.Split(' ');
+            if (parts.Length < 2)
+            {
+                return withoutPrefix;
+            }
+
+            // The last part should be the year, everything else is the city name
+            var lastPart = parts[^1];
+            if (lastPart.Length == 4 && int.TryParse(lastPart, out _))
+            {
+                // Join all parts except the last one (year)
+                return string.Join(" ", parts[..^1]);
+            }
+
+            // If no year found, return the whole string
+            return withoutPrefix;
         }
 
         /// <summary>
