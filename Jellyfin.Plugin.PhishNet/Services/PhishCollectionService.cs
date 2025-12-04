@@ -134,6 +134,11 @@ namespace Jellyfin.Plugin.PhishNet.Services
                 // Update with the metadata
                 await _libraryManager.UpdateItemAsync(boxSet, boxSet.GetParent(), 
                     ItemUpdateType.MetadataEdit, cancellationToken: default);
+                
+                // Trigger image discovery for the collection
+                // This allows the PhishCollectionImageProvider to provide default images
+                await _libraryManager.UpdateItemAsync(boxSet, boxSet.GetParent(), 
+                    ItemUpdateType.ImageUpdate, cancellationToken: default);
 
                 _logger.LogInformation("Successfully created collection: {CollectionName} (ID: {CollectionId})", 
                     boxSet.Name, boxSet.Id);

@@ -18,6 +18,9 @@ namespace Jellyfin.Plugin.PhishNet
             // Explicitly register the image provider to ensure Jellyfin discovers it
             serviceCollection.AddTransient<PhishImageProvider>();
             
+            // Register collection image provider for default images
+            serviceCollection.AddTransient<PhishCollectionImageProvider>();
+            
             // Register external ID provider for Phish.net links
             serviceCollection.AddTransient<PhishNetExternalId>();
             
