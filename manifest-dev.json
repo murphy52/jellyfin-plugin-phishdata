@@ -14,8 +14,8 @@
         "changelog": "## Jellyfin Phish Data Plugin v1.5.0.8\n\n### Collection Default Images\n- Collections created by the plugin now display automatic default Phish-themed poster and backdrop images\n- Images are embedded as plugin resources to improve reliability\n- Default artwork appears in Jellyfin UI instead of blank placeholders\n\n### Technical Details\n- Implemented IRemoteImageProvider<BoxSet> for collection image discovery\n- Added PhishCollectionImageProvider to handle Primary and Backdrop image types\n- Triggers metadata update after collection creation to load images\n\n### Build Quality\n- 0 build errors\n- Full .NET 8.0 support\n- Jellyfin 10.8.0+ compatible",
         "targetAbi": "10.8.0.0",
         "sourceUrl": "https://github.com/murphy52/jellyfin-plugin-phishdata/releases/download/v1.5.0.8/jellyfin-plugin-phishdata-v1.5.0.8.zip",
-        "checksum": "c6a70769ead999995a54aafca12f61559032d2f6fcc88d9c4038a8a36bab0b47",
-        "timestamp": "2025-12-04T17:50:00Z"
+        "checksum": "5430c74aa7f7787aaf0fb936eed8c3b4e33833bd602d6b36a36667115ed8cbde",
+        "timestamp": "2025-12-04T17:52:00Z"
       },
       {
         "version": "1.5.0.7",
