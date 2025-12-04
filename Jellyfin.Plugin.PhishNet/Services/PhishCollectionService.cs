@@ -136,13 +136,15 @@ namespace Jellyfin.Plugin.PhishNet.Services
                     ItemUpdateType.MetadataEdit, cancellationToken: default);
                 
                 // Set default images by writing them to the collection's metadata directory
+                _logger.LogInformation("About to set default images for collection {CollectionName}", collectionName);
                 try
                 {
                     await SetCollectionDefaultImagesAsync(boxSet, collectionName);
+                    _logger.LogInformation("Successfully completed SetCollectionDefaultImagesAsync for {CollectionName}", collectionName);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Failed to set default images for collection {CollectionName}", collectionName);
+                    _logger.LogError(ex, "CRITICAL: Failed to set default images for collection {CollectionName}", collectionName);
                     // Don't fail collection creation if images can't be set
                 }
 
@@ -486,7 +488,14 @@ namespace Jellyfin.Plugin.PhishNet.Services
                 }
 
                 _logger.LogInformation("Writing collection images to metadata path: {MetadataPath}", metadataPath);
+                if (!System.IO.Directory.Exists(metadataPath))
+                {
+                    _logger.LogWarning("Metadata path does not exist, creating: {MetadataPath}", metadataPath);
+                }
                 System.IO.Directory.CreateDirectory(metadataPath);
+                _logger.LogInformation("Metadata directory ready at: {MetadataPath}", metadataPath);
+                var dirExists = System.IO.Directory.Exists(metadataPath);
+                _logger.LogInformation("Directory exists verification: {DirectoryExists}", dirExists);
 
                 // Write poster image (Primary)
                 var posterResourceName = "Jellyfin.Plugin.PhishNet.Resources.collection-poster.jpg";
