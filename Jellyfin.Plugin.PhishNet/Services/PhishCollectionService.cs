@@ -135,10 +135,16 @@ namespace Jellyfin.Plugin.PhishNet.Services
                 await _libraryManager.UpdateItemAsync(boxSet, boxSet.GetParent(), 
                     ItemUpdateType.MetadataEdit, cancellationToken: default);
                 
-                // Trigger image discovery for the collection
-                // This allows the PhishCollectionImageProvider to provide default images
-                await _libraryManager.UpdateItemAsync(boxSet, boxSet.GetParent(), 
-                    ItemUpdateType.ImageUpdate, cancellationToken: default);
+                // Set default images by writing them to the collection's metadata directory
+                try
+                {
+                    await SetCollectionDefaultImagesAsync(boxSet, collectionName);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to set default images for collection {CollectionName}", collectionName);
+                    // Don't fail collection creation if images can't be set
+                }
 
                 _logger.LogInformation("Successfully created collection: {CollectionName} (ID: {CollectionId})", 
                     boxSet.Name, boxSet.Id);
@@ -458,6 +464,69 @@ namespace Jellyfin.Plugin.PhishNet.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error processing multi-night run collection for {MovieName}", movie.Name);
+            }
+        }
+
+        /// <summary>
+        /// Sets default images for a collection by writing them directly to Jellyfin's metadata directory.
+        /// </summary>
+        private async Task SetCollectionDefaultImagesAsync(BoxSet collection, string collectionName)
+        {
+            try
+            {
+                // Get the assembly and extract embedded resources
+                var assembly = typeof(PhishCollectionService).Assembly;
+                
+                // Jellyfin stores metadata in a folder with the item's ID
+                var metadataPath = collection.GetInternalMetadataPath();
+                if (string.IsNullOrEmpty(metadataPath))
+                {
+                    _logger.LogWarning("Could not determine metadata path for collection {CollectionName}", collectionName);
+                    return;
+                }
+
+                System.IO.Directory.CreateDirectory(metadataPath);
+
+                // Write poster image (Primary)
+                var posterResourceName = "Jellyfin.Plugin.PhishNet.Resources.collection-poster.png";
+                var posterStream = assembly.GetManifestResourceStream(posterResourceName);
+                if (posterStream != null)
+                {
+                    var posterPath = System.IO.Path.Combine(metadataPath, "poster.png");
+                    using (posterStream)
+                    using (var fileStream = new System.IO.FileStream(posterPath, System.IO.FileMode.Create))
+                    {
+                        await posterStream.CopyToAsync(fileStream);
+                    }
+                    _logger.LogInformation("Set poster image for collection {CollectionName}", collectionName);
+                }
+                else
+                {
+                    _logger.LogWarning("Embedded resource not found: {ResourceName}", posterResourceName);
+                }
+
+                // Write backdrop image
+                var backdropResourceName = "Jellyfin.Plugin.PhishNet.Resources.collection-backdrop.png";
+                var backdropStream = assembly.GetManifestResourceStream(backdropResourceName);
+                if (backdropStream != null)
+                {
+                    var backdropPath = System.IO.Path.Combine(metadataPath, "backdrop.png");
+                    using (backdropStream)
+                    using (var fileStream = new System.IO.FileStream(backdropPath, System.IO.FileMode.Create))
+                    {
+                        await backdropStream.CopyToAsync(fileStream);
+                    }
+                    _logger.LogInformation("Set backdrop image for collection {CollectionName}", collectionName);
+                }
+                else
+                {
+                    _logger.LogWarning("Embedded resource not found: {ResourceName}", backdropResourceName);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error setting collection images for {CollectionName}", collectionName);
+                throw;
             }
         }
     }
