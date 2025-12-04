@@ -10,12 +10,12 @@
     "repositoryUrl": "https://github.com/murphy52/jellyfin-plugin-phishdata/tree/development",
     "versions": [
       {
-        "version": "1.5.0.1",
+        "version": "1.5.0.2",
         "changelog": "## Jellyfin Phish Data Plugin v1.5.0.0\n\n### Major Release: Phase 1-3 Improvements\n\n#### Phase 1: Configuration & Cleanup\n- Removed unused Instagram/Twitter/Flickr API key fields\n- Removed placeholder image URLs\n- Improved timestamp handling (DateTime.UtcNow)\n- Simplified encoding logic\n\n#### Phase 2: Comprehensive Test Suite (980 lines)\n- 70+ tests for filename parser patterns\n- 20+ tests for UTF-8 mojibake character handling\n- 15+ tests for metadata provider pipeline\n- 10+ tests for run detection logic\n\n#### Phase 3: Internal Architecture Improvements\n- Implemented dependency injection factory\n- Centralized API client creation\n- Improved error handling (no null returns from API)\n- Better testability and maintainability\n\n### Build Quality\n- 0 build errors\n- Full .NET 8.0 support\n- Jellyfin 10.8.0+ compatible\n\nSee full release on GitHub: https://github.com/murphy52/jellyfin-plugin-phishdata/releases/tag/v1.5.0.0",
         "targetAbi": "10.8.0.0",
-        "sourceUrl": "https://github.com/murphy52/jellyfin-plugin-phishdata/releases/download/v1.5.0.1/jellyfin-plugin-phishdata-v1.5.0.1.zip",
-        "checksum": "fcec7c3f4da339d0f0626d2a6f621a7f",
-        "timestamp": "2025-12-04T04:10:00Z"
+        "sourceUrl": "https://github.com/murphy52/jellyfin-plugin-phishdata/releases/download/v1.5.0.2/jellyfin-plugin-phishdata-v1.5.0.2.zip",
+        "checksum": "557ec02409c3a45f93ff670b5188ea28",
+        "timestamp": "2025-12-04T15:55:00Z"
       }
     ]
   }
