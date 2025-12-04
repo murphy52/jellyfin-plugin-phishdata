@@ -485,6 +485,7 @@ namespace Jellyfin.Plugin.PhishNet.Services
                     return;
                 }
 
+                _logger.LogInformation("Writing collection images to metadata path: {MetadataPath}", metadataPath);
                 System.IO.Directory.CreateDirectory(metadataPath);
 
                 // Write poster image (Primary)

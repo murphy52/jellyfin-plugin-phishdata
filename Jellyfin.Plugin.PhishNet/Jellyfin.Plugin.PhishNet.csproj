@@ -3,9 +3,9 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>Jellyfin.Plugin.PhishNet</RootNamespace>
-    <Version>1.5.0.10</Version>
-    <AssemblyVersion>1.5.0.10</AssemblyVersion>
-    <FileVersion>1.5.0.10</FileVersion>
+    <Version>1.5.0.11</Version>
+    <AssemblyVersion>1.5.0.11</AssemblyVersion>
+    <FileVersion>1.5.0.11</FileVersion>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsNotAsErrors>CS1591</WarningsNotAsErrors>
