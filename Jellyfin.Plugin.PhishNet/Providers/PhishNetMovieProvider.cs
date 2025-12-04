@@ -491,24 +491,32 @@ namespace Jellyfin.Plugin.PhishNet.Providers
                 "Page McConnell"
             };
 
-            var people = new List<PersonInfo>();
-            foreach (var member in bandMembers)
+            // Try using the People property (Jellyfin 10.8.0-10.10.x)
+            // If it doesn't exist, the method will gracefully skip
+            try
             {
-                people.Add(new PersonInfo
+                var people = new List<PersonInfo>();
+                foreach (var member in bandMembers)
                 {
-                    Name = member,
-                    Type = PersonKind.Actor,
-                    Role = "Self"
-                });
-            }
+                    people.Add(new PersonInfo
+                    {
+                        Name = member,
+                        Type = PersonKind.Actor,
+                        Role = "Self"
+                    });
+                }
 
-            if (result.People == null)
-            {
-                result.People = people;
+                // Use reflection to set People if available
+                var peopleProperty = result.GetType().GetProperty("People");
+                if (peopleProperty != null && peopleProperty.CanWrite)
+                {
+                    peopleProperty.SetValue(result, people);
+                }
             }
-            else
+            catch (Exception)
             {
-                result.People.AddRange(people);
+                // Silently fail if People property doesn't exist or is read-only
+                // The metadata will still be populated, just without band members
             }
         }
 
