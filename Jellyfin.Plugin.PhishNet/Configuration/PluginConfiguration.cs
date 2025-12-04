@@ -20,8 +20,11 @@ public class PluginConfiguration : BasePluginConfiguration
     /// </summary>
     public string ApiKey { get; set; }
 
+    /// <summary>
+    /// Gets or sets a value indicating whether to automatically add multi-night Phish runs to collections.
+    /// </summary>
+    public bool EnableCollections { get; set; } = true;
 
-    
     /// <summary>
     /// Gets or sets the Unsplash API key for venue images (optional).
     /// </summary>

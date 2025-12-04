@@ -84,6 +84,14 @@ namespace Jellyfin.Plugin.PhishNet.Services
         {
             try
             {
+                // Check if collections are enabled in plugin configuration
+                var config = Plugin.Instance?.Configuration;
+                if (config?.EnableCollections != true)
+                {
+                    _logger.LogDebug("EVENT DEBUG: Skipping collection processing for {MovieName} - collections are disabled", movie.Name);
+                    return;
+                }
+
                 if (movie.Id == Guid.Empty)
                 {
                     _logger.LogDebug("EVENT DEBUG: Skipping collection processing for {MovieName} - no valid ID yet", movie.Name);
