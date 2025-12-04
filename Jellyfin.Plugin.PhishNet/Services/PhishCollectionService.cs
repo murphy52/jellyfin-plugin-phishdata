@@ -523,6 +523,17 @@ namespace Jellyfin.Plugin.PhishNet.Services
                 {
                     _logger.LogWarning("Embedded resource not found: {ResourceName}", backdropResourceName);
                 }
+                
+                // Write .nfo file to tell Jellyfin about the images (Jellyfin looks for NFO files)
+                var nfoPath = System.IO.Path.Combine(metadataPath, "collection.nfo");
+                var nfoContent = $@"<?xml version=""1.0"" encoding=""utf-8""?>
+<Collection>
+    <collectiontype>boxset</collectiontype>
+    <thumb>cover.jpg</thumb>
+    <backdrop>backdrop.jpg</backdrop>
+</Collection>";
+                await System.IO.File.WriteAllTextAsync(nfoPath, nfoContent);
+                _logger.LogInformation("Created collection.nfo for {CollectionName} at {Path}", collectionName, nfoPath);
             }
             catch (Exception ex)
             {
