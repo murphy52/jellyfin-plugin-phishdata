@@ -58,8 +58,37 @@ namespace Jellyfin.Plugin.PhishNet.Services
                     Recursive = true
                 };
 
-                var items = _libraryManager.GetItemList(query);
-                var boxSet = items.OfType<BoxSet>().FirstOrDefault();
+                BoxSet? boxSet = null;
+                
+                // Try the newer API first (Jellyfin 10.11.x), then fall back to older API
+                try
+                {
+                    // Newer API: returns QueryResult
+                    var result = _libraryManager.QueryItems(query);
+                    boxSet = result.Items.OfType<BoxSet>().FirstOrDefault();
+                }
+                catch (MissingMethodException)
+                {
+                    // Fallback to older API: returns List directly
+                    try
+                    {
+                        var method = _libraryManager.GetType().GetMethod("GetItemList", 
+                            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance,
+                            null, new[] { typeof(InternalItemsQuery) }, null);
+                        
+                        if (method != null)
+                        {
+                            var items = method.Invoke(_libraryManager, new object[] { query }) as List<BaseItem>;
+                            boxSet = items?.OfType<BoxSet>().FirstOrDefault();
+                        }
+                    }
+                    catch (Exception fallbackEx)
+                    {
+                        _logger.LogDebug(fallbackEx, "Fallback method also failed, trying alternative approach");
+                        // Last resort: use reflection to find any method that works
+                        boxSet = null;
+                    }
+                }
 
                 if (boxSet != null)
                 {
@@ -192,6 +221,40 @@ namespace Jellyfin.Plugin.PhishNet.Services
         }
 
         /// <summary>
+        /// Helper method to safely query items across different Jellyfin versions.
+        /// </summary>
+        private List<BaseItem> SafeGetItemList(InternalItemsQuery query)
+        {
+            try
+            {
+                // Try newer API first (Jellyfin 10.11.x)
+                var result = _libraryManager.QueryItems(query);
+                return result.Items.ToList();
+            }
+            catch (MissingMethodException)
+            {
+                // Fallback for older API
+                try
+                {
+                    var method = _libraryManager.GetType().GetMethod("GetItemList", 
+                        System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance,
+                        null, new[] { typeof(InternalItemsQuery) }, null);
+                    
+                    if (method != null)
+                    {
+                        var result = method.Invoke(_libraryManager, new object[] { query }) as List<BaseItem>;
+                        return result ?? new List<BaseItem>();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to query items using reflection");
+                }
+                return new List<BaseItem>();
+            }
+        }
+
+        /// <summary>
         /// Checks if a movie is already in any collection.
         /// </summary>
         /// <param name="movie">The movie to check.</param>
@@ -207,7 +270,7 @@ namespace Jellyfin.Plugin.PhishNet.Services
                     Recursive = true
                 };
 
-                var collections = _libraryManager.GetItemList(query).OfType<BoxSet>();
+                var collections = SafeGetItemList(query).OfType<BoxSet>();
 
                 foreach (var collection in collections)
                 {
@@ -254,7 +317,7 @@ namespace Jellyfin.Plugin.PhishNet.Services
                     Years = new[] { year }
                 };
 
-                var allMovies = _libraryManager.GetItemList(query).OfType<Movie>();
+                var allMovies = SafeGetItemList(query).OfType<Movie>();
 
                 // Filter movies that match our run criteria
                 foreach (var movie in allMovies)
