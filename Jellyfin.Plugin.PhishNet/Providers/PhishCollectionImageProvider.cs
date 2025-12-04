@@ -62,11 +62,16 @@ namespace Jellyfin.Plugin.PhishNet.Providers
         public bool Supports(BaseItem item)
         {
             if (item is not BoxSet boxSet)
+            {
+                _logger.LogDebug("PhishCollectionImageProvider.Supports called for non-BoxSet item: {ItemType} '{ItemName}'", item.GetType().Name, item.Name);
                 return false;
+            }
 
             // Check if this looks like a Phish collection by name
             var name = boxSet.Name?.ToLower() ?? string.Empty;
-            return name.StartsWith("phish");
+            var isPhishCollection = name.StartsWith("phish");
+            _logger.LogInformation("PhishCollectionImageProvider.Supports called for BoxSet '{BoxSetName}' - Supports: {IsSupported}", boxSet.Name, isPhishCollection);
+            return isPhishCollection;
         }
 
         /// <summary>
@@ -77,6 +82,7 @@ namespace Jellyfin.Plugin.PhishNet.Providers
         /// <returns>Available remote image info.</returns>
         public Task<IEnumerable<RemoteImageInfo>> GetImages(BaseItem item, CancellationToken cancellationToken)
         {
+            _logger.LogInformation("PhishCollectionImageProvider.GetImages called for '{ItemName}'", item.Name);
             var images = new List<RemoteImageInfo>
             {
                 new RemoteImageInfo
@@ -93,7 +99,7 @@ namespace Jellyfin.Plugin.PhishNet.Providers
                 }
             };
 
-            _logger.LogDebug("Providing {Count} images for collection {CollectionName}", images.Count, item.Name);
+            _logger.LogInformation("Providing {Count} images for collection {CollectionName}", images.Count, item.Name);
             return Task.FromResult((IEnumerable<RemoteImageInfo>)images);
         }
 
@@ -105,6 +111,7 @@ namespace Jellyfin.Plugin.PhishNet.Providers
         /// <returns>The HTTP response containing the image data.</returns>
         public Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
         {
+            _logger.LogInformation("PhishCollectionImageProvider.GetImageResponse called with URL: {Url}", url);
             if (string.IsNullOrEmpty(url))
             {
                 throw new ArgumentNullException(nameof(url));
@@ -129,9 +136,10 @@ namespace Jellyfin.Plugin.PhishNet.Providers
 
             if (imageStream == null)
             {
-                _logger.LogWarning("Could not find embedded resource: {ResourceName}", resourceName);
+                _logger.LogError("Could not find embedded resource: {ResourceName}", resourceName);
                 throw new FileNotFoundException($"Embedded resource not found: {resourceName}");
             }
+            _logger.LogInformation("Successfully loaded embedded resource {ResourceName}", resourceName);
 
             var response = new HttpResponseMessage
             {
