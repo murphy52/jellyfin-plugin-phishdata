@@ -489,17 +489,17 @@ namespace Jellyfin.Plugin.PhishNet.Services
                 System.IO.Directory.CreateDirectory(metadataPath);
 
                 // Write poster image (Primary)
-                var posterResourceName = "Jellyfin.Plugin.PhishNet.Resources.collection-poster.png";
+                var posterResourceName = "Jellyfin.Plugin.PhishNet.Resources.collection-poster.jpg";
                 var posterStream = assembly.GetManifestResourceStream(posterResourceName);
                 if (posterStream != null)
                 {
-                    var posterPath = System.IO.Path.Combine(metadataPath, "poster.png");
+                    var posterPath = System.IO.Path.Combine(metadataPath, "cover.jpg");
                     using (posterStream)
                     using (var fileStream = new System.IO.FileStream(posterPath, System.IO.FileMode.Create))
                     {
                         await posterStream.CopyToAsync(fileStream);
                     }
-                    _logger.LogInformation("Set poster image for collection {CollectionName}", collectionName);
+                    _logger.LogInformation("Set cover image for collection {CollectionName} at {Path}", collectionName, posterPath);
                 }
                 else
                 {
@@ -507,17 +507,17 @@ namespace Jellyfin.Plugin.PhishNet.Services
                 }
 
                 // Write backdrop image
-                var backdropResourceName = "Jellyfin.Plugin.PhishNet.Resources.collection-backdrop.png";
+                var backdropResourceName = "Jellyfin.Plugin.PhishNet.Resources.collection-backdrop.jpg";
                 var backdropStream = assembly.GetManifestResourceStream(backdropResourceName);
                 if (backdropStream != null)
                 {
-                    var backdropPath = System.IO.Path.Combine(metadataPath, "backdrop.png");
+                    var backdropPath = System.IO.Path.Combine(metadataPath, "backdrop.jpg");
                     using (backdropStream)
                     using (var fileStream = new System.IO.FileStream(backdropPath, System.IO.FileMode.Create))
                     {
                         await backdropStream.CopyToAsync(fileStream);
                     }
-                    _logger.LogInformation("Set backdrop image for collection {CollectionName}", collectionName);
+                    _logger.LogInformation("Set backdrop image for collection {CollectionName} at {Path}", collectionName, backdropPath);
                 }
                 else
                 {
