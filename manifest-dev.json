@@ -10,6 +10,14 @@
     "repositoryUrl": "https://github.com/murphy52/jellyfin-plugin-phishdata/tree/development",
     "versions": [
       {
+        "version": "1.5.0.9",
+        "changelog": "## Jellyfin Phish Data Plugin v1.5.0.9\n\n### Collection Image Provider with Debugging\n- Added PhishCollectionImageProvider implementing IRemoteImageProvider for BoxSet collections\n- Comprehensive logging for debugging image discovery and provider invocation\n- Provider supports Primary (poster) and Backdrop image types\n- Detects Phish collections by name pattern\n- Embedded default Phish-themed images as plugin resources\n\n### Technical Improvements\n- Enhanced logging in Supports(), GetImages(), and GetImageResponse() methods\n- Better error diagnostics for troubleshooting image loading\n\n### Build Quality\n- 0 build errors\n- Full .NET 8.0 support\n- Jellyfin 10.8.0+ compatible",
+        "targetAbi": "10.8.0.0",
+        "sourceUrl": "https://github.com/murphy52/jellyfin-plugin-phishdata/releases/download/v1.5.0.9/jellyfin-plugin-phishdata-v1.5.0.9.zip",
+        "checksum": "39877b124c4c5c00e08da41634b144bc",
+        "timestamp": "2025-12-04T18:35:00Z"
+      },
+      {
         "version": "1.5.0.8",
         "changelog": "## Jellyfin Phish Data Plugin v1.5.0.8\n\n### Collection Default Images\n- Collections created by the plugin now display automatic default Phish-themed poster and backdrop images\n- Images are embedded as plugin resources to improve reliability\n- Default artwork appears in Jellyfin UI instead of blank placeholders\n\n### Technical Details\n- Implemented IRemoteImageProvider<BoxSet> for collection image discovery\n- Added PhishCollectionImageProvider to handle Primary and Backdrop image types\n- Triggers metadata update after collection creation to load images\n\n### Build Quality\n- 0 build errors\n- Full .NET 8.0 support\n- Jellyfin 10.8.0+ compatible",
         "targetAbi": "10.8.0.0",
