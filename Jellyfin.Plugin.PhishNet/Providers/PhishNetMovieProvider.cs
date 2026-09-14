@@ -120,6 +120,13 @@ namespace Jellyfin.Plugin.PhishNet.Providers
             {
                 _logger.LogDebug("Processing movie info for: {Name} (Path: {Path})", info.Name, info.Path);
 
+                // Issue #25: leave videos that don't look Phish-related to other providers
+                if (!PhishFileNameParser.LooksPhishRelated(info.Name, info.Path))
+                {
+                    _logger.LogDebug("Skipping {Name}: nothing in the title or path suggests a Phish show", info.Name);
+                    return result;
+                }
+
                 // Parse using the Name first (which could be metadata title or filename), then fallback to filename from path
                 var parseResult = _filenameParser.Parse(info.Name, info.Path);
                 

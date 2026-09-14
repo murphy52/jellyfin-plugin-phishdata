@@ -69,6 +69,10 @@ Phish Videos/
 - **Rich Tags**: Venue, location, year, and Phish-specific tags
 - **Band Member Info**: Individual profiles accessible via People section
 
+## Mixed Libraries
+
+The plugin only acts on videos that look Phish-related: the title, filename, or any folder in the path contains "phish", or the filename uses the `ph` + date convention (for example `ph1997-11-22.mkv`). Anything else is left untouched for your other metadata providers, so Phish shows can share a library with other concerts or movies.
+
 ## Supported Jellyfin Versions
 
 - Jellyfin 12.0.0 and newer (v1.6.0.0+). For Jellyfin 10.8–10.10 use plugin v1.5.x.

@@ -149,6 +149,39 @@ namespace Jellyfin.Plugin.PhishNet.Parsers
         }
 
         /// <summary>
+        /// Determines whether a file looks Phish-related from its title or path alone.
+        /// Used to leave non-Phish videos in a shared library to other metadata providers (issue #25).
+        /// </summary>
+        /// <param name="name">The item name or title.</param>
+        /// <param name="path">The file path.</param>
+        /// <returns>True if the name, filename or any folder mentions Phish, or the filename uses the "ph" + date convention.</returns>
+        public static bool LooksPhishRelated(string? name, string? path)
+        {
+            var filename = string.IsNullOrEmpty(path) ? string.Empty : System.IO.Path.GetFileNameWithoutExtension(path);
+
+            foreach (var candidate in new[] { name, path })
+            {
+                if (!string.IsNullOrEmpty(candidate) && candidate.Contains("phish", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            foreach (var candidate in new[] { name, filename })
+            {
+                if (candidate != null && candidate.Length > 2
+                    && candidate.StartsWith("ph", StringComparison.OrdinalIgnoreCase)
+                    && char.IsDigit(candidate[2]))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+
+        /// <summary>
         /// Parses a filename to extract Phish show information.
         /// </summary>
         /// <param name="filename">The filename to parse.</param>
