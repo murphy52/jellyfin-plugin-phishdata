@@ -2,6 +2,7 @@ using FluentAssertions;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Model.Entities;
+using MediaBrowser.Model.Providers;
 using Xunit;
 using Jellyfin.Plugin.PhishNet.Providers.ExternalIds;
 
@@ -19,7 +20,6 @@ public class PhishNetExternalIdTests
         externalId.ProviderName.Should().Be("Phish.net");
         externalId.Key.Should().Be("PhishNet");
         externalId.Type.Should().Be(ExternalIdMediaType.Movie);
-        externalId.UrlFormatString.Should().Be("https://phish.net/show/{0}");
     }
 
     [Fact]
@@ -29,56 +29,60 @@ public class PhishNetExternalIdTests
         var externalId = new PhishNetExternalId();
         var movie = new Movie();
 
-        // Act
-        var supports = externalId.Supports(movie);
-
-        // Assert
-        supports.Should().BeTrue();
+        // Act & Assert
+        externalId.Supports(movie).Should().BeTrue();
     }
 
     [Fact]
-    public void PhishNetExternalId_ShouldNotSupportSeries()
+    public void PhishNetExternalId_ShouldNotSupportNonMovies()
     {
         // Arrange
         var externalId = new PhishNetExternalId();
-        var series = new Series();
+        var episode = new Episode();
 
-        // Act
-        var supports = externalId.Supports(series);
-
-        // Assert
-        supports.Should().BeFalse();
+        // Act & Assert
+        externalId.Supports(episode).Should().BeFalse();
     }
 }
 
-// Removed unused external ID provider tests since we're only keeping PhishNetExternalId
-
-public class ExternalIdIntegrationTests
+public class PhishNetExternalUrlProviderTests
 {
-    [Theory]
-    [InlineData("1997-11-22", "https://phish.net/show/1997-11-22")]
-    [InlineData("2023-07-15", "https://phish.net/show/2023-07-15")]
-    [InlineData("1995-12-31", "https://phish.net/show/1995-12-31")]
-    public void PhishNetExternalId_ShouldGenerateCorrectUrls(string showDate, string expectedUrl)
+    [Fact]
+    public void GetExternalUrls_ShouldReturnStoredShowUrl_ForMovie()
     {
         // Arrange
-        var externalId = new PhishNetExternalId();
+        var provider = new PhishNetExternalUrlProvider();
+        var movie = new Movie();
+        movie.SetProviderId(PhishNetExternalId.ProviderKey, "https://phish.net/setlists/phish-august-30-2024-dicks-sporting-goods-park-commerce-city-co-usa.html");
 
         // Act
-        var actualUrl = string.Format(externalId.UrlFormatString, showDate);
+        var urls = provider.GetExternalUrls(movie);
 
         // Assert
-        actualUrl.Should().Be(expectedUrl);
+        provider.Name.Should().Be("Phish.net");
+        urls.Should().ContainSingle().Which.Should().Be("https://phish.net/setlists/phish-august-30-2024-dicks-sporting-goods-park-commerce-city-co-usa.html");
     }
 
     [Fact]
-    public void PhishNetExternalId_ShouldSupportMovies()
+    public void GetExternalUrls_ShouldReturnNothing_WhenMovieHasNoPhishNetId()
     {
         // Arrange
+        var provider = new PhishNetExternalUrlProvider();
         var movie = new Movie();
-        var externalId = new PhishNetExternalId();
 
         // Act & Assert
-        externalId.Supports(movie).Should().BeTrue("PhishNet external ID should support movies");
+        provider.GetExternalUrls(movie).Should().BeEmpty();
+    }
+
+    [Fact]
+    public void GetExternalUrls_ShouldReturnNothing_ForNonMovies()
+    {
+        // Arrange
+        var provider = new PhishNetExternalUrlProvider();
+        var episode = new Episode();
+        episode.SetProviderId(PhishNetExternalId.ProviderKey, "https://phish.net/show/2024-08-30");
+
+        // Act & Assert
+        provider.GetExternalUrls(episode).Should().BeEmpty();
     }
 }

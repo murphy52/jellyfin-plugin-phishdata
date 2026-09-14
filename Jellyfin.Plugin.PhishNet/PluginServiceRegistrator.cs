@@ -23,6 +23,7 @@ namespace Jellyfin.Plugin.PhishNet
             
             // Register external ID provider for Phish.net links
             serviceCollection.AddTransient<PhishNetExternalId>();
+            serviceCollection.AddTransient<PhishNetExternalUrlProvider>();
             
             // Register collection service for multi-night runs
             serviceCollection.AddTransient<PhishCollectionService>();

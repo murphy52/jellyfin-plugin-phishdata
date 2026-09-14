@@ -71,7 +71,7 @@ Phish Videos/
 
 ## Supported Jellyfin Versions
 
-- Jellyfin 10.8.0 and newer
+- Jellyfin 12.0.0 and newer (v1.6.0.0+). For Jellyfin 10.8–10.10 use plugin v1.5.x.
 - Compatible with all major platforms (Windows, Linux, macOS, Docker)
 
 ## Support this project

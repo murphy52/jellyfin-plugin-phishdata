@@ -22,7 +22,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '8.0.x'
+        dotnet-version: '10.0.x'
         
     - name: Build plugin
       run: |
@@ -67,7 +67,7 @@ jobs:
           
           ## Package Information
           - **Checksum (MD5)**: `${{ steps.checksum.outputs.checksum }}`
-          - **Target Jellyfin**: 10.8.0+
+          - **Target Jellyfin**: 12.0.0+ (use v1.5.x for Jellyfin 10.8–10.10)
           
           ## Documentation
           - [Setup Guide](https://github.com/murphy52/jellyfin-plugin-phishdata#installation)
