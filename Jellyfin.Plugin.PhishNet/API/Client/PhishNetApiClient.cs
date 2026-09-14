@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using Jellyfin.Plugin.PhishNet.API.Models;
+using Jellyfin.Plugin.PhishNet.API.Serialization;
 using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.PhishNet.API.Client;
@@ -135,10 +136,9 @@ public class PhishNetApiClient : IPhishNetApiClient, IDisposable
             // Extract data array
             if (root.TryGetProperty("data", out var dataElement) && dataElement.ValueKind == JsonValueKind.Array)
             {
-                var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                 foreach (var songElement in dataElement.EnumerateArray())
                 {
-                    var song = JsonSerializer.Deserialize<SetlistSongDto>(songElement.GetRawText(), jsonOptions);
+                    var song = JsonSerializer.Deserialize<SetlistSongDto>(songElement.GetRawText(), PhishNetJsonOptions.Default);
                     if (song != null)
                     {
                         songs.Add(song);
@@ -264,10 +264,7 @@ public class PhishNetApiClient : IPhishNetApiClient, IDisposable
                 return null;
             }
 
-            var apiResponse = JsonSerializer.Deserialize<ApiResponse<T>>(jsonContent, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            var apiResponse = JsonSerializer.Deserialize<ApiResponse<T>>(jsonContent, PhishNetJsonOptions.Default);
 
             if (apiResponse != null && !apiResponse.IsSuccess)
             {

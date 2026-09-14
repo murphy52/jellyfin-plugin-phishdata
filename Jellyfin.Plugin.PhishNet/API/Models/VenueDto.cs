@@ -17,7 +17,7 @@ public class VenueDto
     /// <summary>
     /// Gets or sets the venue name.
     /// </summary>
-    [JsonPropertyName("venue")]
+    [JsonPropertyName("venuename")]
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
@@ -41,7 +41,7 @@ public class VenueDto
     /// <summary>
     /// Gets or sets additional venue information or notes.
     /// </summary>
-    [JsonPropertyName("venueinfo")]
+    [JsonPropertyName("venuenotes")]
     public string? VenueInfo { get; set; }
 
     /// <summary>
