@@ -6,7 +6,9 @@ Your support helps maintain and improve the extension with new features and site
 
 # Phish Data Plugin for Jellyfin
 
-A comprehensive metadata provider for Phish concert videos using the Phish.net API. 
+A comprehensive metadata provider for Phish concert videos using the Phish.net API.
+
+**Requires Jellyfin 12.0 or newer** (plugin v1.6.0.0+). Running Jellyfin 10.8–10.10? Install plugin v1.5.x instead.
 
 ![Phish Data Jellyfin Plugin](https://github.com/murphy52/jellyfin-plugin-phishdata/blob/master/thumb.png)
 
@@ -15,6 +17,7 @@ A comprehensive metadata provider for Phish concert videos using the Phish.net A
 - **Smart Filename Parsing**: Automatically identifies Phish shows from various filename formats
 - **Complete Setlists**: Displays full song lists with set breaks and transitions
 - **Rich Metadata**: Show dates, venues, locations, and production years
+- **Phish.net Links**: Every show links to its Phish.net setlist page under External Links
 - **Clean Configuration**: Simple setup with just your Phish.net API key
 
 ## Installation
@@ -75,8 +78,16 @@ The plugin only acts on videos that look Phish-related: the title, filename, or 
 
 ## Supported Jellyfin Versions
 
-- Jellyfin 12.0.0 and newer (v1.6.0.0+). For Jellyfin 10.8–10.10 use plugin v1.5.x.
-- Compatible with all major platforms (Windows, Linux, macOS, Docker)
+| Plugin version | Jellyfin version | .NET |
+|----------------|------------------|------|
+| 1.6.x          | 12.0 and newer   | 10   |
+| 1.5.x          | 10.8 – 10.10     | 8    |
+
+Compatible with all major platforms (Windows, Linux, macOS, Docker).
+
+### Upgrading from 1.5.x to Jellyfin 12
+
+Jellyfin 12 moved to .NET 10 and changed its plugin API, so 1.5.x builds do not load on it. After upgrading Jellyfin, install v1.6.0.0 from the catalog (it appears once the server reports version 12) and delete any old `phishnet_*` or `PhishData_1.5.*` folder from your `plugins` directory before restarting.
 
 ## Support this project
 
