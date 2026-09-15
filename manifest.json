@@ -10,6 +10,14 @@
     "repositoryUrl": "https://github.com/murphy52/jellyfin-plugin-phishdata",
     "versions": [
       {
+        "version": "1.6.0.0",
+        "changelog": "## Jellyfin Phish Data Plugin v1.6.0.0\n\n### Jellyfin 12 Support\n- Rebuilt for Jellyfin 12.0.0 (.NET 10). Does not load on Jellyfin 10.x; keep v1.5.x there.\n- Phish.net links restored under External Links via Jellyfin 12's external URL provider.\n\n### Fixes\n- Phish.net API v5 now returns numeric fields and renamed venue keys, which broke every request. Parsing is now tolerant and venue names/notes map correctly.\n- Non-Phish videos in a shared library are left to other metadata providers instead of getting \"Needs Title Fix\" guidance (#25).\n\n### Upgrading\n- Remove any old phishnet_* or PhishData_1.5.* folder from plugins/ after installing.",
+        "targetAbi": "12.0.0.0",
+        "sourceUrl": "https://github.com/murphy52/jellyfin-plugin-phishdata/releases/download/v1.6.0.0/jellyfin-plugin-phishdata-v1.6.0.0.zip",
+        "checksum": "8e105232388722a536162b2c962e99db",
+        "timestamp": "2026-09-15T02:34:08Z"
+      },
+      {
         "version": "1.4.6.0",
         "changelog": "## Jellyfin Phish Data Plugin v1.4.6.0\n\n### 📝 Error Message & Parsing Fix (Issue #22) - FIXED\n\n#### ✅ Improved Parsing Logic\n- Added fallback parsing: tries metadata title first, then filename from path\n- Plugin now handles both metadata titles and filenames correctly\n- Automatic fallback when metadata title parsing fails\n\n#### ✅ Accurate Error Messages\n- Updated error text to reflect actual behavior (title/filename instead of just filename)\n- **Prioritizes metadata title editing** (much easier than file renaming!)\n- Provides two clear options: edit metadata vs rename file\n- Updated UI guidance with step-by-step instructions\n\n#### ✅ Better User Experience\n- **Option 1**: Right-click → Manage → Edit Metadata → Change Title *(EASIER)*\n- **Option 2**: Rename file *(Alternative)*\n- Updated tags from \"Needs Rename\" to \"Needs Title Fix\"\n- More intuitive and user-friendly error guidance\n\n### 👥 Previous Features (v1.4.5.0)\n- All 4 Phish band members auto-populate in movie metadata\n- Native Jellyfin + IMDB integration for member photos and details\n- Type: Actor, Role: Self (matches manual entry format)\n\n### Core Features (Unchanged)\n- Smart filename parsing for show identification\n- Complete setlists with proper formatting\n- Rich show metadata from Phish.net API\n- Venue details and location information\n- Community ratings and reviews\n- Clean text encoding\n\nA significant improvement making error resolution much easier for users!",
         "targetAbi": "10.8.0.0",

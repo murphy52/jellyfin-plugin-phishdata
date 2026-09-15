@@ -10,6 +10,14 @@
     "repositoryUrl": "https://github.com/murphy52/jellyfin-plugin-phishdata/tree/development",
     "versions": [
       {
+        "version": "1.6.0.0",
+        "changelog": "## Jellyfin Phish Data Plugin v1.6.0.0\n\n### Jellyfin 12 Support\n- Rebuilt for Jellyfin 12.0.0 (.NET 10). Does not load on Jellyfin 10.x; keep v1.5.x there.\n- Phish.net links restored under External Links via Jellyfin 12's external URL provider.\n\n### Fixes\n- Phish.net API v5 now returns numeric fields and renamed venue keys, which broke every request. Parsing is now tolerant and venue names/notes map correctly.\n- Non-Phish videos in a shared library are left to other metadata providers instead of getting \"Needs Title Fix\" guidance (#25).\n\n### Upgrading\n- Remove any old phishnet_* or PhishData_1.5.* folder from plugins/ after installing.",
+        "targetAbi": "12.0.0.0",
+        "sourceUrl": "https://github.com/murphy52/jellyfin-plugin-phishdata/releases/download/v1.6.0.0/jellyfin-plugin-phishdata-v1.6.0.0.zip",
+        "checksum": "8e105232388722a536162b2c962e99db",
+        "timestamp": "2026-09-15T02:34:08Z"
+      },
+      {
         "version": "1.5.0.15",
         "changelog": "## Jellyfin Phish Data Plugin v1.5.0.15\n\n### Diagnostic Logging for Collection Images\n- Added comprehensive diagnostic logging to track file write operations\n- Logs now show: method invocation, metadata directory path, file write success/failure, permission issues\n- Enhanced error logging to reveal where image writing may be failing\n- Helps identify if issue is permission-based, exception handling, or method not being called\n\n### Build Quality\n- 0 build errors\n- Full .NET 8.0 support\n- Jellyfin 10.8.0+ compatible",
         "targetAbi": "10.8.0.0",
