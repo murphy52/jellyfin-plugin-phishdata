@@ -10,6 +10,14 @@
     "repositoryUrl": "https://github.com/murphy52/jellyfin-plugin-phishdata",
     "versions": [
       {
+        "version": "1.6.1.0",
+        "changelog": "## Jellyfin Phish Data Plugin v1.6.1.0\n\n### Fixes\n- Collections now form for multi-night runs using Phish.net run detection, so files named without a night number (e.g. \"Phish 7-31-2026\") group correctly, and runs longer than two nights include every night.\n- Already-titled items such as \"N1 Phish 7-22-2026\" re-parse correctly on refresh.\n- Collection poster and backdrop load again (provider referenced PNG resources while JPEGs are embedded).\n\n### Upgrading\n- Refresh a run's shows with \"Replace all metadata\" (night 1 first) to create its collection.",
+        "targetAbi": "12.0.0.0",
+        "sourceUrl": "https://github.com/murphy52/jellyfin-plugin-phishdata/releases/download/v1.6.1.0/jellyfin-plugin-phishdata-v1.6.1.0.zip",
+        "checksum": "efe926837d070b959ad771508abbed6e",
+        "timestamp": "2026-09-15T14:40:23Z"
+      },
+      {
         "version": "1.6.0.0",
         "changelog": "## Jellyfin Phish Data Plugin v1.6.0.0\n\n### Jellyfin 12 Support\n- Rebuilt for Jellyfin 12.0.0 (.NET 10). Does not load on Jellyfin 10.x; keep v1.5.x there.\n- Phish.net links restored under External Links via Jellyfin 12's external URL provider.\n\n### Fixes\n- Phish.net API v5 now returns numeric fields and renamed venue keys, which broke every request. Parsing is now tolerant and venue names/notes map correctly.\n- Non-Phish videos in a shared library are left to other metadata providers instead of getting \"Needs Title Fix\" guidance (#25).\n\n### Upgrading\n- Remove any old phishnet_* or PhishData_1.5.* folder from plugins/ after installing.",
         "targetAbi": "12.0.0.0",
