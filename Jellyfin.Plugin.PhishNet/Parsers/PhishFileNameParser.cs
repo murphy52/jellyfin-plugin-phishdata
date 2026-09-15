@@ -127,7 +127,7 @@ namespace Jellyfin.Plugin.PhishNet.Parsers
              "Ambient/Secret set without date", ParseAmbientSpecialFormat),
 
             // Pattern 9: Pre-processed titles with night indicators (N1, N2, etc.)
-            (new Regex(@"^N(\d+)\s+Phish\s+([^\d]+?)\s*(\d{1,2})-(\d{1,2})-(\d{4})$", RegexOptions.IgnoreCase), 
+            (new Regex(@"^N(\d+)\s+Phish\s+(?:([^\d]+?)\s*)?(\d{1,2})-(\d{1,2})-(\d{4})$", RegexOptions.IgnoreCase), 
              "Processed title with night indicator", ParseProcessedTitleFormat),
 
             // Pattern 10: Standard Phish title format (Phish City M-D-YYYY)
@@ -462,7 +462,9 @@ namespace Jellyfin.Plugin.PhishNet.Parsers
         private static PhishShowParseResult ParseProcessedTitleFormat(Match match)
         {
             var nightNumber = int.Parse(match.Groups[1].Value);
-            var city = match.Groups[2].Value.Trim();
+            var city = match.Groups[2].Success && !string.IsNullOrWhiteSpace(match.Groups[2].Value)
+                ? match.Groups[2].Value.Trim()
+                : null;
             var month = int.Parse(match.Groups[3].Value);
             var day = int.Parse(match.Groups[4].Value);
             var year = int.Parse(match.Groups[5].Value);

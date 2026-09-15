@@ -100,38 +100,21 @@ namespace Jellyfin.Plugin.PhishNet.Services
 
                 _logger.LogInformation("EVENT DEBUG: Processing movie {MovieName} with ID {MovieId}", movie.Name, movie.Id);
 
-                // Check if this movie has stored collection metadata from the metadata provider
-                var cityProviderId = movie.ProviderIds?.GetValueOrDefault("PhishCollectionCity");
-                var yearProviderId = movie.ProviderIds?.GetValueOrDefault("PhishCollectionYear");
-                var dayNumberProviderId = movie.ProviderIds?.GetValueOrDefault("PhishCollectionDayNumber");
-                var dateProviderId = movie.ProviderIds?.GetValueOrDefault("PhishCollectionDate");
-
-                _logger.LogInformation("EVENT DEBUG: Collection metadata - City: {City}, Year: {Year}, Day: {Day}, Date: {Date}", 
-                    cityProviderId, yearProviderId, dayNumberProviderId, dateProviderId);
-
-                if (string.IsNullOrEmpty(cityProviderId) || string.IsNullOrEmpty(yearProviderId) || string.IsNullOrEmpty(dayNumberProviderId))
+                // Read the collection metadata the provider stored on the movie
+                var collectionMetadata = PhishCollectionMetadata.FromProviderIds(movie.ProviderIds);
+                if (collectionMetadata == null)
                 {
                     _logger.LogDebug("EVENT DEBUG: Movie {MovieName} has no collection metadata, skipping", movie.Name);
                     return;
                 }
 
-                if (!int.TryParse(yearProviderId, out var year) || !int.TryParse(dayNumberProviderId, out var dayNumber) || !DateTime.TryParse(dateProviderId, out var showDate))
-                {
-                    _logger.LogWarning("EVENT DEBUG: Invalid collection metadata for movie {MovieName}", movie.Name);
-                    return;
-                }
+                var cityProviderId = collectionMetadata.City;
+                var year = collectionMetadata.Year;
+                var runDates = collectionMetadata.RunDates.ToList();
 
-                _logger.LogInformation("EVENT DEBUG: Processing collection for Phish movie {MovieName} (ID: {MovieId}) - {City} {Year} Day {Day}", 
-                    movie.Name, movie.Id, cityProviderId, year, dayNumber);
-
-                // Create run dates based on the day number (simple 2-night run)
-                var runDates = new List<DateTime>
-                {
-                    showDate.AddDays(-dayNumber + 1),
-                    showDate.AddDays(-dayNumber + 2)
-                };
-
-                _logger.LogInformation("EVENT DEBUG: Using run dates: {RunDates}", string.Join(", ", runDates.Select(d => d.ToString("yyyy-MM-dd"))));
+                _logger.LogInformation("EVENT DEBUG: Processing collection for Phish movie {MovieName} (ID: {MovieId}) - {City} {Year} Night {Day} of {Total}: {RunDates}",
+                    movie.Name, movie.Id, cityProviderId, year, collectionMetadata.DayNumber, runDates.Count,
+                    string.Join(", ", runDates.Select(d => d.ToString("yyyy-MM-dd"))));
 
                 // Process collection for this movie
                 await _collectionService.ProcessMultiNightRunCollectionAsync(movie, cityProviderId, year, runDates);

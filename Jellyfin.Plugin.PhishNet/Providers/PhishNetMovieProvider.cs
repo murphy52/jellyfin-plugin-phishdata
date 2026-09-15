@@ -219,24 +219,23 @@ namespace Jellyfin.Plugin.PhishNet.Providers
                 PopulateMetadataFromApi(result.Item, parseResult, showData, setlistData?.FirstOrDefault(), venueData, runInfo, _apiClient, cancellationToken);
                 AddPhishBandMembers(result);
 
-                // Store collection metadata in the movie's metadata for later processing by library events
-                if (parseResult.DayNumber.HasValue && parseResult.DayNumber > 0 && parseResult.ShowDate.HasValue)
+                // Store collection metadata for the library handler, which builds collections after the item is saved.
+                // Prefer API run detection; fall back to a night number parsed from the filename/title.
+                var collectionMetadata = PhishCollectionMetadata.FromShow(
+                    parseResult,
+                    runInfo?.IsPartOfRun == true ? runInfo.NightNumber : null,
+                    runInfo?.IsPartOfRun == true ? runInfo.RunDates : null,
+                    showData?.City);
+                if (collectionMetadata != null)
                 {
-                    _logger.LogInformation("COLLECTION DEBUG: Storing collection metadata for later processing - DayNumber {DayNumber}", parseResult.DayNumber);
-                    
-                    // Store collection info in custom metadata that library events can read
-                    result.Item.SetProviderId("PhishCollectionCity", parseResult.City ?? showData?.City ?? "Unknown");
-                    result.Item.SetProviderId("PhishCollectionYear", (parseResult.ShowDate.Value.Year).ToString());
-                    result.Item.SetProviderId("PhishCollectionDayNumber", parseResult.DayNumber.Value.ToString());
-                    result.Item.SetProviderId("PhishCollectionDate", parseResult.ShowDate.Value.ToString("yyyy-MM-dd"));
-                    
-                    _logger.LogInformation("COLLECTION DEBUG: Stored collection metadata - City: {City}, Year: {Year}, Day: {Day}", 
-                        parseResult.City ?? showData?.City ?? "Unknown", parseResult.ShowDate.Value.Year, parseResult.DayNumber);
+                    collectionMetadata.ApplyTo(result.Item);
+                    _logger.LogInformation("COLLECTION DEBUG: Stored collection metadata - City: {City}, Year: {Year}, Night {Day} of {Total} ({RunDates})",
+                        collectionMetadata.City, collectionMetadata.Year, collectionMetadata.DayNumber, collectionMetadata.RunDates.Count,
+                        string.Join(", ", collectionMetadata.RunDates.Select(d => d.ToString("yyyy-MM-dd"))));
                 }
                 else
                 {
-                    _logger.LogDebug("COLLECTION DEBUG: Not storing collection metadata - DayNumber is {DayNumber}, ShowDate is {ShowDate}", 
-                        parseResult.DayNumber, parseResult.ShowDate?.ToString("yyyy-MM-dd"));
+                    _logger.LogDebug("COLLECTION DEBUG: Not storing collection metadata - no run detected for {Name}", info.Name);
                 }
 
                 result.HasMetadata = true;
