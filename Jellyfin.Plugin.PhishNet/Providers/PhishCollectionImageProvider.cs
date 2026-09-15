@@ -120,11 +120,11 @@ namespace Jellyfin.Plugin.PhishNet.Providers
             string resourceName;
             if (url == "phish-collection-poster")
             {
-                resourceName = "Jellyfin.Plugin.PhishNet.Resources.collection-poster.png";
+                resourceName = "Jellyfin.Plugin.PhishNet.Resources.collection-poster.jpg";
             }
             else if (url == "phish-collection-backdrop")
             {
-                resourceName = "Jellyfin.Plugin.PhishNet.Resources.collection-backdrop.png";
+                resourceName = "Jellyfin.Plugin.PhishNet.Resources.collection-backdrop.jpg";
             }
             else
             {
@@ -146,7 +146,7 @@ namespace Jellyfin.Plugin.PhishNet.Providers
                 Content = new StreamContent(imageStream)
             };
 
-            response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/png");
+            response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
             return Task.FromResult(response);
         }
     }
