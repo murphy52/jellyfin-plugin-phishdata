@@ -6,7 +6,7 @@
     "description": "DEVELOPMENT VERSION - NOT FOR PRODUCTION USE\n\nThis is the development version of the Phish Data plugin with experimental features and fixes. Use at your own risk!",
     "owner": "murphy52",
     "category": "Metadata",
-    "imagePath": "thumb.png",
+    "imageUrl": "https://raw.githubusercontent.com/murphy52/jellyfin-plugin-phishdata/master/thumb.png",
     "repositoryUrl": "https://github.com/murphy52/jellyfin-plugin-phishdata/tree/development",
     "versions": [
       {
