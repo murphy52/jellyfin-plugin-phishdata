@@ -15,8 +15,9 @@ namespace Jellyfin.Plugin.PhishNet.Chapters.Audio;
 public sealed record TemplateDecodeResult(float[] Envelope, long BytesRead, bool HitByteCap)
 {
     /// <summary>
-    /// Says whether the template is usable: the full 90 s, or the whole of a shorter track (within 1 s,
-    /// since phish.in's duration and the decoded length can differ slightly). A capped download never is.
+    /// Says whether the template is usable: the full 90 s, or for a track shorter than that, all of it
+    /// (within 1 s, since phish.in's duration and the decoded length can differ slightly). A capped
+    /// download never is.
     /// </summary>
     /// <param name="trackSeconds">The track length phish.in reports.</param>
     /// <returns>True when the template can be aligned and cached.</returns>
@@ -27,8 +28,12 @@ public sealed record TemplateDecodeResult(float[] Envelope, long BytesRead, bool
             return false;
         }
 
-        int whole = (int)Math.Floor(trackSeconds * AlignmentConstants.Fps) - AlignmentConstants.Fps;
-        return Envelope.Length >= Math.Min(AlignmentConstants.TemplateFrames, whole);
+        if (trackSeconds >= AlignmentConstants.TemplateSeconds)
+        {
+            return Envelope.Length >= AlignmentConstants.TemplateFrames;
+        }
+
+        return Envelope.Length >= (int)Math.Floor(trackSeconds * AlignmentConstants.Fps) - AlignmentConstants.Fps;
     }
 }
 
@@ -49,7 +54,8 @@ public interface IEnvelopeDecoder
     /// Decodes the first <see cref="AlignmentConstants.TemplateSeconds"/> of a track, reading no more of
     /// <paramref name="source"/> than ffmpeg needs and never more than <paramref name="maxBytes"/>.
     /// </summary>
-    /// <param name="source">The track audio, e.g. a phish.in MP3 response body. The caller disposes it.</param>
+    /// <param name="source">The track audio, e.g. a phish.in MP3 response body. The caller disposes it, which
+    /// also ends a read that ignored cancellation.</param>
     /// <param name="maxBytes">Most bytes to read: the smaller of the per-track cap and what's left of the show's.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The template and how much was read.</returns>

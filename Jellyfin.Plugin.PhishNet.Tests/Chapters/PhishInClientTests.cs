@@ -137,6 +137,93 @@ public class PhishInClientTests
         handler.Requests.Should().BeEmpty();
     }
 
+    [Theory]
+    [InlineData("""{"title":"Ghost","duration":1000,"set_name":"Set 1"}""", "position 0")]
+    [InlineData("""{"title":"Ghost","position":-2,"duration":1000,"set_name":"Set 1"}""", "position -2")]
+    [InlineData("""{"title":"Ghost","position":1,"duration":1000,"set_name":"Set 1"}""", "repeated position 1")]
+    public async Task GetShow_ShouldReportInvalid_WhenAPositionIsMissingOrRepeated(string track, string detail)
+    {
+        var json = $$"""{"audio_status":"complete","tracks":[{"title":"Tweezer","position":1,"duration":1000,"set_name":"Set 1"},{{track}}]}""";
+        var (client, _, _) = Create(_ => Json(HttpStatusCode.OK, json));
+
+        var show = await client.GetShowAsync(new DateTime(2026, 7, 7), CancellationToken.None);
+
+        show.Status.Should().Be(PhishInShowStatus.Invalid);
+        show.Detail.Should().Contain(detail);
+    }
+
+    [Fact]
+    public async Task OpenMp3_ShouldHoldThePacerUntilTheDownloadIsDisposed()
+    {
+        var (client, _, _) = Create(_ => Json(HttpStatusCode.OK, "{}"));
+        var first = await client.OpenMp3Async("https://phish.in/blob/a.mp3", CancellationToken.None);
+
+        var second = client.OpenMp3Async("https://phish.in/blob/b.mp3", CancellationToken.None);
+        await Task.Delay(100);
+        second.IsCompleted.Should().BeFalse("only one phish.in request may run at a time");
+
+        first.Dispose();
+        using var audio = await second.WaitAsync(TimeSpan.FromSeconds(5));
+    }
+
+    [Fact]
+    public async Task OpenMp3_ShouldFollowARedirectWithinPhishIn()
+    {
+        var (client, handler, _) = Create(r => r.RequestUri!.AbsolutePath == "/blob/a.mp3"
+            ? Redirect("/blob/moved.mp3")
+            : Json(HttpStatusCode.OK, "mp3"));
+
+        using var audio = await client.OpenMp3Async("https://phish.in/blob/a.mp3", CancellationToken.None);
+
+        handler.Requests.Select(r => r.RequestUri!.ToString())
+            .Should().Equal("https://phish.in/blob/a.mp3", "https://phish.in/blob/moved.mp3");
+        handler.Requests[1].Headers.UserAgent.ToString().Should().Contain("Jellyfin-PhishData");
+    }
+
+    [Theory]
+    [InlineData("https://example.com/x.mp3")]
+    [InlineData("http://phish.in/blob/a.mp3")]
+    [InlineData("https://169.254.169.254/latest")]
+    public async Task OpenMp3_ShouldNotFollowARedirectOffPhishIn(string location)
+    {
+        var (client, handler, _) = Create(_ => Redirect(location));
+
+        var act = () => client.OpenMp3Async("https://phish.in/blob/a.mp3", CancellationToken.None);
+
+        await act.Should().ThrowAsync<HttpRequestException>();
+        handler.Requests.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task OpenMp3_ShouldGiveUpAfterThreeRedirects()
+    {
+        int n = 0;
+        var (client, handler, _) = Create(_ => Redirect($"/blob/hop{++n}.mp3"));
+
+        var act = () => client.OpenMp3Async("https://phish.in/blob/a.mp3", CancellationToken.None);
+
+        await act.Should().ThrowAsync<HttpRequestException>();
+        handler.Requests.Should().HaveCount(PhishInClient.MaxRedirects + 1);
+    }
+
+    [Fact]
+    public async Task OpenMp3_ShouldFreeThePacer_WhenTheRequestFails()
+    {
+        var (client, _, _) = Create(_ => Json(HttpStatusCode.NotFound, "{}"));
+
+        var act = () => client.OpenMp3Async("https://phish.in/blob/a.mp3", CancellationToken.None);
+
+        await act.Should().ThrowAsync<HttpRequestException>();
+        await act.Should().ThrowAsync<HttpRequestException>().WaitAsync(TimeSpan.FromSeconds(5));
+    }
+
+    private static HttpResponseMessage Redirect(string location)
+    {
+        var r = new HttpResponseMessage(HttpStatusCode.Found);
+        r.Headers.Location = new Uri(location, UriKind.RelativeOrAbsolute);
+        return r;
+    }
+
     private static HttpResponseMessage Json(HttpStatusCode code, string body) =>
         new(code) { Content = new StringContent(body, System.Text.Encoding.UTF8, "application/json") };
 

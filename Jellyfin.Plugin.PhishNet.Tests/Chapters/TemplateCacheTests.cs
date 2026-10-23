@@ -127,6 +127,19 @@ public class TemplateCacheTests : IDisposable
     }
 
     [Fact]
+    public async Task Read_ShouldMiss_ForAFileFarLargerThanAnyRecord()
+    {
+        var cache = new TemplateCache(_dir);
+        await cache.WriteAsync(Url, Envelope(100), CancellationToken.None);
+        await using (var f = new FileStream(PathFor(Url), FileMode.Open))
+        {
+            f.SetLength(64L * 1024 * 1024); // sparse; never read
+        }
+
+        (await cache.TryReadAsync(Url, CancellationToken.None)).Should().BeNull();
+    }
+
+    [Fact]
     public async Task Write_ShouldRefuseNonFiniteOrEmptyEnvelopes()
     {
         var cache = new TemplateCache(_dir);

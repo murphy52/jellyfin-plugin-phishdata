@@ -24,6 +24,7 @@ public sealed class TemplateCache
     private const int FormatVersion = 1;
     private const int HeaderInts = 8;
     private const int MaxUrlBytes = 4096;
+    private const int MaxRecordBytes = 4 + (HeaderInts * 4) + MaxUrlBytes + (AlignmentConstants.TemplateFrames * 4);
     private static readonly byte[] Magic = "PHTC"u8.ToArray();
 
     private readonly string _directory;
@@ -45,17 +46,28 @@ public sealed class TemplateCache
     /// <returns>The envelope, or null when it isn't cached or the record can't be trusted.</returns>
     public async Task<float[]?> TryReadAsync(string mp3Url, CancellationToken cancellationToken)
     {
-        byte[] bytes;
+        FileStream file;
         try
         {
-            bytes = await File.ReadAllBytesAsync(PathFor(mp3Url), cancellationToken).ConfigureAwait(false);
+            file = new FileStream(PathFor(mp3Url), FileMode.Open, FileAccess.Read, FileShare.Read, 4096, useAsync: true);
         }
         catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException)
         {
             return null;
         }
 
-        return Parse(bytes, mp3Url);
+        await using (file.ConfigureAwait(false))
+        {
+            // Checked before reading, so a damaged or foreign file can't force a large allocation.
+            if (file.Length > MaxRecordBytes)
+            {
+                return null;
+            }
+
+            var bytes = new byte[file.Length];
+            await file.ReadExactlyAsync(bytes, cancellationToken).ConfigureAwait(false);
+            return Parse(bytes, mp3Url);
+        }
     }
 
     /// <summary>

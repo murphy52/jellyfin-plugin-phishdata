@@ -94,6 +94,29 @@ public class EnvelopeDecoderTests : IDisposable
     }
 
     [FfmpegFact]
+    public async Task DecodeTemplate_ShouldNotHang_WhenTheSourceIgnoresCancellation()
+    {
+        var decoder = Create(templateTimeout: TimeSpan.FromMilliseconds(300), feederGrace: TimeSpan.FromMilliseconds(200));
+        using var source = new DeafStream(Wav(Signal(seconds: 1))[..44]);
+        var clock = Stopwatch.StartNew();
+
+        var act = () => decoder.DecodeTemplateAsync(source, EnvelopeDecoder.MaxTrackBytes, CancellationToken.None);
+
+        await act.Should().ThrowAsync<TimeoutException>();
+        clock.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(5));
+    }
+
+    [Fact]
+    public async Task Decode_ShouldThrowDecodeException_WhenFfmpegCanNotStart()
+    {
+        using var source = new MemoryStream(new byte[10]);
+
+        var act = () => Create("/nonexistent/ffmpeg").DecodeTemplateAsync(source, EnvelopeDecoder.MaxTrackBytes, CancellationToken.None);
+
+        await act.Should().ThrowAsync<EnvelopeDecodeException>().WithMessage("*/nonexistent/ffmpeg*");
+    }
+
+    [FfmpegFact]
     public async Task DecodeFile_ShouldThrowWithFfmpegsMessage_ForAFileItCannotDecode()
     {
         var path = Path.Combine(_dir, "not-audio.mkv");
@@ -138,6 +161,8 @@ public class EnvelopeDecoderTests : IDisposable
     [InlineData(1800, 300, true)]
     [InlineData(1799, 300, false)]
     [InlineData(1800, 90, true)]
+    [InlineData(1780, 90, false)]
+    [InlineData(1778, 89.9, true)]
     [InlineData(500, 25, true)]
     [InlineData(480, 25, true)]
     [InlineData(479, 25, false)]
@@ -167,10 +192,10 @@ public class EnvelopeDecoderTests : IDisposable
         }
     }
 
-    private static EnvelopeDecoder Create(Action<Process>? started = null, TimeSpan? templateTimeout = null) =>
-        Create(FfmpegFactAttribute.FfmpegPath!, started, templateTimeout);
+    private static EnvelopeDecoder Create(Action<Process>? started = null, TimeSpan? templateTimeout = null, TimeSpan? feederGrace = null) =>
+        Create(FfmpegFactAttribute.FfmpegPath!, started, templateTimeout, feederGrace);
 
-    private static EnvelopeDecoder Create(string ffmpeg, Action<Process>? started = null, TimeSpan? templateTimeout = null)
+    private static EnvelopeDecoder Create(string ffmpeg, Action<Process>? started = null, TimeSpan? templateTimeout = null, TimeSpan? feederGrace = null)
     {
         var encoder = new Mock<IMediaEncoder>();
         encoder.Setup(e => e.EncoderPath).Returns(ffmpeg);
@@ -178,6 +203,7 @@ public class EnvelopeDecoderTests : IDisposable
         {
             ProcessStarted = started,
             TemplateTimeout = templateTimeout ?? TimeSpan.FromMinutes(2),
+            FeederGrace = feederGrace ?? TimeSpan.FromSeconds(5),
         };
     }
 
@@ -246,6 +272,30 @@ public class EnvelopeDecoderTests : IDisposable
 
             await Task.Delay(Timeout.Infinite, cancellationToken);
             return 0;
+        }
+    }
+
+    /// <summary>Returns its bytes, then blocks until disposed, ignoring cancellation.</summary>
+    private sealed class DeafStream(byte[] head) : MemoryStream(head)
+    {
+        private readonly TaskCompletionSource _disposed = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            int n = await base.ReadAsync(buffer, CancellationToken.None);
+            if (n > 0)
+            {
+                return n;
+            }
+
+            await _disposed.Task;
+            throw new ObjectDisposedException(nameof(DeafStream));
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            _disposed.TrySetResult();
+            base.Dispose(disposing);
         }
     }
 

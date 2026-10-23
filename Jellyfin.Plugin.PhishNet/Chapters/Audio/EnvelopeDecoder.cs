@@ -22,8 +22,9 @@ public sealed class EnvelopeDecodeException : Exception
     /// Initializes a new instance of the <see cref="EnvelopeDecodeException"/> class.
     /// </summary>
     /// <param name="message">What went wrong, with the tail of ffmpeg's stderr.</param>
-    public EnvelopeDecodeException(string message)
-        : base(message)
+    /// <param name="innerException">The underlying error, if any.</param>
+    public EnvelopeDecodeException(string message, Exception? innerException = null)
+        : base(message, innerException)
     {
     }
 }
@@ -63,6 +64,9 @@ public sealed class EnvelopeDecoder : IEnvelopeDecoder
 
     /// <summary>Gets the longest one track template may take, download included.</summary>
     public TimeSpan TemplateTimeout { get; init; } = TimeSpan.FromMinutes(2);
+
+    /// <summary>Gets how long a canceled download may take to stop before it is left to its owner.</summary>
+    internal TimeSpan FeederGrace { get; init; } = TimeSpan.FromSeconds(5);
 
     /// <summary>Gets a hook tests use to watch the ffmpeg process.</summary>
     internal Action<Process>? ProcessStarted { get; init; }
@@ -124,81 +128,115 @@ public sealed class EnvelopeDecoder : IEnvelopeDecoder
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
         using var feedCts = CancellationTokenSource.CreateLinkedTokenSource(linked.Token);
         using var process = new Process { StartInfo = psi };
-        process.Start();
-        LowerPriority(process);
-        ProcessStarted?.Invoke(process);
-
-        // Pipe reads don't honor cancellation everywhere, so a cancel kills ffmpeg, which closes the pipes.
-        using var kill = linked.Token.Register(() => Kill(process));
-
-        var stderr = ReadTailAsync(process.StandardError);
-        var feed = source is null
-            ? CloseInput(process)
-            : FeedAsync(source, process.StandardInput.BaseStream, maxBytes, feedCts.Token);
-
-        var builder = new EnvelopeBuilder();
-        var buffer = new byte[ChunkBytes];
-        var stdout = process.StandardOutput.BaseStream;
         try
         {
-            int n;
-            while ((n = await stdout.ReadAsync(buffer, CancellationToken.None).ConfigureAwait(false)) > 0)
+            process.Start();
+        }
+        catch (Win32Exception ex)
+        {
+            throw new EnvelopeDecodeException($"Could not start ffmpeg at {ffmpeg}: {ex.Message}", ex);
+        }
+
+        try
+        {
+            LowerPriority(process);
+            ProcessStarted?.Invoke(process);
+
+            // Pipe reads don't honor cancellation everywhere, so a cancel kills ffmpeg, which closes the pipes.
+            using var kill = linked.Token.Register(() => Kill(process));
+
+            var stderr = ReadTailAsync(process.StandardError);
+            var fed = new FeedState();
+            if (source is null)
             {
-                builder.AddBytes(buffer.AsSpan(0, n));
+                process.StandardInput.Close();
             }
-        }
-        catch (IOException) when (linked.IsCancellationRequested)
-        {
-            // The pipe broke because ffmpeg was killed; reported below.
-        }
 
-        await process.WaitForExitAsync(CancellationToken.None).ConfigureAwait(false);
-        await feedCts.CancelAsync().ConfigureAwait(false); // a feeder still waiting on the network
-        var tail = await stderr.ConfigureAwait(false);
+            var feed = source is null
+                ? Task.CompletedTask
+                : FeedAsync(source, process.StandardInput.BaseStream, maxBytes, fed, feedCts.Token);
 
-        FeedResult fed;
-        try
-        {
-            fed = await feed.ConfigureAwait(false);
-        }
-        catch when (linked.IsCancellationRequested)
-        {
-            fed = default;
-        }
+            var builder = new EnvelopeBuilder();
+            var buffer = new byte[ChunkBytes];
+            var stdout = process.StandardOutput.BaseStream;
+            try
+            {
+                int n;
+                while ((n = await stdout.ReadAsync(buffer, CancellationToken.None).ConfigureAwait(false)) > 0)
+                {
+                    builder.AddBytes(buffer.AsSpan(0, n));
+                }
+            }
+            catch (IOException) when (linked.IsCancellationRequested)
+            {
+                // The pipe broke because ffmpeg was killed; reported below.
+            }
 
-        cancellationToken.ThrowIfCancellationRequested();
-        if (timeoutCts.IsCancellationRequested)
-        {
-            throw new TimeoutException($"ffmpeg took longer than {timeout} on {label}");
-        }
+            await process.WaitForExitAsync(CancellationToken.None).ConfigureAwait(false);
+            await feedCts.CancelAsync().ConfigureAwait(false); // a feeder still waiting on the network
+            var tail = await stderr.ConfigureAwait(false);
+            await JoinFeederAsync(feed, label, linked.IsCancellationRequested).ConfigureAwait(false);
 
-        var envelope = builder.ToArray();
-        if (!fed.HitByteCap && (process.ExitCode != 0 || envelope.Length == 0))
-        {
-            throw new EnvelopeDecodeException(
-                $"ffmpeg could not decode {label} (exit {process.ExitCode}, {envelope.Length} frames): {tail}");
-        }
+            cancellationToken.ThrowIfCancellationRequested();
+            if (timeoutCts.IsCancellationRequested)
+            {
+                throw new TimeoutException($"ffmpeg took longer than {timeout} on {label}");
+            }
 
-        if (tail.Length > 0)
-        {
-            _logger.LogDebug("ffmpeg on {Label}: {Stderr}", label, tail);
-        }
+            var envelope = builder.ToArray();
+            if (!fed.HitByteCap && (process.ExitCode != 0 || envelope.Length == 0))
+            {
+                throw new EnvelopeDecodeException(
+                    $"ffmpeg could not decode {label} (exit {process.ExitCode}, {envelope.Length} frames): {tail}");
+            }
 
-        return new TemplateDecodeResult(envelope, fed.BytesRead, fed.HitByteCap);
+            if (tail.Length > 0)
+            {
+                _logger.LogDebug("ffmpeg on {Label}: {Stderr}", label, tail);
+            }
+
+            return new TemplateDecodeResult(envelope, Volatile.Read(ref fed.BytesRead), fed.HitByteCap);
+        }
+        finally
+        {
+            Kill(process); // no-op once it has exited; never leave ffmpeg behind on an unexpected error
+        }
     }
 
-    private static async Task<FeedResult> FeedAsync(Stream source, Stream stdin, long maxBytes, CancellationToken cancellationToken)
+    /// <summary>
+    /// Waits for the feeder to notice it was canceled. A source that ignores cancellation is left to the
+    /// caller, whose disposing of it ends the read; it must not hold up the worker.
+    /// </summary>
+    private async Task JoinFeederAsync(Task feed, string label, bool canceled)
+    {
+        if (await Task.WhenAny(feed, Task.Delay(FeederGrace)).ConfigureAwait(false) != feed)
+        {
+            _logger.LogWarning("The download for {Label} didn't stop when asked; leaving it to be disposed", label);
+            _ = feed.ContinueWith(t => _ = t.Exception, CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Default);
+            return;
+        }
+
+        try
+        {
+            await feed.ConfigureAwait(false);
+        }
+        catch when (canceled)
+        {
+            // Killed on timeout or cancel; that is what gets reported.
+        }
+    }
+
+    private static async Task FeedAsync(Stream source, Stream stdin, long maxBytes, FeedState state, CancellationToken cancellationToken)
     {
         var buffer = new byte[ChunkBytes];
         long total = 0;
-        bool capped = false;
         try
         {
             while (true)
             {
                 if (total >= maxBytes)
                 {
-                    capped = true;
+                    state.HitByteCap = true;
                     break;
                 }
 
@@ -210,6 +248,7 @@ public sealed class EnvelopeDecoder : IEnvelopeDecoder
                 }
 
                 total += n;
+                Volatile.Write(ref state.BytesRead, total);
                 try
                 {
                     await stdin.WriteAsync(buffer.AsMemory(0, n), cancellationToken).ConfigureAwait(false);
@@ -230,19 +269,11 @@ public sealed class EnvelopeDecoder : IEnvelopeDecoder
             {
                 await stdin.DisposeAsync().ConfigureAwait(false);
             }
-            catch (IOException)
+            catch (Exception ex) when (ex is IOException or ObjectDisposedException)
             {
-                // Already closed by ffmpeg.
+                // Already closed by ffmpeg, or the process is gone.
             }
         }
-
-        return new FeedResult(total, capped);
-    }
-
-    private static Task<FeedResult> CloseInput(Process process)
-    {
-        process.StandardInput.Close();
-        return Task.FromResult(default(FeedResult));
     }
 
     private static async Task<string> ReadTailAsync(StreamReader stderr)
@@ -286,5 +317,11 @@ public sealed class EnvelopeDecoder : IEnvelopeDecoder
         }
     }
 
-    private readonly record struct FeedResult(long BytesRead, bool HitByteCap);
+    /// <summary>What the feeder has done, readable even if it is abandoned mid-read.</summary>
+    private sealed class FeedState
+    {
+        public long BytesRead; // a field so it can be read and written with Volatile
+
+        public bool HitByteCap { get; set; }
+    }
 }
