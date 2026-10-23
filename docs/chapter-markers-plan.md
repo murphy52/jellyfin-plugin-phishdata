@@ -156,6 +156,8 @@ Added to `PluginConfiguration` and the settings page:
 - `ChapterMarkersMaxShowsPerRun` (default 10) and `ChapterMarkersMaxGbPerRun` (default 100)
 - `ReplaceDummyChapters` (default true)
 
+**Credit:** the settings page credits phish.in as the audio source for chapter markers, with a link to https://phish.in (David asked for this on 2026-10-23). It sits in the chapter markers section next to the existing Phish.net attribution, and the README gets the same line.
+
 Plus a read-only status table (counts by status, and the Needs review list with actions), served by a small `[Authorize(Policy = "RequiresElevation")]` API controller.
 
 ### 4.6 Logging and failure handling
