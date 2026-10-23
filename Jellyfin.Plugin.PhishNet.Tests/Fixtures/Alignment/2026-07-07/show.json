@@ -1,0 +1,206 @@
+{
+ "date": "2026-07-07",
+ "fps": 20,
+ "tracks": [
+  {
+   "title": "Chalk Dust Torture",
+   "set": "Set 1",
+   "duration_ms": 604068,
+   "frames": 1800
+  },
+  {
+   "title": "Ghost",
+   "set": "Set 1",
+   "duration_ms": 832752,
+   "frames": 1800
+  },
+  {
+   "title": "Back on the Train",
+   "set": "Set 1",
+   "duration_ms": 480432,
+   "frames": 1800
+  },
+  {
+   "title": "Free",
+   "set": "Set 1",
+   "duration_ms": 504216,
+   "frames": 1800
+  },
+  {
+   "title": "Mike's Song",
+   "set": "Set 1",
+   "duration_ms": 515088,
+   "frames": 1800
+  },
+  {
+   "title": "The Man Who Stepped Into Yesterday",
+   "set": "Set 1",
+   "duration_ms": 220944,
+   "frames": 1800
+  },
+  {
+   "title": "Avenu Malkenu",
+   "set": "Set 1",
+   "duration_ms": 199824,
+   "frames": 1800
+  },
+  {
+   "title": "Weekapaug Groove",
+   "set": "Set 1",
+   "duration_ms": 447456,
+   "frames": 1800
+  },
+  {
+   "title": "A Wave of Hope",
+   "set": "Set 1",
+   "duration_ms": 620976,
+   "frames": 1800
+  },
+  {
+   "title": "Character Zero",
+   "set": "Set 1",
+   "duration_ms": 373650,
+   "frames": 1800
+  },
+  {
+   "title": "Run Like an Antelope",
+   "set": "Set 2",
+   "duration_ms": 624154,
+   "frames": 1800
+  },
+  {
+   "title": "Fuego",
+   "set": "Set 2",
+   "duration_ms": 1525368,
+   "frames": 1800
+  },
+  {
+   "title": "Life Saving Gun",
+   "set": "Set 2",
+   "duration_ms": 684840,
+   "frames": 1800
+  },
+  {
+   "title": "Sand",
+   "set": "Set 2",
+   "duration_ms": 906480,
+   "frames": 1800
+  },
+  {
+   "title": "Ruby Waves",
+   "set": "Set 2",
+   "duration_ms": 969576,
+   "frames": 1800
+  },
+  {
+   "title": "Suzy Greenberg",
+   "set": "Set 2",
+   "duration_ms": 434790,
+   "frames": 1800
+  },
+  {
+   "title": "Slave to the Traffic Light",
+   "set": "Encore",
+   "duration_ms": 534297,
+   "frames": 1800
+  },
+  {
+   "title": "Say It to Me S.A.N.T.O.S.",
+   "set": "Encore",
+   "duration_ms": 347232,
+   "frames": 1800
+  }
+ ],
+ "expected": [
+  [
+   "Chalk Dust Torture",
+   58.95,
+   0.4636
+  ],
+  [
+   "Ghost",
+   663.0,
+   0.7604
+  ],
+  [
+   "Back on the Train",
+   1495.7,
+   0.7714
+  ],
+  [
+   "Free",
+   1976.1,
+   0.6966
+  ],
+  [
+   "Mike's Song",
+   2480.25,
+   0.7594
+  ],
+  [
+   "The Man Who Stepped Into Yesterday",
+   2995.35,
+   0.6317
+  ],
+  [
+   "Avenu Malkenu",
+   3216.25,
+   0.6485
+  ],
+  [
+   "Weekapaug Groove",
+   3416.05,
+   0.5522
+  ],
+  [
+   "A Wave of Hope",
+   3863.45,
+   0.7229
+  ],
+  [
+   "Character Zero",
+   4484.4,
+   0.7582
+  ],
+  [
+   "Run Like an Antelope",
+   4951.5,
+   0.7952
+  ],
+  [
+   "Fuego",
+   5575.65,
+   0.8387
+  ],
+  [
+   "Life Saving Gun",
+   7101.0,
+   0.7434
+  ],
+  [
+   "Sand",
+   7785.8,
+   0.6317
+  ],
+  [
+   "Ruby Waves",
+   8692.2,
+   0.8189
+  ],
+  [
+   "Suzy Greenberg",
+   9661.75,
+   0.634
+  ],
+  [
+   "Slave to the Traffic Light",
+   10247.45,
+   0.8331
+  ],
+  [
+   "Say It to Me S.A.N.T.O.S.",
+   10781.75,
+   0.7236
+  ]
+ ]
+}
