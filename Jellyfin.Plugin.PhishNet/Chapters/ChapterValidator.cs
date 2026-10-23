@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Jellyfin.Plugin.PhishNet.Chapters.Alignment;
 
 namespace Jellyfin.Plugin.PhishNet.Chapters;
@@ -52,6 +53,11 @@ public static class ChapterValidator
             if (c.Title.Length > MaxTitleLength)
             {
                 return $"chapter {i + 1} has a title longer than {MaxTitleLength} characters";
+            }
+
+            if (c.Title.Any(char.IsControl))
+            {
+                return $"chapter {i + 1} has a control character in its title";
             }
 
             if (!double.IsFinite(c.StartSeconds))

@@ -31,6 +31,15 @@ public class ChapterValidatorTests
     }
 
     [Theory]
+    [InlineData("Intro\r5:00 Tweezer")]
+    [InlineData("Tab\there")]
+    [InlineData("Bell\u0007")]
+    public void Validate_ShouldRejectControlCharactersInTitles(string title)
+    {
+        ChapterValidator.Validate(Rows((0, "Ghost"), (60, title)), Runtime).Should().Contain("chapter 2").And.Contain("control character");
+    }
+
+    [Theory]
     [InlineData(600.0)]
     [InlineData(500.0)]
     public void Validate_ShouldRejectStartsThatDoNotIncrease(double second)

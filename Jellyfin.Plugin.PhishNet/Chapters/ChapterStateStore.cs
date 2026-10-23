@@ -35,13 +35,26 @@ public enum ChapterStatus
     Ignored,
 }
 
+/// <summary>Where an Applied record's chapters came from.</summary>
+public enum ChapterSource
+{
+    /// <summary>Aligned against phish.in audio.</summary>
+    Aligned,
+
+    /// <summary>The <c>.chapters.txt</c> sidecar next to the video.</summary>
+    Sidecar,
+
+    /// <summary>A review item the admin applied anyway.</summary>
+    ApplyAnyway,
+}
+
 /// <summary>
 /// Identifies one version of a media file. A different fingerprint means a new file to align.
 /// </summary>
 /// <param name="Path">The file path.</param>
 /// <param name="Size">Size in bytes.</param>
 /// <param name="ModifiedUtc">Last write time.</param>
-/// <param name="SidecarHash">Hash of the chapters sidecar, when one exists (Phase 4).</param>
+/// <param name="SidecarHash">Hash of the chapters sidecar, when one exists, so adding, editing or removing it counts as a change.</param>
 public sealed record FileFingerprint(string Path, long Size, DateTime ModifiedUtc, string? SidecarHash = null)
 {
     /// <summary>
@@ -81,6 +94,18 @@ public sealed class ChapterState
 
     /// <summary>Gets or sets the chapters: saved ones when Applied, the rejected alignment when NeedsReview.</summary>
     public List<AlignedChapter> Chapters { get; set; } = new();
+
+    /// <summary>Gets or sets where an Applied record's chapters came from.</summary>
+    public ChapterSource? Source { get; set; }
+
+    /// <summary>
+    /// Gets or sets the chapters this plugin last saved to Jellyfin, when the record's status no longer says
+    /// so (after a file swap or a Retry, say). Only an exact match of these may be replaced.
+    /// </summary>
+    public List<AlignedChapter>? SavedChapters { get; set; }
+
+    /// <summary>Gets or sets a value indicating whether the admin asked for a fresh attempt on the next pass.</summary>
+    public bool RetryRequested { get; set; }
 
     /// <summary>Gets or sets the alignment's median confidence.</summary>
     public double? MedianConfidence { get; set; }
@@ -185,6 +210,25 @@ public sealed class ChapterStateStore
         {
             File.Delete(temp); // no-op once moved
         }
+    }
+
+    /// <summary>
+    /// Reads every readable record.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Item IDs and their records.</returns>
+    public async Task<IReadOnlyList<KeyValuePair<Guid, ChapterState>>> ReadAllAsync(CancellationToken cancellationToken)
+    {
+        var records = new List<KeyValuePair<Guid, ChapterState>>();
+        foreach (var id in KnownItemIds())
+        {
+            if (await ReadAsync(id, cancellationToken).ConfigureAwait(false) is { } state)
+            {
+                records.Add(new KeyValuePair<Guid, ChapterState>(id, state));
+            }
+        }
+
+        return records;
     }
 
     /// <summary>

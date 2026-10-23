@@ -23,7 +23,7 @@ namespace Jellyfin.Plugin.PhishNet.Tests.Chapters;
 /// The service's rules with everything outside it faked: Jellyfin's chapter table, phish.in, ffmpeg and
 /// the clock. The alignment itself is real, on a synthetic show.
 /// </summary>
-public class ChapterMarkerServiceTests : IDisposable
+public partial class ChapterMarkerServiceTests : IDisposable
 {
     private static readonly ConsensusAlignerTests.SyntheticShow Synthetic =
         ConsensusAlignerTests.SyntheticShow.Build(seed: 10, songs: 12, leadInSec: 60, drift: 1.02, setbreakAfter: null, setbreakSec: 0);
