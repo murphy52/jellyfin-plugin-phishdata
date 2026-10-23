@@ -103,6 +103,10 @@ This plugin is not affiliated with Phish.net, but we highly encourage supporting
 
 **[Support Phish.net & The Mockingbird Foundation](https://donate.mbird.org/forms/mbird-donations-via-the-phishnet-frontpage)**
 
+## About phish.in
+
+The optional chapter markers (off by default) are aligned against track audio from [phish.in](https://phish.in), the Phish audio archive. Thanks to phish.in for the audio. This plugin is not affiliated with phish.in.
+
 ## Support
 
 For issues, questions, or feature requests, please visit the [GitHub repository](https://github.com/murphy52/jellyfin-plugin-phishdata).

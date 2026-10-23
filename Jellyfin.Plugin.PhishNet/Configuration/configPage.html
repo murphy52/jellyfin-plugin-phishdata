@@ -3,6 +3,17 @@
 <head>
     <meta charset="utf-8">
     <title>Phish Data</title>
+    <style>
+        #PhishNetConfigPage .chapterTableWrap { overflow-x: auto; margin-top: 0.75em; }
+        #PhishNetConfigPage .chapterTable { width: 100%; border-collapse: collapse; }
+        #PhishNetConfigPage .chapterTable th,
+        #PhishNetConfigPage .chapterTable td { text-align: left; padding: 0.4em 0.6em; border-bottom: 1px solid rgba(128, 128, 128, 0.3); vertical-align: top; }
+        #PhishNetConfigPage .chapterTable td.num,
+        #PhishNetConfigPage .chapterTable th.num { text-align: right; }
+        #PhishNetConfigPage .chapterReason { overflow-wrap: anywhere; }
+        #PhishNetConfigPage .chapterActions button { margin: 0 0.4em 0.4em 0; }
+        #PhishNetConfigPage .chapterMessage { min-height: 1.4em; margin: 0.5em 0; }
+    </style>
 </head>
 <body>
     <div id="PhishNetConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox,emby-select">
@@ -41,8 +52,93 @@
                         </div>
                     </div>
 
+                    <div class="verticalSection">
+                        <div class="sectionTitleContainer flex align-items-center">
+                            <h3 class="sectionTitle">Chapter Markers</h3>
+                        </div>
+                        <p class="fieldDescription">
+                            Adds a chapter for each song by matching the video's audio to track audio from
+                            <a href="https://phish.in" target="_blank" rel="noopener noreferrer">phish.in</a>,
+                            the Phish audio archive. Thanks to phish.in for the audio. Show data comes from
+                            <a href="https://phish.net" target="_blank" rel="noopener noreferrer">Phish.net</a>.
+                            Chapters go into Jellyfin's database; video files are never changed.
+                        </p>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="checkboxLabel">
+                                <input type="checkbox" is="emby-checkbox" id="chkEnableChapterMarkers" />
+                                <span>Add chapter markers to Phish shows</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Off by default. Each show reads its whole video file once and downloads the first 90 seconds of every track from phish.in.
+                            </div>
+                        </div>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="checkboxLabel">
+                                <input type="checkbox" is="emby-checkbox" id="chkChapterMarkersOnLibraryChanges" />
+                                <span>Add chapters soon after new or changed shows are scanned</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                When off, only the "Phish: add chapter markers" scheduled task adds them (daily at 4:00 by default; change it under Scheduled Tasks).
+                            </div>
+                        </div>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="checkboxLabel">
+                                <input type="checkbox" is="emby-checkbox" id="chkReplaceDummyChapters" />
+                                <span>Replace Jellyfin's generated "Chapter N" markers</span>
+                            </label>
+                            <div class="fieldDescription checkboxFieldDescription">
+                                Real chapters, from the file or added by hand, are never replaced.
+                            </div>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="txtChapterMaxShows">Most shows per run</label>
+                            <input id="txtChapterMaxShows" type="number" is="emby-input" min="0" step="1" />
+                            <div class="fieldDescription">How many shows one scheduled run aligns. Library changes share the same allowance per day.</div>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="txtChapterMaxGb">Most video read per run (GB)</label>
+                            <input id="txtChapterMaxGb" type="number" is="emby-input" min="0" step="1" />
+                            <div class="fieldDescription">Stops the run once this much video has been read, so a first run on a big library is spread over several nights.</div>
+                        </div>
+                        <p class="fieldDescription">
+                            To set a show's chapters by hand, put a text file named like the video with <code>.chapters.txt</code>
+                            in place of its extension next to it (for example <code>ph2026-07-07.chapters.txt</code> next to
+                            <code>ph2026-07-07.mkv</code>), with one <code>H:MM:SS Title</code> per line. It replaces alignment for that show.
+                        </p>
 
-
+                        <h3 class="sectionTitle">Chapter Status</h3>
+                        <div id="chapterStatusMessage" class="chapterMessage fieldDescription" role="status" aria-live="polite"></div>
+                        <div class="chapterTableWrap">
+                            <table class="chapterTable" id="chapterCounts">
+                                <caption class="fieldDescription" style="text-align: left;">Shows by status</caption>
+                                <thead><tr><th scope="col">Status</th><th scope="col" class="num">Shows</th></tr></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                        <h4>Needs your attention</h4>
+                        <div id="chapterReviewEmpty" class="fieldDescription">Nothing needs your attention.</div>
+                        <div class="chapterTableWrap">
+                            <table class="chapterTable" id="chapterReview" hidden>
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Show</th>
+                                        <th scope="col">File</th>
+                                        <th scope="col">Status</th>
+                                        <th scope="col">Reason</th>
+                                        <th scope="col" class="num">Median</th>
+                                        <th scope="col" class="num">Low</th>
+                                        <th scope="col">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                        <div>
+                            <button is="emby-button" type="button" class="raised" id="btnRefreshChapterStatus">
+                                <span>Refresh status</span>
+                            </button>
+                        </div>
+                    </div>
 
                     <div>
                         <button is="emby-button" type="submit" class="raised button-submit block">
@@ -57,9 +153,36 @@
             (function() {
                 var pluginId = "8a4d0e85-6f3c-4e5a-9b2c-3d7f8e9a1b4c";
 
+                var statusLabels = {
+                    Applied: 'Applied',
+                    Superseded: 'Replaced by other chapters',
+                    Pending: 'Waiting (not on phish.in yet, or file changing)',
+                    NeedsReview: 'Needs review',
+                    Failed: 'Failed (retrying)',
+                    Skipped: 'Skipped',
+                    Ignored: 'Ignored'
+                };
+                var statusOrder = ['Applied', 'Superseded', 'Pending', 'NeedsReview', 'Failed', 'Skipped', 'Ignored'];
+                var actionLabels = { Retry: 'Retry', ApplyAnyway: 'Apply anyway', Ignore: 'Ignore' };
+                var actionDone = {
+                    Retry: 'Retry queued. It runs within a few minutes when library changes are on, otherwise at the next scheduled run.',
+                    ApplyAnyway: 'Chapters applied.',
+                    Ignore: 'Show ignored. Retry brings it back.'
+                };
+
+                function wholeNumber(value, fallback) {
+                    var n = parseInt(value, 10);
+                    return isNaN(n) || n < 0 ? fallback : n;
+                }
+
                 function loadPage(page, config) {
                     page.querySelector('#txtApiKey').value = config.ApiKey || '';
                     page.querySelector('#chkEnableCollections').checked = config.EnableCollections !== false;
+                    page.querySelector('#chkEnableChapterMarkers').checked = config.EnableChapterMarkers === true;
+                    page.querySelector('#chkChapterMarkersOnLibraryChanges').checked = config.ChapterMarkersOnLibraryChanges !== false;
+                    page.querySelector('#chkReplaceDummyChapters').checked = config.ReplaceDummyChapters !== false;
+                    page.querySelector('#txtChapterMaxShows').value = wholeNumber(config.ChapterMarkersMaxShowsPerRun, 10);
+                    page.querySelector('#txtChapterMaxGb').value = wholeNumber(config.ChapterMarkersMaxGbPerRun, 100);
                 }
 
                 function onSubmit(e) {
@@ -67,25 +190,141 @@
                     Dashboard.showLoadingMsg();
 
                     var form = this;
-                    var config = {
-                        ApiKey: form.querySelector('#txtApiKey').value,
-                        EnableCollections: form.querySelector('#chkEnableCollections').checked
-                    };
+                    var page = form.closest('#PhishNetConfigPage');
 
-                    ApiClient.updatePluginConfiguration(pluginId, config).then(function(result) {
+                    // Start from the saved configuration, so settings this page doesn't show are kept.
+                    ApiClient.getPluginConfiguration(pluginId).then(function(config) {
+                        config.ApiKey = form.querySelector('#txtApiKey').value;
+                        config.EnableCollections = form.querySelector('#chkEnableCollections').checked;
+                        config.EnableChapterMarkers = form.querySelector('#chkEnableChapterMarkers').checked;
+                        config.ChapterMarkersOnLibraryChanges = form.querySelector('#chkChapterMarkersOnLibraryChanges').checked;
+                        config.ReplaceDummyChapters = form.querySelector('#chkReplaceDummyChapters').checked;
+                        config.ChapterMarkersMaxShowsPerRun = wholeNumber(form.querySelector('#txtChapterMaxShows').value, 10);
+                        config.ChapterMarkersMaxGbPerRun = wholeNumber(form.querySelector('#txtChapterMaxGb').value, 100);
+                        return ApiClient.updatePluginConfiguration(pluginId, config);
+                    }).then(function(result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);
+                        loadStatus(page);
+                    }, function() {
+                        Dashboard.hideLoadingMsg();
+                        setMessage(page, 'Could not save the settings.');
                     });
 
                     return false;
                 }
 
-                function getTabs() {
-                    return [
-                        {
-                            href: Dashboard.getConfigurationPageUrl('PhishNetConfigPage'),
-                            name: 'Phish Data'
+                function chaptersUrl(path) {
+                    return ApiClient.getUrl('PhishData/Chapters/' + path);
+                }
+
+                function setMessage(page, text) {
+                    page.querySelector('#chapterStatusMessage').textContent = text;
+                }
+
+                function cell(text, className) {
+                    var td = document.createElement('td');
+                    td.textContent = text === null || text === undefined ? '' : String(text);
+                    if (className) {
+                        td.className = className;
+                    }
+                    return td;
+                }
+
+                function errorText(err) {
+                    if (err && typeof err.json === 'function') {
+                        return err.json().then(function(body) {
+                            return (body && (body.Message || body.message)) || ('HTTP ' + err.status);
+                        }, function() {
+                            return 'HTTP ' + err.status;
+                        });
+                    }
+                    return Promise.resolve('the request failed');
+                }
+
+                function runAction(page, action, item, button) {
+                    var buttons = button.parentNode.querySelectorAll('button');
+                    buttons.forEach(function(b) { b.disabled = true; });
+                    ApiClient.ajax({
+                        type: 'POST',
+                        url: chaptersUrl(encodeURIComponent(item.ItemId) + '/' + action)
+                    }).then(function() {
+                        setMessage(page, (item.ShowDate || item.Name) + ': ' + actionDone[action]);
+                        loadStatus(page, true);
+                    }, function(err) {
+                        errorText(err).then(function(text) {
+                            setMessage(page, (item.ShowDate || item.Name) + ': ' + actionLabels[action] + ' failed: ' + text);
+                            buttons.forEach(function(b) { b.disabled = false; });
+                        });
+                    });
+                }
+
+                function actionButton(page, action, item) {
+                    var button = document.createElement('button', { is: 'emby-button' });
+                    button.setAttribute('is', 'emby-button');
+                    button.type = 'button';
+                    button.className = 'raised';
+                    button.textContent = actionLabels[action];
+                    button.setAttribute('aria-label', actionLabels[action] + ' ' + (item.ShowDate || item.Name));
+                    button.addEventListener('click', function() {
+                        runAction(page, action, item, button);
+                    });
+                    return button;
+                }
+
+                function renderCounts(page, report) {
+                    var body = page.querySelector('#chapterCounts tbody');
+                    body.textContent = '';
+                    statusOrder.forEach(function(status) {
+                        var row = document.createElement('tr');
+                        row.appendChild(cell(statusLabels[status]));
+                        row.appendChild(cell(report.Counts && report.Counts[status] ? report.Counts[status] : 0, 'num'));
+                        body.appendChild(row);
+                    });
+                }
+
+                function renderReview(page, report) {
+                    var items = report.Items || [];
+                    var table = page.querySelector('#chapterReview');
+                    var body = table.querySelector('tbody');
+                    body.textContent = '';
+                    table.hidden = items.length === 0;
+                    page.querySelector('#chapterReviewEmpty').hidden = items.length !== 0;
+                    items.forEach(function(item) {
+                        var row = document.createElement('tr');
+                        row.appendChild(cell(item.ShowDate || item.Name));
+                        row.appendChild(cell((item.FileName || '') + (item.InLibrary ? '' : ' (no longer in the library)')));
+                        row.appendChild(cell((statusLabels[item.Status] || item.Status) + (item.RetryRequested ? ' (retry queued)' : '')));
+                        row.appendChild(cell(item.Reason, 'chapterReason'));
+                        row.appendChild(cell(typeof item.MedianConfidence === 'number' ? item.MedianConfidence.toFixed(2) : '', 'num'));
+                        row.appendChild(cell(item.ChapterCount ? item.LowConfidenceCount + ' of ' + item.ChapterCount : '', 'num'));
+                        var actions = cell('', 'chapterActions');
+                        actions.appendChild(actionButton(page, 'Retry', item));
+                        if (item.CanApplyAnyway) {
+                            actions.appendChild(actionButton(page, 'ApplyAnyway', item));
                         }
-                    ];
+                        if (item.Status !== 'Ignored') {
+                            actions.appendChild(actionButton(page, 'Ignore', item));
+                        }
+                        row.appendChild(actions);
+                        body.appendChild(row);
+                    });
+                }
+
+                function loadStatus(page, keepMessage) {
+                    if (!keepMessage) {
+                        setMessage(page, 'Loading chapter status...');
+                    }
+                    ApiClient.getJSON(chaptersUrl('Status')).then(function(report) {
+                        renderCounts(page, report);
+                        renderReview(page, report);
+                        if (!keepMessage) {
+                            setMessage(page, report.Enabled ? '' : 'Chapter markers are off. Turn them on above and save to start.');
+                        }
+                    }, function(err) {
+                        errorText(err).then(function(text) {
+                            setMessage(page, 'Could not load the chapter status: ' + text);
+                        });
+                    });
                 }
 
                 window.addEventListener('pageshow', function(e) {
@@ -95,9 +334,13 @@
                         loadPage(page, config);
                         Dashboard.hideLoadingMsg();
                     });
+                    loadStatus(page);
                 });
 
                 document.getElementById('PhishNetConfigForm').addEventListener('submit', onSubmit);
+                document.getElementById('btnRefreshChapterStatus').addEventListener('click', function() {
+                    loadStatus(document.getElementById('PhishNetConfigPage'));
+                });
             })();
         </script>
     </div>
