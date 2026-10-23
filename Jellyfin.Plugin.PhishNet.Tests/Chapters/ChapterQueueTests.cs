@@ -58,6 +58,17 @@ public class ChapterQueueTests : IDisposable
     }
 
     [Fact]
+    public async Task Enqueue_ShouldProcessARetriedShow_OnTheNextTick()
+    {
+        _library.Setup(l => l.GetItemById(_movie.Id)).Returns(_movie);
+
+        _queue.Enqueue(_movie.Id);
+        await _queue.ProcessDueAsync(_now, CancellationToken.None);
+
+        _service.Processed.Should().Equal(_movie.Id);
+    }
+
+    [Fact]
     public async Task ProcessDue_ShouldRestartTheQuietPeriod_OnEachUpdate()
     {
         await _queue.StartAsync(CancellationToken.None);
