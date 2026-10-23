@@ -416,16 +416,18 @@ public sealed class ChapterMarkerService : IChapterMarkerService
     private static List<AlignedChapter>? OursIn(ChapterState? state) =>
         state is { Status: ChapterStatus.Applied or ChapterStatus.Superseded } ? state.Chapters : state?.SavedChapters;
 
-    private static SidecarResult ReadSidecar(string videoPath)
+    private SidecarResult ReadSidecar(string videoPath)
     {
         try
         {
             return SidecarChapterReader.Read(videoPath);
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        catch (Exception ex) when (ex is not OperationCanceledException and not OutOfMemoryException)
         {
-            // Settles in review; once it reads, the real hash differs, so the item is looked at again.
-            return new SidecarResult(SidecarStatus.Invalid, UnreadableSidecarHash, Array.Empty<AlignedChapter>(), "sidecar can't be read: " + ex.Message);
+            // Settles in review; once it reads, the real hash differs, so the item is looked at again. The
+            // details (with paths) go to the log, not to the record the settings page shows.
+            _logger.LogWarning(ex, "Chapters: can't read the sidecar for {File}", Path.GetFileName(videoPath));
+            return new SidecarResult(SidecarStatus.Invalid, UnreadableSidecarHash, Array.Empty<AlignedChapter>(), $"sidecar can't be read ({ex.GetType().Name})");
         }
     }
 
@@ -741,17 +743,8 @@ public sealed class ChapterMarkerService : IChapterMarkerService
         return new ChapterOutcome(ChapterOutcomeKind.Applied);
     }
 
-    private ChapterSituation Classify(Job job)
-    {
-        var current = _chapters.GetChapters(job.Item.Id);
-        var situation = ChapterDetector.Classify(current, job.Ours, DummiesFor(job.Runtime));
-
-        // Chapters equal to the sidecar's are what it asks for, whoever saved them (say, a record lost after a save).
-        return situation == ChapterSituation.Other && job.Sidecar.Status == SidecarStatus.Ok
-            && ChapterDetector.Classify(current, job.Sidecar.Chapters, null) == ChapterSituation.Ours
-            ? ChapterSituation.Ours
-            : situation;
-    }
+    private ChapterSituation Classify(Job job) =>
+        ChapterDetector.Classify(_chapters.GetChapters(job.Item.Id), job.Ours, DummiesFor(job.Runtime));
 
     private DummySignature? DummiesFor(long runtime)
     {

@@ -157,5 +157,50 @@ public class SidecarChapterReaderTests : IDisposable
         result.Hash.Should().NotBeNullOrEmpty();
     }
 
+    [Fact]
+    public void Parse_ShouldRejectNonAsciiDigits_InsteadOfThrowing()
+    {
+        var result = Parse("\uFF10:\uFF10\uFF15 Tweezer\n");
+
+        result.Status.Should().Be(SidecarStatus.Invalid);
+        result.Error.Should().StartWith("sidecar line 1:");
+    }
+
+    [Fact]
+    public void Parse_ShouldSplitOldMacLineEndings_IntoSeparateChapters()
+    {
+        var result = Parse("0:00 Intro\r5:00 Tweezer\r10:00 Sand\r");
+
+        result.Status.Should().Be(SidecarStatus.Ok, result.Error);
+        result.Chapters.Select(c => c.Title).Should().Equal("Intro", "Tweezer", "Sand");
+    }
+
+    [Fact]
+    public void Read_ShouldRefuseASymlinkedSidecar_WithoutFollowingIt()
+    {
+        var video = Path.Combine(_dir, "ph2026-07-07.mkv");
+        var target = Path.Combine(_dir, "elsewhere.txt");
+        File.WriteAllText(target, "secret first line\n");
+        File.CreateSymbolicLink(SidecarChapterReader.PathFor(video), target);
+
+        var result = SidecarChapterReader.Read(video);
+
+        result.Status.Should().Be(SidecarStatus.Invalid);
+        result.Error.Should().Contain("link").And.NotContain("secret");
+        result.Hash.Should().NotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public void Read_ShouldNotOpenAnEmptyOrSpecialFile()
+    {
+        var video = Path.Combine(_dir, "ph2026-07-07.mkv");
+        File.WriteAllBytes(SidecarChapterReader.PathFor(video), Array.Empty<byte>());
+
+        var result = SidecarChapterReader.Read(video);
+
+        result.Status.Should().Be(SidecarStatus.Invalid);
+        result.Error.Should().Be("sidecar has no chapters");
+    }
+
     private static SidecarResult Parse(string text) => SidecarChapterReader.Parse(Encoding.UTF8.GetBytes(text));
 }

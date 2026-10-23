@@ -107,7 +107,7 @@
                         </p>
 
                         <h3 class="sectionTitle">Chapter Status</h3>
-                        <div id="chapterStatusMessage" class="chapterMessage fieldDescription" role="status" aria-live="polite"></div>
+                        <div id="chapterStatusMessage" class="chapterMessage fieldDescription" role="status" aria-live="polite" tabindex="-1"></div>
                         <div class="chapterTableWrap">
                             <table class="chapterTable" id="chapterCounts">
                                 <caption class="fieldDescription" style="text-align: left;">Shows by status</caption>
@@ -116,7 +116,7 @@
                             </table>
                         </div>
                         <h4>Needs your attention</h4>
-                        <div id="chapterReviewEmpty" class="fieldDescription">Nothing needs your attention.</div>
+                        <div id="chapterReviewEmpty" class="fieldDescription" hidden>Nothing needs your attention.</div>
                         <div class="chapterTableWrap">
                             <table class="chapterTable" id="chapterReview" hidden>
                                 <thead>
@@ -165,10 +165,11 @@
                 var statusOrder = ['Applied', 'Superseded', 'Pending', 'NeedsReview', 'Failed', 'Skipped', 'Ignored'];
                 var actionLabels = { Retry: 'Retry', ApplyAnyway: 'Apply anyway', Ignore: 'Ignore' };
                 var actionDone = {
-                    Retry: 'Retry queued. It runs within a few minutes when library changes are on, otherwise at the next scheduled run.',
+                    Retry: 'Retry queued. With library changes on it runs within a few minutes, unless today\'s allowance of shows is used up; otherwise it runs at the next scheduled run.',
                     ApplyAnyway: 'Chapters applied.',
                     Ignore: 'Show ignored. Retry brings it back.'
                 };
+                var featureOn = true;
 
                 function wholeNumber(value, fallback) {
                     var n = parseInt(value, 10);
@@ -248,7 +249,13 @@
                         type: 'POST',
                         url: chaptersUrl(encodeURIComponent(item.ItemId) + '/' + action)
                     }).then(function() {
-                        setMessage(page, (item.ShowDate || item.Name) + ': ' + actionDone[action]);
+                        var done = actionDone[action];
+                        if (action === 'Retry' && !featureOn) {
+                            done = 'Retry queued, but chapter markers are off, so it waits until you turn them on.';
+                        }
+                        setMessage(page, (item.ShowDate || item.Name) + ': ' + done);
+                        // The row is about to be rebuilt; keep keyboard focus somewhere useful.
+                        page.querySelector('#chapterStatusMessage').focus();
                         loadStatus(page, true);
                     }, function(err) {
                         errorText(err).then(function(text) {
@@ -262,7 +269,7 @@
                     var button = document.createElement('button', { is: 'emby-button' });
                     button.setAttribute('is', 'emby-button');
                     button.type = 'button';
-                    button.className = 'raised';
+                    button.className = 'raised emby-button';
                     button.textContent = actionLabels[action];
                     button.setAttribute('aria-label', actionLabels[action] + ' ' + (item.ShowDate || item.Name));
                     button.addEventListener('click', function() {
@@ -315,6 +322,7 @@
                         setMessage(page, 'Loading chapter status...');
                     }
                     ApiClient.getJSON(chaptersUrl('Status')).then(function(report) {
+                        featureOn = report.Enabled === true;
                         renderCounts(page, report);
                         renderReview(page, report);
                         if (!keepMessage) {
@@ -327,8 +335,9 @@
                     });
                 }
 
-                window.addEventListener('pageshow', function(e) {
-                    var page = e.target;
+                // On this page only: jellyfin-web's pageshow bubbles, so a window listener would run for every view.
+                document.querySelector('#PhishNetConfigPage').addEventListener('pageshow', function() {
+                    var page = this;
                     Dashboard.showLoadingMsg();
                     ApiClient.getPluginConfiguration(pluginId).then(function(config) {
                         loadPage(page, config);

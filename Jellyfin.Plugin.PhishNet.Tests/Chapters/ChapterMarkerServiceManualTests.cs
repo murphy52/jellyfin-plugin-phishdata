@@ -105,14 +105,27 @@ public partial class ChapterMarkerServiceTests
     }
 
     [Fact]
-    public async Task Process_ShouldTakeChaptersEqualToTheSidecar_AsApplied_WhenTheRecordWasLost()
+    public async Task Process_ShouldNotAdoptRealChapters_ThatHappenToEqualTheSidecar()
     {
+        // The file's own chapters, exported into a sidecar: still not ours, so removing the sidecar
+        // later must not let an alignment replace them.
+        _db.Chapters = ChapterDetector.ToChapterInfos(SidecarChapterReader.Parse(System.Text.Encoding.UTF8.GetBytes(ThreeSongs)).Chapters);
         WriteSidecar(ThreeSongs);
-        await Process();
-        File.Delete(Path.Combine(_dir, "state", _movie.Id.ToString("N") + ".json"));
+        (await Process()).Kind.Should().Be(ChapterOutcomeKind.Skipped);
 
-        (await Process()).Kind.Should().Be(ChapterOutcomeKind.Applied);
-        (await Record())!.Source.Should().Be(ChapterSource.Sidecar);
+        File.Delete(SidecarChapterReader.PathFor(_movie.Path));
+        (await Process()).Kind.Should().Be(ChapterOutcomeKind.Skipped);
+
+        _db.Saves.Should().Be(0);
+        _decoder.FileDecodes.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task Process_ShouldSendAnUnparseableSidecarToReview_RatherThanThrow()
+    {
+        WriteSidecar("\uFF10:\uFF10\uFF15 Tweezer\n");
+
+        (await Process()).Kind.Should().Be(ChapterOutcomeKind.NeedsReview);
     }
 
     [Fact]

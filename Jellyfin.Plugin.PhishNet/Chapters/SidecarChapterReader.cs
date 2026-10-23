@@ -37,7 +37,7 @@ public sealed record SidecarResult(SidecarStatus Status, string? Hash, IReadOnly
 
 /// <summary>
 /// Reads the manual override (plan §4.4): <c>&lt;video basename&gt;.chapters.txt</c> next to the video, one
-/// <c>H:MM:SS Title</c> (or <c>M:SS Title</c>) per line. Blank lines and lines starting with <c>#</c> are
+/// <c>H:MM:SS Title</c> (or <c>M:SS Title</c>, ASCII digits) per line, with any line ending. Blank lines and lines starting with <c>#</c> are
 /// skipped. The whole file must parse, or none of it is used. Starts past the end of the video are left to
 /// <see cref="ChapterValidator"/>, which knows the runtime.
 /// </summary>
@@ -72,24 +72,53 @@ public static partial class SidecarChapterReader
             return SidecarResult.Missing;
         }
 
+        // Not read, so the size and time stand in for the content hash.
+        var stat = string.Create(CultureInfo.InvariantCulture, $"stat-{info.Length}-{info.LastWriteTimeUtc.Ticks}");
+
+        // A link's size is the link's, and its target could be anything Jellyfin can read (/dev/zero, a
+        // secret), so links aren't followed.
+        if (info.LinkTarget is not null)
+        {
+            return Invalid(stat, "sidecar is a link; put a regular file there");
+        }
+
+        // A FIFO or device also reports 0 bytes, and opening one can block; an empty file has no chapters anyway.
+        if (info.Length == 0)
+        {
+            return Invalid(stat, "sidecar has no chapters");
+        }
+
         if (info.Length > MaxBytes)
         {
-            // Not read, so the size and time stand in for the content hash.
-            var hash = string.Create(CultureInfo.InvariantCulture, $"size-{info.Length}-{info.LastWriteTimeUtc.Ticks}");
-            return Invalid(hash, $"sidecar is larger than {MaxBytes / 1024} KB");
+            return Invalid(stat, $"sidecar is larger than {MaxBytes / 1024} KB");
         }
 
         byte[] bytes;
         try
         {
-            bytes = File.ReadAllBytes(info.FullName);
+            bytes = ReadAtMost(info.FullName, MaxBytes + 1);
         }
         catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException)
         {
             return SidecarResult.Missing; // removed between the stat and the read
         }
 
-        return Parse(bytes);
+        return bytes.Length > MaxBytes ? Invalid(stat, $"sidecar is larger than {MaxBytes / 1024} KB") : Parse(bytes);
+    }
+
+    /// <summary>Reads up to <paramref name="limit"/> bytes, so a file that grows after the stat can't make the read unbounded.</summary>
+    private static byte[] ReadAtMost(string path, int limit)
+    {
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        var buffer = new byte[limit];
+        int total = 0;
+        int read;
+        while (total < limit && (read = stream.Read(buffer, total, limit - total)) > 0)
+        {
+            total += read;
+        }
+
+        return buffer.AsSpan(0, total).ToArray();
     }
 
     /// <summary>
@@ -111,7 +140,7 @@ public static partial class SidecarChapterReader
         }
 
         var chapters = new List<AlignedChapter>();
-        var lines = text.TrimStart('﻿').Split('\n');
+        var lines = text.TrimStart('\uFEFF').ReplaceLineEndings("\n").Split('\n');
         for (int i = 0; i < lines.Length; i++)
         {
             var line = lines[i].Trim();
@@ -169,6 +198,6 @@ public static partial class SidecarChapterReader
 
     private static string Clip(string line) => line.Length <= 60 ? line : line[..60] + "…";
 
-    [GeneratedRegex(@"^(?:(?<h>\d{1,2}):)?(?<m>\d{1,2}):(?<s>\d{2})(?:\.(?<f>\d{1,3}))?\s+(?<title>\S.*)$", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    [GeneratedRegex(@"^(?:(?<h>[0-9]{1,2}):)?(?<m>[0-9]{1,2}):(?<s>[0-9]{2})(?:\.(?<f>[0-9]{1,3}))?\s+(?<title>\S.*)$", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex LinePattern();
 }
