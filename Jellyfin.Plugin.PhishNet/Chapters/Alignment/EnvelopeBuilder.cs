@@ -11,6 +11,9 @@ namespace Jellyfin.Plugin.PhishNet.Chapters.Alignment;
 /// </summary>
 public sealed class EnvelopeBuilder
 {
+    /// <summary>Version of the frame formula; bump it when the formula changes so cached envelopes are rebuilt.</summary>
+    public const int FormulaVersion = 1;
+
     private const int Hop = AlignmentConstants.SampleRate / AlignmentConstants.Fps;
 
     private readonly List<float> _frames = new();
