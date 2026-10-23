@@ -118,12 +118,27 @@ public sealed class RunBudget
 }
 
 /// <summary>
+/// Processes one item's chapters; what the queue and the scheduled task call.
+/// </summary>
+public interface IChapterMarkerService
+{
+    /// <summary>
+    /// Adds, restores or leaves alone one item's chapters.
+    /// </summary>
+    /// <param name="item">The video.</param>
+    /// <param name="budget">The scheduled run's budget, or null for a library event.</param>
+    /// <param name="cancellationToken">Cancellation token; cancelling writes no record.</param>
+    /// <returns>What happened.</returns>
+    Task<ChapterOutcome> ProcessAsync(Video item, RunBudget? budget, CancellationToken cancellationToken);
+}
+
+/// <summary>
 /// Adds chapter markers to one Phish show at a time (plan §4.2–§4.6). Library events and the scheduled task
 /// both call <see cref="ProcessAsync"/>; a global lock keeps it to one show at a time and an in-flight set
 /// keeps the same item from running twice. Chapters go to Jellyfin's database first, then the item's
 /// record is written, so a crash in between loses nothing.
 /// </summary>
-public sealed class ChapterMarkerService
+public sealed class ChapterMarkerService : IChapterMarkerService
 {
     /// <summary>The alignment version written into records. Bump it to re-align Skipped and NeedsReview items.</summary>
     public const int AlgorithmVersion = 1;
@@ -212,13 +227,7 @@ public sealed class ChapterMarkerService
             ?? (string.IsNullOrEmpty(item.Name) ? null : Parser.Parse(item.Name).ShowDate);
     }
 
-    /// <summary>
-    /// Adds, restores or leaves alone one item's chapters.
-    /// </summary>
-    /// <param name="item">The video.</param>
-    /// <param name="budget">The scheduled run's budget, or null for a library event.</param>
-    /// <param name="cancellationToken">Cancellation token; cancelling writes no record.</param>
-    /// <returns>What happened.</returns>
+    /// <inheritdoc />
     public async Task<ChapterOutcome> ProcessAsync(Video item, RunBudget? budget, CancellationToken cancellationToken)
     {
         if (!_inFlight.TryAdd(item.Id, 0))

@@ -32,7 +32,7 @@ public class ChapterMarkerServiceTests : IDisposable
     private readonly FakeChapters _db = new();
     private readonly FakeAudio _audio = new();
     private readonly FakeDecoder _decoder = new();
-    private readonly FakeTime _time = new();
+    private readonly TestClock _time = new(new DateTime(DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond * TimeSpan.TicksPerSecond, DateTimeKind.Utc));
     private readonly ServerConfiguration _server = new() { DummyChapterDuration = 0 };
     private readonly PluginConfiguration _config = new();
     private readonly ChapterMarkerService _service;
@@ -602,14 +602,5 @@ public class ChapterMarkerServiceTests : IDisposable
 
         public Task<TemplateDecodeResult> DecodeTemplateAsync(Stream source, long maxBytes, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
-    }
-
-    private sealed class FakeTime : TimeProvider
-    {
-        public DateTime Now { get; private set; } = new DateTime(DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond * TimeSpan.TicksPerSecond, DateTimeKind.Utc);
-
-        public void Advance(TimeSpan by) => Now += by;
-
-        public override DateTimeOffset GetUtcNow() => new(Now);
     }
 }
