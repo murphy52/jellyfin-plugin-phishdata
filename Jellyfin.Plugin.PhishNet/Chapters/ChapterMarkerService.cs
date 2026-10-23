@@ -69,6 +69,33 @@ public enum ChapterOutcomeKind
 /// <param name="RetryAtUtc">When the item is worth trying again (Pending, Failed, RateLimited), if known.</param>
 public sealed record ChapterOutcome(ChapterOutcomeKind Kind, string? Reason = null, DateTime? RetryAtUtc = null);
 
+/// <summary>How an admin action (Retry, Apply anyway, Ignore) went.</summary>
+public enum ChapterActionStatus
+{
+    /// <summary>Done.</summary>
+    Done,
+
+    /// <summary>The item has no record (or isn't in the library).</summary>
+    NotFound,
+
+    /// <summary>The item is being processed right now; try again shortly.</summary>
+    Busy,
+
+    /// <summary>The action doesn't fit the item's state; the message says why.</summary>
+    Conflict,
+}
+
+/// <summary>
+/// How an admin action went.
+/// </summary>
+/// <param name="Status">The result.</param>
+/// <param name="Message">Why, for anything but <see cref="ChapterActionStatus.Done"/>.</param>
+public sealed record ChapterActionResult(ChapterActionStatus Status, string? Message = null)
+{
+    /// <summary>Gets the result of an action that worked.</summary>
+    public static ChapterActionResult Done { get; } = new(ChapterActionStatus.Done);
+}
+
 /// <summary>
 /// The limits of one scheduled run: how many shows to align and how much video to read. Used by one
 /// caller at a time.
@@ -137,7 +164,10 @@ public interface IChapterMarkerService
 /// Adds chapter markers to one Phish show at a time (plan §4.2–§4.6). Library events and the scheduled task
 /// both call <see cref="ProcessAsync"/>; a global lock keeps it to one show at a time and an in-flight set
 /// keeps the same item from running twice. Chapters go to Jellyfin's database first, then the item's
-/// record is written, so a crash in between loses nothing.
+/// record is written, so a crash in between loses nothing. A <c>.chapters.txt</c> sidecar next to the
+/// video replaces alignment for that item. The admin actions (<see cref="RetryAsync"/>,
+/// <see cref="ApplyAnywayAsync"/>, <see cref="IgnoreAsync"/>) touch one item, so they take only its
+/// in-flight slot, not the global lock, and report Busy rather than wait for a show in progress.
 /// </summary>
 public sealed class ChapterMarkerService : IChapterMarkerService
 {
@@ -152,6 +182,9 @@ public sealed class ChapterMarkerService : IChapterMarkerService
 
     /// <summary>Start of the reason for an item whose premiere date disagrees with its file name.</summary>
     public const string DateMismatchReason = "date-mismatch";
+
+    /// <summary>Stands in for the content hash of a sidecar that couldn't be read.</summary>
+    public const string UnreadableSidecarHash = "unreadable";
 
     /// <summary>A file written more recently than this may still be copying, so it waits.</summary>
     public static readonly TimeSpan MinFileAge = TimeSpan.FromMinutes(10);
@@ -271,7 +304,150 @@ public sealed class ChapterMarkerService : IChapterMarkerService
         }
     }
 
-    private static bool Changed(Job job) => FileFingerprint.Of(job.Path) != job.Fingerprint;
+    /// <summary>
+    /// Clears an item's waits and settled states so the next pass starts fresh: re-aligns it, or re-reads its
+    /// sidecar. Chapters this plugin saved stay replaceable. The record's status is kept until that pass.
+    /// </summary>
+    /// <param name="itemId">The item.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>How it went.</returns>
+    public Task<ChapterActionResult> RetryAsync(Guid itemId, CancellationToken cancellationToken) =>
+        WithItemAsync(itemId, async () =>
+        {
+            if (await _store.ReadAsync(itemId, cancellationToken).ConfigureAwait(false) is not { } state)
+            {
+                return NoRecord;
+            }
+
+            state.RetryRequested = true;
+            state.UpdatedUtc = _time.GetUtcNow().UtcDateTime;
+            await _store.WriteAsync(itemId, state, cancellationToken).ConfigureAwait(false);
+            _logger.LogInformation("Chapters RETRY requested for {Item} ({Status})", itemId, state.Status);
+            return ChapterActionResult.Done;
+        });
+
+    /// <summary>
+    /// Leaves an item alone until a Retry or a change to its file or sidecar. Applied and Superseded items
+    /// can't be ignored: their chapters are in Jellyfin, and ignoring would forget they're ours.
+    /// </summary>
+    /// <param name="itemId">The item.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>How it went.</returns>
+    public Task<ChapterActionResult> IgnoreAsync(Guid itemId, CancellationToken cancellationToken) =>
+        WithItemAsync(itemId, async () =>
+        {
+            if (await _store.ReadAsync(itemId, cancellationToken).ConfigureAwait(false) is not { } state)
+            {
+                return NoRecord;
+            }
+
+            switch (state.Status)
+            {
+                case ChapterStatus.Ignored:
+                    return ChapterActionResult.Done;
+                case ChapterStatus.Applied or ChapterStatus.Superseded:
+                    return Conflict($"the show is {state.Status}; only shows without our chapters can be ignored");
+            }
+
+            await _store.WriteAsync(itemId, Copy(state, ChapterStatus.Ignored, state.Reason, _time.GetUtcNow().UtcDateTime), cancellationToken).ConfigureAwait(false);
+            _logger.LogInformation("Chapters IGNORE {Item} (was {Status}: {Reason})", itemId, state.Status, state.Reason);
+            return ChapterActionResult.Done;
+        });
+
+    /// <summary>
+    /// Saves a review item's aligned chapters despite the confidence gates. The structural checks still
+    /// apply, the file must be the one that was aligned, and real chapters from anyone else are never
+    /// replaced.
+    /// </summary>
+    /// <param name="item">The video.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>How it went.</returns>
+    public Task<ChapterActionResult> ApplyAnywayAsync(Video item, CancellationToken cancellationToken) =>
+        WithItemAsync(item.Id, async () =>
+        {
+            if (await _store.ReadAsync(item.Id, cancellationToken).ConfigureAwait(false) is not { } state)
+            {
+                return NoRecord;
+            }
+
+            if (state.Status != ChapterStatus.NeedsReview || state.Chapters.Count == 0)
+            {
+                return Conflict("only a review item with aligned chapters can be applied anyway");
+            }
+
+            if (FileFingerprint.Of(item.Path) is not { } file || file with { SidecarHash = ReadSidecar(item.Path).Hash } != state.Fingerprint)
+            {
+                return Conflict("the file or its sidecar changed since it was aligned; use Retry");
+            }
+
+            long runtime = item.RunTimeTicks ?? 0;
+            if (ChapterValidator.Validate(state.Chapters, runtime) is { } invalid)
+            {
+                return Conflict(invalid);
+            }
+
+            var situation = ChapterDetector.Classify(_chapters.GetChapters(item.Id), state.SavedChapters, DummiesFor(runtime));
+            if (situation == ChapterSituation.Other)
+            {
+                return Conflict("the show has other chapters now, and those are never replaced");
+            }
+
+            _chapters.SaveChapters(item, ChapterDetector.ToChapterInfos(state.Chapters));
+            var applied = Copy(state, ChapterStatus.Applied, null, _time.GetUtcNow().UtcDateTime);
+            applied.Source = ChapterSource.ApplyAnyway;
+            applied.SavedChapters = null;
+
+            // Not cancellable once saved, as in ProcessAsync.
+            await _store.WriteAsync(item.Id, applied, CancellationToken.None).ConfigureAwait(false);
+            _logger.LogInformation(
+                "Chapters APPLIED ANYWAY {Date} \"{File}\": {Count} ch, median {Median}",
+                state.ShowDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                Path.GetFileName(item.Path),
+                state.Chapters.Count,
+                state.MedianConfidence?.ToString("0.00", CultureInfo.InvariantCulture) ?? "n/a");
+            return ChapterActionResult.Done;
+        });
+
+    private static ChapterActionResult NoRecord { get; } = new(ChapterActionStatus.NotFound, "no chapter record for this item");
+
+    private static ChapterActionResult Conflict(string message) => new(ChapterActionStatus.Conflict, message);
+
+    /// <summary>What we saved is ours: the chapters of an Applied or Superseded record, or the ones carried on.</summary>
+    private static List<AlignedChapter>? OursIn(ChapterState? state) =>
+        state is { Status: ChapterStatus.Applied or ChapterStatus.Superseded } ? state.Chapters : state?.SavedChapters;
+
+    private static SidecarResult ReadSidecar(string videoPath)
+    {
+        try
+        {
+            return SidecarChapterReader.Read(videoPath);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Settles in review; once it reads, the real hash differs, so the item is looked at again.
+            return new SidecarResult(SidecarStatus.Invalid, UnreadableSidecarHash, Array.Empty<AlignedChapter>(), "sidecar can't be read: " + ex.Message);
+        }
+    }
+
+    private static bool Changed(Job job) =>
+        FileFingerprint.Of(job.Path) is not { } now || now with { SidecarHash = job.Fingerprint.SidecarHash } != job.Fingerprint;
+
+    private async Task<ChapterActionResult> WithItemAsync(Guid itemId, Func<Task<ChapterActionResult>> action)
+    {
+        if (!_inFlight.TryAdd(itemId, 0))
+        {
+            return new ChapterActionResult(ChapterActionStatus.Busy, "the show is being processed; try again in a minute");
+        }
+
+        try
+        {
+            return await action().ConfigureAwait(false);
+        }
+        finally
+        {
+            _inFlight.TryRemove(itemId, out _);
+        }
+    }
 
     private async Task<ChapterOutcome> ProcessLockedAsync(Video item, RunBudget? budget, CancellationToken cancellationToken)
     {
@@ -281,21 +457,24 @@ public sealed class ChapterMarkerService : IChapterMarkerService
             return new ChapterOutcome(ChapterOutcomeKind.NotEligible);
         }
 
-        if (FileFingerprint.Of(item.Path) is not { } fingerprint)
+        if (FileFingerprint.Of(item.Path) is not { } file)
         {
             return new ChapterOutcome(ChapterOutcomeKind.NotEligible, "file-missing");
         }
 
+        // Before the Applied fast path: adding, editing or removing a sidecar changes the fingerprint.
+        var sidecar = ReadSidecar(item.Path);
+        var fingerprint = file with { SidecarHash = sidecar.Hash };
         var state = await _store.ReadAsync(item.Id, cancellationToken).ConfigureAwait(false);
 
         // What we saved is still ours to replace after the file changes, until Jellyfin re-probes it.
-        var ours = state is { Status: ChapterStatus.Applied or ChapterStatus.Superseded } ? state.Chapters : null;
+        var ours = OursIn(state);
         if (state is not null && state.Fingerprint != fingerprint)
         {
-            state = null; // a new file, so an old result (even Ignored) no longer applies
+            state = null; // a new file or sidecar, so an old result (even Ignored) no longer applies
         }
 
-        var job = new Job(item, item.Path, showDate.Date, fingerprint, runtime, state, ours, _time.GetUtcNow().UtcDateTime);
+        var job = new Job(item, item.Path, showDate.Date, fingerprint, runtime, state, ours, sidecar, _time.GetUtcNow().UtcDateTime);
         try
         {
             return await DecideAsync(job, budget, cancellationToken).ConfigureAwait(false);
@@ -322,6 +501,11 @@ public sealed class ChapterMarkerService : IChapterMarkerService
     private async Task<ChapterOutcome> DecideAsync(Job job, RunBudget? budget, CancellationToken cancellationToken)
     {
         var state = job.Previous;
+        if (state is { RetryRequested: true })
+        {
+            job.Previous = state = null; // the admin asked for a fresh start; what we saved stays ours (job.Ours)
+        }
+
         if (state is { Status: ChapterStatus.Ignored })
         {
             return new ChapterOutcome(ChapterOutcomeKind.Unchanged, "ignored");
@@ -348,6 +532,11 @@ public sealed class ChapterMarkerService : IChapterMarkerService
         if (state is { Status: ChapterStatus.Skipped, Reason: HasChaptersReason })
         {
             job.Previous = state = null; // those chapters are gone
+        }
+
+        if (job.Sidecar.Status != SidecarStatus.Missing)
+        {
+            return await ApplySidecarAsync(job, cancellationToken).ConfigureAwait(false);
         }
 
         // Only checked before aligning: an applied result was matched against this date's audio already.
@@ -413,6 +602,31 @@ public sealed class ChapterMarkerService : IChapterMarkerService
                 Log(job, "REAPPLY", $"{state.Chapters.Count} ch restored after Jellyfin dropped them");
                 return new ChapterOutcome(ChapterOutcomeKind.Reapplied);
         }
+    }
+
+    /// <summary>The sidecar is the admin's word for this item: never aligned, and it needs no show date check.</summary>
+    private async Task<ChapterOutcome> ApplySidecarAsync(Job job, CancellationToken cancellationToken)
+    {
+        var sidecar = job.Sidecar;
+        var problem = sidecar.Status == SidecarStatus.Invalid
+            ? sidecar.Error
+            : ChapterValidator.Validate(sidecar.Chapters, job.Runtime) is { } invalid ? "sidecar: " + invalid : null;
+        if (problem is not null)
+        {
+            return job.Previous is { Status: ChapterStatus.NeedsReview } p && p.Reason == problem
+                ? new ChapterOutcome(ChapterOutcomeKind.Unchanged, problem)
+                : await SettleAsync(job, ChapterStatus.NeedsReview, problem, null, cancellationToken).ConfigureAwait(false);
+        }
+
+        _chapters.SaveChapters(job.Item, ChapterDetector.ToChapterInfos(sidecar.Chapters));
+        var state = New(job, ChapterStatus.Applied, null, null);
+        state.Chapters = sidecar.Chapters.ToList();
+        state.Source = ChapterSource.Sidecar;
+
+        // Not cancellable once saved: a lost record would make our chapters look like anyone's.
+        await RecordAsync(job, state, CancellationToken.None).ConfigureAwait(false);
+        Log(job, "SIDECAR", $"{sidecar.Chapters.Count} ch from {Path.GetFileName(SidecarChapterReader.PathFor(job.Path))}");
+        return new ChapterOutcome(ChapterOutcomeKind.Applied, "sidecar");
     }
 
     private async Task<ChapterOutcome> AlignAsync(Job job, RunBudget? budget, CancellationToken cancellationToken)
@@ -512,7 +726,9 @@ public sealed class ChapterMarkerService : IChapterMarkerService
         _chapters.SaveChapters(job.Item, ChapterDetector.ToChapterInfos(rows));
 
         // Not cancellable once saved: a lost record would make our chapters look like anyone's.
-        await RecordAsync(job, New(job, ChapterStatus.Applied, null, result), CancellationToken.None).ConfigureAwait(false);
+        var applied = New(job, ChapterStatus.Applied, null, result);
+        applied.Source = ChapterSource.Aligned;
+        await RecordAsync(job, applied, CancellationToken.None).ConfigureAwait(false);
         Log(job, "DONE", string.Format(
             CultureInfo.InvariantCulture,
             "{0} ch, median {1:0.00}, {2} low (read {3:0}s, fetch {4:0}s, align {5:0.0}s)",
@@ -525,8 +741,17 @@ public sealed class ChapterMarkerService : IChapterMarkerService
         return new ChapterOutcome(ChapterOutcomeKind.Applied);
     }
 
-    private ChapterSituation Classify(Job job) =>
-        ChapterDetector.Classify(_chapters.GetChapters(job.Item.Id), job.Ours, DummiesFor(job.Runtime));
+    private ChapterSituation Classify(Job job)
+    {
+        var current = _chapters.GetChapters(job.Item.Id);
+        var situation = ChapterDetector.Classify(current, job.Ours, DummiesFor(job.Runtime));
+
+        // Chapters equal to the sidecar's are what it asks for, whoever saved them (say, a record lost after a save).
+        return situation == ChapterSituation.Other && job.Sidecar.Status == SidecarStatus.Ok
+            && ChapterDetector.Classify(current, job.Sidecar.Chapters, null) == ChapterSituation.Ours
+            ? ChapterSituation.Ours
+            : situation;
+    }
 
     private DummySignature? DummiesFor(long runtime)
     {
@@ -569,7 +794,7 @@ public sealed class ChapterMarkerService : IChapterMarkerService
             return new ChapterOutcome(ChapterOutcomeKind.NotEligible, "file-missing");
         }
 
-        job.Fingerprint = now;
+        job.Fingerprint = now with { SidecarHash = job.Fingerprint.SidecarHash };
         var retry = job.Now + MinFileAge;
         await RecordAsync(job, PendingCarry(job, FileChangingReason, retry), cancellationToken).ConfigureAwait(false);
         Log(job, "PENDING", FileChangingReason);
@@ -628,6 +853,7 @@ public sealed class ChapterMarkerService : IChapterMarkerService
         Chapters = result?.Chapters?.ToList() ?? new List<AlignedChapter>(),
         MedianConfidence = result?.Chapters is null ? null : result.MedianConfidence,
         LowConfidenceCount = result?.LowConfidenceCount ?? 0,
+        SavedChapters = status == ChapterStatus.Applied ? null : job.Ours?.ToList(),
         UpdatedUtc = job.Now,
     };
 
@@ -670,6 +896,8 @@ public sealed class ChapterMarkerService : IChapterMarkerService
         Chapters = state.Chapters,
         MedianConfidence = state.MedianConfidence,
         LowConfidenceCount = state.LowConfidenceCount,
+        Source = state.Source,
+        SavedChapters = state.SavedChapters,
         UpdatedUtc = now,
     };
 
@@ -696,7 +924,7 @@ public sealed class ChapterMarkerService : IChapterMarkerService
         _logger.LogDebug("Chapters for {Date} \"{File}\":\n{Table}", Date(job), FileName(job), string.Join('\n', lines));
     }
 
-    private sealed class Job(Video item, string path, DateTime showDate, FileFingerprint fingerprint, long runtime, ChapterState? previous, IReadOnlyList<AlignedChapter>? ours, DateTime now)
+    private sealed class Job(Video item, string path, DateTime showDate, FileFingerprint fingerprint, long runtime, ChapterState? previous, IReadOnlyList<AlignedChapter>? ours, SidecarResult sidecar, DateTime now)
     {
         public Video Item { get; } = item;
 
@@ -712,6 +940,9 @@ public sealed class ChapterMarkerService : IChapterMarkerService
 
         /// <summary>Gets the chapters this plugin last saved for the item, even for an older version of the file.</summary>
         public IReadOnlyList<AlignedChapter>? Ours { get; } = ours;
+
+        /// <summary>Gets the sidecar next to the video, read once per pass.</summary>
+        public SidecarResult Sidecar { get; } = sidecar;
 
         public DateTime Now { get; } = now;
     }
