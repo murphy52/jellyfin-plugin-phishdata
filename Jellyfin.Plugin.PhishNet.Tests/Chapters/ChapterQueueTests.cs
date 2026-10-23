@@ -51,7 +51,7 @@ public class ChapterQueueTests : IDisposable
 
         await _queue.ProcessDueAsync(_now + TimeSpan.FromMinutes(2), CancellationToken.None);
         _service.Processed.Should().Equal(_movie.Id);
-        _service.Budgets.Should().Equal(new RunBudget?[] { null });
+        _service.Budgets.Single().Should().NotBeNull("library changes have their own budget");
 
         await _queue.ProcessDueAsync(_now + TimeSpan.FromMinutes(10), CancellationToken.None);
         _service.Processed.Should().HaveCount(1, "it left the queue");
@@ -137,23 +137,71 @@ public class ChapterQueueTests : IDisposable
     }
 
     [Fact]
-    public async Task ProcessDue_ShouldPause_AfterARateLimit()
+    public async Task ProcessDue_ShouldStopThePass_AndRetryARateLimitedShowWhenPhishInSaid()
     {
         var second = Show("ph2026-07-08.Webcast.mkv", modified: _now - TimeSpan.FromHours(1));
-        _service.Outcome = new ChapterOutcome(ChapterOutcomeKind.RateLimited);
+        var retry = _now + TimeSpan.FromHours(6);
+        _service.Outcome = new ChapterOutcome(ChapterOutcomeKind.RateLimited, RetryAtUtc: retry);
         await _queue.StartAsync(CancellationToken.None);
         Raise(_movie, at: _now);
-        Raise(second, at: _now);
+        Raise(second, at: _now + TimeSpan.FromSeconds(1));
 
         await _queue.ProcessDueAsync(_now + TimeSpan.FromMinutes(3), CancellationToken.None);
+        _service.Processed.Should().Equal(_movie.Id);
+
+        _service.Outcome = new ChapterOutcome(ChapterOutcomeKind.Applied);
+        await _queue.ProcessDueAsync(_now + TimeSpan.FromMinutes(4), CancellationToken.None);
+        _service.Processed.Should().Equal(_movie.Id, second.Id);
+
+        await _queue.ProcessDueAsync(retry, CancellationToken.None);
+        _service.Processed.Should().Equal(_movie.Id, second.Id, _movie.Id);
+    }
+
+    [Fact]
+    public async Task ProcessDue_ShouldKeepAPendingShowQueued_UntilItsRetryTime()
+    {
+        var retry = _now + TimeSpan.FromHours(1);
+        _service.Outcome = new ChapterOutcome(ChapterOutcomeKind.Pending, "not-on-phishin", retry);
+        await _queue.StartAsync(CancellationToken.None);
+        Raise(_movie, at: _now);
+
+        await _queue.ProcessDueAsync(_now + TimeSpan.FromMinutes(3), CancellationToken.None);
+        await _queue.ProcessDueAsync(_now + TimeSpan.FromMinutes(30), CancellationToken.None);
         _service.Processed.Should().HaveCount(1);
 
         _service.Outcome = new ChapterOutcome(ChapterOutcomeKind.Applied);
-        await _queue.ProcessDueAsync(_now + TimeSpan.FromMinutes(30), CancellationToken.None);
-        _service.Processed.Should().HaveCount(1, "phish.in asked us to wait");
-
-        await _queue.ProcessDueAsync(_now + TimeSpan.FromMinutes(3) + ChapterMarkerService.DefaultRateLimitWait, CancellationToken.None);
+        await _queue.ProcessDueAsync(retry, CancellationToken.None);
         _service.Processed.Should().HaveCount(2);
+        _queue.Count.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ProcessDue_ShouldShareOneBudget_AndRenewItAfterADay()
+    {
+        var second = Show("ph2026-07-08.Webcast.mkv", modified: _now - TimeSpan.FromHours(1));
+        await _queue.StartAsync(CancellationToken.None);
+        Raise(_movie, at: _now);
+        await _queue.ProcessDueAsync(_now + TimeSpan.FromMinutes(3), CancellationToken.None);
+        Raise(second, at: _now + TimeSpan.FromHours(1));
+        await _queue.ProcessDueAsync(_now + TimeSpan.FromHours(2), CancellationToken.None);
+        Raise(_movie, at: _now + TimeSpan.FromDays(1));
+        await _queue.ProcessDueAsync(_now + TimeSpan.FromDays(1) + TimeSpan.FromMinutes(3), CancellationToken.None);
+
+        _service.Budgets[1].Should().BeSameAs(_service.Budgets[0]);
+        _service.Budgets[2].Should().NotBeSameAs(_service.Budgets[0]);
+        _service.Budgets[0]!.ShowsLeft.Should().Be(_config.ChapterMarkersMaxShowsPerRun);
+    }
+
+    [Fact]
+    public async Task ProcessDue_ShouldNotWaitForever_OnAFileDatedInTheFuture()
+    {
+        var skewed = Show("ph2026-07-08.Webcast.mkv", modified: _now + TimeSpan.FromDays(2));
+        await _queue.StartAsync(CancellationToken.None);
+        Raise(skewed, at: _now);
+
+        await _queue.ProcessDueAsync(_now + TimeSpan.FromMinutes(3), CancellationToken.None);
+
+        _service.Processed.Should().Equal(skewed.Id);
     }
 
     [Fact]

@@ -19,6 +19,10 @@ namespace Jellyfin.Plugin.PhishNet.Chapters;
 /// event handler only records the item. A worker, ticking every minute, hands an item to the service once
 /// no update has arrived for <see cref="QuietPeriod"/> and its file is at least
 /// <see cref="ChapterMarkerService.MinFileAge"/> old, which covers copies in progress and scan bursts.
+/// An item the service wants to retry (not on phish.in yet, an error, a rate limit) stays queued until
+/// then, so a new show isn't left until the nightly task. Library changes share one rolling 24-hour budget
+/// built from the per-run settings, so a "Replace all metadata" on a big library can't read every show at
+/// once; what doesn't fit is left to the scheduled task.
 /// </summary>
 public sealed class ChapterQueue : IHostedService, IDisposable
 {
@@ -28,15 +32,19 @@ public sealed class ChapterQueue : IHostedService, IDisposable
     /// <summary>How often the worker looks for due items.</summary>
     public static readonly TimeSpan TickInterval = TimeSpan.FromMinutes(1);
 
+    /// <summary>How long one library-change budget lasts.</summary>
+    public static readonly TimeSpan BudgetWindow = TimeSpan.FromDays(1);
+
     private readonly ILibraryManager _library;
     private readonly IChapterMarkerService _service;
     private readonly Func<PluginConfiguration> _config;
     private readonly TimeProvider _time;
     private readonly ILogger<ChapterQueue> _logger;
-    private readonly ConcurrentDictionary<Guid, DateTime> _lastUpdate = new();
+    private readonly ConcurrentDictionary<Guid, DateTime> _due = new();
     private CancellationTokenSource? _stopping;
     private Task? _worker;
-    private DateTime _pausedUntil;
+    private RunBudget? _budget;
+    private DateTime _budgetEndsUtc;
     private bool _subscribed;
 
     /// <summary>
@@ -57,7 +65,7 @@ public sealed class ChapterQueue : IHostedService, IDisposable
     }
 
     /// <summary>Gets how many items are waiting.</summary>
-    public int Count => _lastUpdate.Count;
+    public int Count => _due.Count;
 
     /// <inheritdoc />
     public Task StartAsync(CancellationToken cancellationToken)
@@ -97,44 +105,42 @@ public sealed class ChapterQueue : IHostedService, IDisposable
     /// <returns>A task that completes when the due items are done.</returns>
     public async Task ProcessDueAsync(DateTime nowUtc, CancellationToken cancellationToken)
     {
-        if (nowUtc < _pausedUntil)
-        {
-            return;
-        }
-
-        foreach (var (id, last) in _lastUpdate.OrderBy(p => p.Value).ToList())
+        foreach (var (id, due) in _due.OrderBy(p => p.Value).ToList())
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (nowUtc - last < QuietPeriod)
+            if (nowUtc < due)
             {
                 continue;
             }
 
             if (_library.GetItemById(id) is not Video video || FileFingerprint.Of(video.Path) is not { } file)
             {
-                _lastUpdate.TryRemove(id, out _);
+                _due.TryRemove(id, out _);
                 continue;
             }
 
-            if (nowUtc - file.ModifiedUtc < ChapterMarkerService.MinFileAge)
+            if (ChapterMarkerService.StillWriting(file.ModifiedUtc, nowUtc))
             {
-                continue; // still being written
+                continue;
             }
 
             // Removed only if no newer update arrived meanwhile; a newer one waits its own quiet period.
-            if (!_lastUpdate.TryRemove(new KeyValuePair<Guid, DateTime>(id, last)) || !Enabled())
+            if (!_due.TryRemove(new KeyValuePair<Guid, DateTime>(id, due)) || !Enabled())
             {
                 continue;
             }
 
             try
             {
-                var outcome = await _service.ProcessAsync(video, null, cancellationToken).ConfigureAwait(false);
+                var outcome = await _service.ProcessAsync(video, BudgetFor(nowUtc), cancellationToken).ConfigureAwait(false);
+                if (outcome.RetryAtUtc is { } retry && outcome.Kind is ChapterOutcomeKind.Pending or ChapterOutcomeKind.Failed or ChapterOutcomeKind.RateLimited)
+                {
+                    _due.TryAdd(id, retry); // an update that arrived meanwhile keeps its own, sooner time
+                }
+
                 if (outcome.Kind == ChapterOutcomeKind.RateLimited)
                 {
-                    _pausedUntil = nowUtc + ChapterMarkerService.DefaultRateLimitWait;
-                    _logger.LogInformation("Chapters: phish.in asked us to slow down; library changes wait until {Until:u}", _pausedUntil);
-                    return;
+                    return; // the rest would only be told the same
                 }
             }
             catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
@@ -152,6 +158,18 @@ public sealed class ChapterQueue : IHostedService, IDisposable
         _stopping?.Dispose();
     }
 
+    private RunBudget BudgetFor(DateTime nowUtc)
+    {
+        if (_budget is null || nowUtc >= _budgetEndsUtc)
+        {
+            var config = _config();
+            _budget = new RunBudget(Math.Max(0, config.ChapterMarkersMaxShowsPerRun), Math.Max(0, config.ChapterMarkersMaxGbPerRun) * 1024L * 1024 * 1024);
+            _budgetEndsUtc = nowUtc + BudgetWindow;
+        }
+
+        return _budget;
+    }
+
     private bool Enabled()
     {
         var config = _config();
@@ -162,7 +180,7 @@ public sealed class ChapterQueue : IHostedService, IDisposable
     {
         if (e.Item is Movie movie && movie.RunTimeTicks > 0 && Enabled() && ChapterMarkerService.ShowDateOf(movie) is not null)
         {
-            _lastUpdate[movie.Id] = _time.GetUtcNow().UtcDateTime;
+            _due[movie.Id] = _time.GetUtcNow().UtcDateTime + QuietPeriod;
         }
     }
 

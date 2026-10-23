@@ -66,7 +66,8 @@ public enum ChapterOutcomeKind
 /// </summary>
 /// <param name="Kind">The outcome.</param>
 /// <param name="Reason">Why, when there is more to say.</param>
-public sealed record ChapterOutcome(ChapterOutcomeKind Kind, string? Reason = null);
+/// <param name="RetryAtUtc">When the item is worth trying again (Pending, Failed, RateLimited), if known.</param>
+public sealed record ChapterOutcome(ChapterOutcomeKind Kind, string? Reason = null, DateTime? RetryAtUtc = null);
 
 /// <summary>
 /// The limits of one scheduled run: how many shows to align and how much video to read. Used by one
@@ -158,6 +159,9 @@ public sealed class ChapterMarkerService : IChapterMarkerService
     /// <summary>The wait after a rate limit that didn't say how long.</summary>
     public static readonly TimeSpan DefaultRateLimitWait = TimeSpan.FromHours(1);
 
+    /// <summary>A modification time this far ahead of the clock is taken as clock skew, not a copy in progress.</summary>
+    public static readonly TimeSpan FutureMtimeTolerance = TimeSpan.FromMinutes(1);
+
     private static readonly PhishFileNameParser Parser = new(NullLogger<PhishFileNameParser>.Instance);
 
     private readonly IChapterManager _chapters;
@@ -171,6 +175,7 @@ public sealed class ChapterMarkerService : IChapterMarkerService
     private readonly ILogger<ChapterMarkerService> _logger;
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly ConcurrentDictionary<Guid, byte> _inFlight = new();
+    private DateTime _phishInPausedUntil; // read and written under _gate
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ChapterMarkerService"/> class.
@@ -227,6 +232,19 @@ public sealed class ChapterMarkerService : IChapterMarkerService
             ?? (string.IsNullOrEmpty(item.Name) ? null : Parser.Parse(item.Name).ShowDate);
     }
 
+    /// <summary>
+    /// Says whether a file may still be being written: modified less than <see cref="MinFileAge"/> ago. A
+    /// time well in the future is clock skew; the stats before and after the read still catch a change.
+    /// </summary>
+    /// <param name="modifiedUtc">The file's last write time.</param>
+    /// <param name="nowUtc">Now.</param>
+    /// <returns>True when the file should be left to settle.</returns>
+    public static bool StillWriting(DateTime modifiedUtc, DateTime nowUtc)
+    {
+        var age = nowUtc - modifiedUtc;
+        return age < MinFileAge && age > -FutureMtimeTolerance;
+    }
+
     /// <inheritdoc />
     public async Task<ChapterOutcome> ProcessAsync(Video item, RunBudget? budget, CancellationToken cancellationToken)
     {
@@ -269,12 +287,15 @@ public sealed class ChapterMarkerService : IChapterMarkerService
         }
 
         var state = await _store.ReadAsync(item.Id, cancellationToken).ConfigureAwait(false);
+
+        // What we saved is still ours to replace after the file changes, until Jellyfin re-probes it.
+        var ours = state is { Status: ChapterStatus.Applied or ChapterStatus.Superseded } ? state.Chapters : null;
         if (state is not null && state.Fingerprint != fingerprint)
         {
             state = null; // a new file, so an old result (even Ignored) no longer applies
         }
 
-        var job = new Job(item, item.Path, showDate.Date, fingerprint, runtime, state, _time.GetUtcNow().UtcDateTime);
+        var job = new Job(item, item.Path, showDate.Date, fingerprint, runtime, state, ours, _time.GetUtcNow().UtcDateTime);
         try
         {
             return await DecideAsync(job, budget, cancellationToken).ConfigureAwait(false);
@@ -285,9 +306,12 @@ public sealed class ChapterMarkerService : IChapterMarkerService
         }
         catch (PhishInRateLimitedException ex)
         {
+            // Every later caller waits too, not just this item: the pause is the service's.
             var wait = ex.RetryAfter is { } after && after > TimeSpan.Zero ? after : DefaultRateLimitWait;
-            await RecordAsync(job, PendingCarry(job, ChapterStatus.Pending, $"rate-limited ({(int)ex.StatusCode})", job.Now + wait), cancellationToken).ConfigureAwait(false);
-            return new ChapterOutcome(ChapterOutcomeKind.RateLimited, ex.Message);
+            _phishInPausedUntil = job.Now + wait;
+            await RecordAsync(job, RateLimited(job, $"rate-limited ({(int)ex.StatusCode})", _phishInPausedUntil), cancellationToken).ConfigureAwait(false);
+            Log(job, "PENDING", $"phish.in rate limit; paused until {_phishInPausedUntil:u}");
+            return new ChapterOutcome(ChapterOutcomeKind.RateLimited, ex.Message, _phishInPausedUntil);
         }
         catch (Exception ex)
         {
@@ -303,23 +327,15 @@ public sealed class ChapterMarkerService : IChapterMarkerService
             return new ChapterOutcome(ChapterOutcomeKind.Unchanged, "ignored");
         }
 
-        if (job.Item.PremiereDate is { } premiere && premiere.Date != job.ShowDate)
-        {
-            var mismatch = string.Format(CultureInfo.InvariantCulture, "{0} premiere={1:yyyy-MM-dd} file={2:yyyy-MM-dd}", DateMismatchReason, premiere, job.ShowDate);
-            return state is { Status: ChapterStatus.NeedsReview } && state.Reason == mismatch
-                ? new ChapterOutcome(ChapterOutcomeKind.Unchanged, mismatch)
-                : await SettleAsync(job, ChapterStatus.NeedsReview, mismatch, null, cancellationToken).ConfigureAwait(false);
-        }
-
-        if (state is { Status: ChapterStatus.NeedsReview } && state.Reason?.StartsWith(DateMismatchReason, StringComparison.Ordinal) == true)
-        {
-            job.Previous = state = null; // the dates agree now
-        }
-
         var situation = Classify(job);
         if (state is { Status: ChapterStatus.Applied or ChapterStatus.Superseded })
         {
-            return await KeepAppliedAsync(job, situation, cancellationToken).ConfigureAwait(false);
+            if (await KeepAppliedAsync(job, situation, cancellationToken).ConfigureAwait(false) is { } kept)
+            {
+                return kept;
+            }
+
+            job.Previous = state = null; // the cached rows no longer fit this file; align it again
         }
 
         if (situation == ChapterSituation.Other)
@@ -334,9 +350,23 @@ public sealed class ChapterMarkerService : IChapterMarkerService
             job.Previous = state = null; // those chapters are gone
         }
 
+        // Only checked before aligning: an applied result was matched against this date's audio already.
+        if (job.Item.PremiereDate is { } premiere && premiere.Date != job.ShowDate)
+        {
+            var mismatch = string.Format(CultureInfo.InvariantCulture, "{0} premiere={1:yyyy-MM-dd} file={2:yyyy-MM-dd}", DateMismatchReason, premiere, job.ShowDate);
+            return state is { Status: ChapterStatus.NeedsReview } && state.Reason == mismatch
+                ? new ChapterOutcome(ChapterOutcomeKind.Unchanged, mismatch)
+                : await SettleAsync(job, ChapterStatus.NeedsReview, mismatch, null, cancellationToken).ConfigureAwait(false);
+        }
+
+        if (state is { Status: ChapterStatus.NeedsReview } && state.Reason?.StartsWith(DateMismatchReason, StringComparison.Ordinal) == true)
+        {
+            job.Previous = state = null; // the dates agree now
+        }
+
         if (state is { Status: ChapterStatus.Pending or ChapterStatus.Failed, NextAttemptUtc: { } next } && next > job.Now)
         {
-            return new ChapterOutcome(ChapterOutcomeKind.Unchanged, $"waiting until {next:u}");
+            return new ChapterOutcome(ChapterOutcomeKind.Unchanged, $"waiting until {next:u}", next);
         }
 
         if (state is { Status: ChapterStatus.Skipped or ChapterStatus.NeedsReview } && state.AlgorithmVersion == AlgorithmVersion)
@@ -347,7 +377,8 @@ public sealed class ChapterMarkerService : IChapterMarkerService
         return await AlignAsync(job, budget, cancellationToken).ConfigureAwait(false);
     }
 
-    private async Task<ChapterOutcome> KeepAppliedAsync(Job job, ChapterSituation situation, CancellationToken cancellationToken)
+    /// <summary>Handles an item whose record is Applied or Superseded; null means align it again.</summary>
+    private async Task<ChapterOutcome?> KeepAppliedAsync(Job job, ChapterSituation situation, CancellationToken cancellationToken)
     {
         var state = job.Previous!;
         switch (situation)
@@ -371,11 +402,14 @@ public sealed class ChapterMarkerService : IChapterMarkerService
             default:
                 if (ChapterValidator.Validate(state.Chapters, job.Runtime) is { } invalid)
                 {
-                    return await SettleAsync(job, ChapterStatus.NeedsReview, "cached chapters no longer fit: " + invalid, null, cancellationToken).ConfigureAwait(false);
+                    Log(job, "REALIGN", "cached chapters no longer fit: " + invalid);
+                    return null;
                 }
 
                 _chapters.SaveChapters(job.Item, ChapterDetector.ToChapterInfos(state.Chapters));
-                await RecordAsync(job, Copy(state, ChapterStatus.Applied, null, job.Now), cancellationToken).ConfigureAwait(false);
+
+                // Not cancellable once saved: a lost record would make our chapters look like anyone's.
+                await RecordAsync(job, Copy(state, ChapterStatus.Applied, null, job.Now), CancellationToken.None).ConfigureAwait(false);
                 Log(job, "REAPPLY", $"{state.Chapters.Count} ch restored after Jellyfin dropped them");
                 return new ChapterOutcome(ChapterOutcomeKind.Reapplied);
         }
@@ -383,7 +417,7 @@ public sealed class ChapterMarkerService : IChapterMarkerService
 
     private async Task<ChapterOutcome> AlignAsync(Job job, RunBudget? budget, CancellationToken cancellationToken)
     {
-        if (job.Now - job.Fingerprint.ModifiedUtc < MinFileAge)
+        if (StillWriting(job.Fingerprint.ModifiedUtc, job.Now))
         {
             return await FileChangingAsync(job, cancellationToken).ConfigureAwait(false);
         }
@@ -392,6 +426,11 @@ public sealed class ChapterMarkerService : IChapterMarkerService
         if (runtimeSeconds < AlignmentConstants.MinVideoSeconds)
         {
             return await SettleAsync(job, ChapterStatus.Skipped, AlignmentGates.CheckVideoLength(runtimeSeconds), null, cancellationToken).ConfigureAwait(false);
+        }
+
+        if (job.Now < _phishInPausedUntil)
+        {
+            return new ChapterOutcome(ChapterOutcomeKind.RateLimited, $"phish.in paused until {_phishInPausedUntil:u}", _phishInPausedUntil);
         }
 
         var fetch = Stopwatch.StartNew();
@@ -416,6 +455,9 @@ public sealed class ChapterMarkerService : IChapterMarkerService
             return new ChapterOutcome(ChapterOutcomeKind.OverBudget);
         }
 
+        // Templates before the video: they're small and cached, so a phish.in error or rate limit fails
+        // fast, and its retry doesn't read the whole video again.
+        var templates = await _audio.GetTemplatesAsync(show, cancellationToken).ConfigureAwait(false);
         fetch.Stop();
         var read = Stopwatch.StartNew();
         float[] video;
@@ -439,10 +481,6 @@ public sealed class ChapterMarkerService : IChapterMarkerService
         {
             return await FileChangingAsync(job, cancellationToken).ConfigureAwait(false);
         }
-
-        fetch.Start();
-        var templates = await _audio.GetTemplatesAsync(show, cancellationToken).ConfigureAwait(false);
-        fetch.Stop();
 
         var align = Stopwatch.StartNew();
         var tracks = show.Tracks.Select((t, i) => new AlignmentTrack(t.Title, t.DurationSeconds, templates.Templates[i])).ToList();
@@ -472,7 +510,9 @@ public sealed class ChapterMarkerService : IChapterMarkerService
         }
 
         _chapters.SaveChapters(job.Item, ChapterDetector.ToChapterInfos(rows));
-        await RecordAsync(job, New(job, ChapterStatus.Applied, null, result), cancellationToken).ConfigureAwait(false);
+
+        // Not cancellable once saved: a lost record would make our chapters look like anyone's.
+        await RecordAsync(job, New(job, ChapterStatus.Applied, null, result), CancellationToken.None).ConfigureAwait(false);
         Log(job, "DONE", string.Format(
             CultureInfo.InvariantCulture,
             "{0} ch, median {1:0.00}, {2} low (read {3:0}s, fetch {4:0}s, align {5:0.0}s)",
@@ -485,11 +525,8 @@ public sealed class ChapterMarkerService : IChapterMarkerService
         return new ChapterOutcome(ChapterOutcomeKind.Applied);
     }
 
-    private ChapterSituation Classify(Job job)
-    {
-        var ours = job.Previous is { Status: ChapterStatus.Applied or ChapterStatus.Superseded } p ? p.Chapters : null;
-        return ChapterDetector.Classify(_chapters.GetChapters(job.Item.Id), ours, DummiesFor(job.Runtime));
-    }
+    private ChapterSituation Classify(Job job) =>
+        ChapterDetector.Classify(_chapters.GetChapters(job.Item.Id), job.Ours, DummiesFor(job.Runtime));
 
     private DummySignature? DummiesFor(long runtime)
     {
@@ -506,7 +543,9 @@ public sealed class ChapterMarkerService : IChapterMarkerService
     {
         var previous = job.Previous is { Status: ChapterStatus.Pending } p ? p : null;
         int attempts = (previous?.Attempts ?? 0) + 1;
-        var first = previous?.FirstPendingUtc ?? job.Now;
+
+        // An error in between doesn't restart the 60-day clock.
+        var first = job.Previous is { Status: ChapterStatus.Pending or ChapterStatus.Failed } q && q.FirstPendingUtc is { } since ? since : job.Now;
         if (RetrySchedule.NextPendingAttempt(first, attempts, job.Now) is not { } next)
         {
             return await SettleAsync(job, ChapterStatus.Skipped, $"{detail}; gave up after {attempts} checks", null, cancellationToken).ConfigureAwait(false);
@@ -518,7 +557,7 @@ public sealed class ChapterMarkerService : IChapterMarkerService
         state.NextAttemptUtc = next;
         await RecordAsync(job, state, cancellationToken).ConfigureAwait(false);
         Log(job, "PENDING", $"{detail}; check {attempts}, next {next:u}");
-        return new ChapterOutcome(ChapterOutcomeKind.Pending, detail);
+        return new ChapterOutcome(ChapterOutcomeKind.Pending, detail, next);
     }
 
     private async Task<ChapterOutcome> FileChangingAsync(Job job, CancellationToken cancellationToken)
@@ -531,9 +570,10 @@ public sealed class ChapterMarkerService : IChapterMarkerService
         }
 
         job.Fingerprint = now;
-        await RecordAsync(job, PendingCarry(job, ChapterStatus.Pending, FileChangingReason, job.Now + MinFileAge), cancellationToken).ConfigureAwait(false);
+        var retry = job.Now + MinFileAge;
+        await RecordAsync(job, PendingCarry(job, FileChangingReason, retry), cancellationToken).ConfigureAwait(false);
         Log(job, "PENDING", FileChangingReason);
-        return new ChapterOutcome(ChapterOutcomeKind.Pending, FileChangingReason);
+        return new ChapterOutcome(ChapterOutcomeKind.Pending, FileChangingReason, retry);
     }
 
     private async Task<ChapterOutcome> FailAsync(Job job, Exception ex, CancellationToken cancellationToken)
@@ -553,6 +593,7 @@ public sealed class ChapterMarkerService : IChapterMarkerService
             : New(job, ChapterStatus.Failed, reason, null);
         state.Attempts = attempts;
         state.NextAttemptUtc = next;
+        state.FirstPendingUtc = job.Previous is { Status: ChapterStatus.Pending or ChapterStatus.Failed } q ? q.FirstPendingUtc : null;
         _logger.LogError(ex, "Chapters FAILED {Date} \"{File}\": attempt {Attempts}, next {Next}", Date(job), FileName(job), attempts, next?.ToString("u", CultureInfo.InvariantCulture) ?? "review");
         try
         {
@@ -563,7 +604,7 @@ public sealed class ChapterMarkerService : IChapterMarkerService
             _logger.LogError(writeError, "Chapters: couldn't write the record for {File}", FileName(job));
         }
 
-        return new ChapterOutcome(ChapterOutcomeKind.Failed, reason);
+        return new ChapterOutcome(ChapterOutcomeKind.Failed, reason, next);
     }
 
     /// <summary>Writes a Skipped or NeedsReview record and logs it.</summary>
@@ -591,10 +632,25 @@ public sealed class ChapterMarkerService : IChapterMarkerService
     };
 
     /// <summary>A Pending record that doesn't count as a check: the attempts and first-pending time carry over.</summary>
-    private static ChapterState PendingCarry(Job job, ChapterStatus status, string reason, DateTime next)
+    private static ChapterState PendingCarry(Job job, string reason, DateTime next)
     {
+        var state = New(job, ChapterStatus.Pending, reason, null);
+        if (job.Previous is { Status: ChapterStatus.Pending or ChapterStatus.Failed } p)
+        {
+            state.Attempts = p.Status == ChapterStatus.Pending ? p.Attempts : 0;
+            state.FirstPendingUtc = p.FirstPendingUtc;
+        }
+
+        state.NextAttemptUtc = next;
+        return state;
+    }
+
+    /// <summary>A rate limit isn't a check or a failure: a Pending or Failed record keeps its status and counters.</summary>
+    private static ChapterState RateLimited(Job job, string reason, DateTime next)
+    {
+        var status = job.Previous is { Status: ChapterStatus.Failed } ? ChapterStatus.Failed : ChapterStatus.Pending;
         var state = New(job, status, reason, null);
-        if (job.Previous is { Status: ChapterStatus.Pending } p)
+        if (job.Previous is { Status: ChapterStatus.Pending or ChapterStatus.Failed } p)
         {
             state.Attempts = p.Attempts;
             state.FirstPendingUtc = p.FirstPendingUtc;
@@ -640,7 +696,7 @@ public sealed class ChapterMarkerService : IChapterMarkerService
         _logger.LogDebug("Chapters for {Date} \"{File}\":\n{Table}", Date(job), FileName(job), string.Join('\n', lines));
     }
 
-    private sealed class Job(Video item, string path, DateTime showDate, FileFingerprint fingerprint, long runtime, ChapterState? previous, DateTime now)
+    private sealed class Job(Video item, string path, DateTime showDate, FileFingerprint fingerprint, long runtime, ChapterState? previous, IReadOnlyList<AlignedChapter>? ours, DateTime now)
     {
         public Video Item { get; } = item;
 
@@ -653,6 +709,9 @@ public sealed class ChapterMarkerService : IChapterMarkerService
         public long Runtime { get; } = runtime;
 
         public ChapterState? Previous { get; set; } = previous;
+
+        /// <summary>Gets the chapters this plugin last saved for the item, even for an older version of the file.</summary>
+        public IReadOnlyList<AlignedChapter>? Ours { get; } = ours;
 
         public DateTime Now { get; } = now;
     }

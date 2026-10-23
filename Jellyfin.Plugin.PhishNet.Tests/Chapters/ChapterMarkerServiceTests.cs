@@ -420,6 +420,85 @@ public class ChapterMarkerServiceTests : IDisposable
         state!.Status.Should().Be(ChapterStatus.Pending);
         state.Attempts.Should().Be(0);
         state.NextAttemptUtc.Should().Be(_time.Now + TimeSpan.FromMinutes(30));
+        outcome.RetryAtUtc.Should().Be(_time.Now + TimeSpan.FromMinutes(30));
+        _decoder.FileDecodes.Should().Be(0, "templates come first, so a rate limit costs no video read");
+
+        var other = new Movie { Id = Guid.NewGuid(), Name = _movie.Name, Path = _movie.Path, RunTimeTicks = _movie.RunTimeTicks };
+        _audio.TemplateError = null;
+        (await _service.ProcessAsync(other, null, CancellationToken.None)).Kind.Should().Be(ChapterOutcomeKind.RateLimited, "the pause holds for every show");
+        _audio.ShowRequests.Should().HaveCount(1);
+
+        _time.Advance(TimeSpan.FromMinutes(30));
+        (await _service.ProcessAsync(other, null, CancellationToken.None)).Kind.Should().Be(ChapterOutcomeKind.Applied);
+    }
+
+    [Fact]
+    public async Task Process_ShouldNotReadTheVideo_WhenATrackFails()
+    {
+        _audio.TemplateError = new HttpRequestException("track 404");
+
+        (await Process()).Kind.Should().Be(ChapterOutcomeKind.Failed);
+
+        _decoder.FileDecodes.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task Process_ShouldKeepTheSixtyDayClock_WhenAnErrorInterruptsTheWait()
+    {
+        _audio.Status = PhishInShowStatus.NotFound;
+        await Process();
+        var first = (await Record())!.FirstPendingUtc;
+        _time.Advance(TimeSpan.FromHours(1));
+        _audio.Status = PhishInShowStatus.Ok;
+        _audio.TemplateError = new HttpRequestException("blip");
+        await Process();
+        _time.Advance(TimeSpan.FromHours(1));
+        _audio.Status = PhishInShowStatus.NotFound;
+
+        await Process();
+
+        (await Record())!.FirstPendingUtc.Should().Be(first);
+    }
+
+    [Fact]
+    public async Task Process_ShouldKeepAnAppliedShow_WhenItsPremiereDateChangesLater()
+    {
+        await Process();
+        _movie.PremiereDate = new DateTime(2026, 7, 8);
+
+        (await Process()).Kind.Should().Be(ChapterOutcomeKind.Unchanged);
+        (await Record())!.Status.Should().Be(ChapterStatus.Applied);
+    }
+
+    [Fact]
+    public async Task Process_ShouldRealign_WhenTheCachedChaptersNoLongerFitTheRuntime()
+    {
+        await _service.Store.WriteAsync(
+            _movie.Id,
+            new ChapterState { Status = ChapterStatus.Applied, AlgorithmVersion = 1, Fingerprint = FileFingerprint.Of(_movie.Path), Chapters = [new AlignedChapter("Ghost", 1e6, 0.9)] },
+            CancellationToken.None);
+
+        (await Process()).Kind.Should().Be(ChapterOutcomeKind.Applied);
+        _db.Chapters.Should().HaveCount(12);
+    }
+
+    [Fact]
+    public async Task Process_ShouldReplaceOurOwnOldChapters_WhenTheFileIsSwappedBeforeAReprobe()
+    {
+        await Process();
+        File.WriteAllBytes(_movie.Path, new byte[2000]);
+        File.SetLastWriteTimeUtc(_movie.Path, _time.Now - TimeSpan.FromHours(1));
+
+        (await Process()).Kind.Should().Be(ChapterOutcomeKind.Applied, "the chapters still in Jellyfin are the ones we saved");
+        _decoder.FileDecodes.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task Process_ShouldAlign_AFileDatedInTheFuture()
+    {
+        File.SetLastWriteTimeUtc(_movie.Path, _time.Now + TimeSpan.FromDays(2));
+
+        (await Process()).Kind.Should().Be(ChapterOutcomeKind.Applied);
     }
 
     [Fact]
@@ -467,6 +546,7 @@ public class ChapterMarkerServiceTests : IDisposable
         var saved = _db.Chapters.ToList();
         File.Delete(Path.Combine(_dir, "state", _movie.Id.ToString("N") + ".json"));
 
+        // Rare now (the record is written even if the caller cancels), but without it our chapters look like anyone's.
         (await Process()).Kind.Should().Be(ChapterOutcomeKind.Skipped, "without a record our chapters look like anyone's");
         _db.Chapters.Should().BeEquivalentTo(saved);
 
