@@ -112,7 +112,7 @@ public class ConsensusAlignerTests
         AlignmentGates.CheckMedian(median).Should().Be(expected);
     }
 
-    private sealed record SyntheticShow(float[] Video, IReadOnlyList<AlignmentTrack> Tracks, double[] TrueStarts)
+    internal sealed record SyntheticShow(float[] Video, IReadOnlyList<AlignmentTrack> Tracks, double[] TrueStarts)
     {
         public static SyntheticShow Build(int seed, int songs, double leadInSec, double drift, int? setbreakAfter, double setbreakSec)
         {
