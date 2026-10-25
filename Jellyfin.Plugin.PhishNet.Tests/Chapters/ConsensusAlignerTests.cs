@@ -101,6 +101,47 @@ public class ConsensusAlignerTests
     }
 
     [Fact]
+    public void Align_PerSetIntercept_ShouldFindTheEncore_AfterABreakLongerThanTheRefineWindow()
+    {
+        // A borrowed intercept doesn't know about the encore break (about 170 s in trimmed webcasts), and a
+        // break only ever adds time, so the search reaches further forward.
+        var show = SyntheticShow.Build(seed: 13, songs: 13, leadInSec: 64, drift: 1.0, setbreakAfter: 6, setbreakSec: 900, encoreSongs: 1, pause: (12, 220));
+
+        var result = ConsensusAligner.Align(show.Video, show.Tracks, AlignmentOptions.PerSet);
+
+        result.SkipReason.Should().BeNull();
+        result.Chapters![12].StartSeconds.Should().BeApproximately(show.TrueStarts[12], 2.0);
+    }
+
+    [Fact]
+    public void Align_PerSetIntercept_ShouldIgnoreASetsAnchors_WhenTheyDisagree()
+    {
+        // A reprise's opening matches the song it reprises, in set 1. Averaged with the encore's true anchor,
+        // that false anchor would put the encore somewhere in set 2.
+        var show = SyntheticShow.Build(seed: 13, songs: 14, leadInSec: 64, drift: 1.0, setbreakAfter: 6, setbreakSec: 900, encoreSongs: 2);
+        var tracks = show.Tracks.Select((t, i) => i == 13 ? t with { Template = show.Tracks[1].Template } : t).ToList();
+
+        var result = ConsensusAligner.Align(show.Video, tracks, AlignmentOptions.PerSet);
+
+        result.SkipReason.Should().BeNull();
+        result.Chapters![12].StartSeconds.Should().BeApproximately(show.TrueStarts[12], 2.0);
+    }
+
+    [Fact]
+    public void Align_PerSetIntercept_ShouldSearchFurther_WhenASongIsAfterALongPause()
+    {
+        // A pause inside a set (a stop to fix gear, a long story) moves the rest of the set later than the line;
+        // a song that scores low in the usual window gets a wider look forward.
+        var show = SyntheticShow.Build(seed: 14, songs: 14, leadInSec: 64, drift: 1.0, setbreakAfter: 7, setbreakSec: 900, pause: (6, 220));
+
+        var result = ConsensusAligner.Align(show.Video, show.Tracks, AlignmentOptions.PerSet);
+
+        result.SkipReason.Should().BeNull();
+        result.Chapters![6].StartSeconds.Should().BeApproximately(show.TrueStarts[6], 2.0);
+        result.LowConfidenceCount.Should().Be(0);
+    }
+
+    [Fact]
     public void Align_ShouldUseFittedTime_ForTrackWithoutAudio()
     {
         var show = SyntheticShow.Build(seed: 12, songs: 10, leadInSec: 30, drift: 1.0, setbreakAfter: null, setbreakSec: 0);
@@ -168,7 +209,7 @@ public class ConsensusAlignerTests
 
     internal sealed record SyntheticShow(float[] Video, IReadOnlyList<AlignmentTrack> Tracks, double[] TrueStarts)
     {
-        public static SyntheticShow Build(int seed, int songs, double leadInSec, double drift, int? setbreakAfter, double setbreakSec, int encoreSongs = 0)
+        public static SyntheticShow Build(int seed, int songs, double leadInSec, double drift, int? setbreakAfter, double setbreakSec, int encoreSongs = 0, (int Song, double Seconds)? pause = null)
         {
             var rng = new Random(seed);
             var video = new List<float>(NccTests.RandomEnvelope(rng, (int)(leadInSec * Fps)).Select(x => x * 0.3f));
@@ -179,6 +220,11 @@ public class ConsensusAlignerTests
                 if (setbreakAfter == i)
                 {
                     video.AddRange(NccTests.RandomEnvelope(rng, (int)(setbreakSec * Fps)).Select(x => x * 0.3f));
+                }
+
+                if (pause is { } p && p.Song == i)
+                {
+                    video.AddRange(NccTests.RandomEnvelope(rng, (int)(p.Seconds * Fps)).Select(x => x * 0.3f));
                 }
 
                 double durSec = 240 + rng.Next(0, 600);

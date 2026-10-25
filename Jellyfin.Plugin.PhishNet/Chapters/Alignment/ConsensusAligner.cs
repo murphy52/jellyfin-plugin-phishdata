@@ -19,7 +19,9 @@ public sealed record AlignmentTrack(string Title, double DurationSeconds, float[
 /// </summary>
 /// <param name="PerSetIntercept">
 /// Fit one intercept per set, sharing the slope. phish.in's durations leave out the setbreak, so a webcast
-/// that keeps it puts set 2 later than a single line predicts by the setbreak's length.
+/// that keeps it puts set 2 later than a single line predicts by the setbreak's length. Breaks only add
+/// time, so a set that borrows the previous set's intercept, and a song that scores low in the usual
+/// window, are also searched further forward.
 /// </param>
 public sealed record AlignmentOptions(bool PerSetIntercept)
 {
@@ -123,14 +125,27 @@ public static class ConsensusAligner
         double b = slopes.Count > 0 ? Math.Clamp(Stats.Median(slopes), SlopeMin, SlopeMax) : 1.0;
         double a = Stats.Median(anchors.Select(p => p.Y - (b * p.X)));
 
-        // A set with too few anchors of its own (often a one- or two-song encore) borrows the intercept of
-        // the set before it, since encore breaks are short; the first set falls back to the whole-show fit.
+        // A set without MinSetAnchors anchors that agree with each other (often a one- or two-song encore), or
+        // whose fit would start it before the set ahead of it, borrows the intercept of the set before it; the
+        // first set falls back to the whole-show fit.
         var intercepts = new double[setNames.Count];
+        var borrowed = new bool[setNames.Count];
         for (int s = 0; s < setNames.Count; s++)
         {
             var own = anchors.Where(p => p.Set == s).Select(p => p.Y - (b * p.X)).ToList();
-            intercepts[s] = own.Count >= MinSetAnchors || setNames.Count == 1 ? (own.Count > 0 ? Stats.Median(own) : a)
-                : s > 0 ? intercepts[s - 1] : a;
+            if (setNames.Count == 1)
+            {
+                intercepts[s] = a;
+            }
+            else if (Consistent(own) is { } fitted && (s == 0 || fitted >= intercepts[s - 1] - AgreementSeconds))
+            {
+                intercepts[s] = fitted;
+            }
+            else
+            {
+                intercepts[s] = s > 0 ? intercepts[s - 1] : a;
+                borrowed[s] = s > 0;
+            }
         }
 
         int agree = anchors.Count(p => Math.Abs(p.Y - (intercepts[p.Set] + (b * p.X))) <= AgreementSeconds);
@@ -153,8 +168,20 @@ public static class ConsensusAligner
             }
 
             int lo = Math.Max(Math.Max(previous + (i == 0 ? 0 : minGapFrames), (int)((predicted - RefineWindowSeconds) * Fps)), 0);
-            int hi = (int)((predicted + RefineWindowSeconds) * Fps);
-            var (index, score) = searcher.Correlate(template).Search(lo, hi);
+            bool reachForward = borrowed[setIndex[i]];
+            int hi = (int)((predicted + RefineWindowSeconds + (reachForward ? ForwardReachSeconds : 0)) * Fps);
+            var correlation = searcher.Correlate(template);
+            var (index, score) = correlation.Search(lo, hi);
+            if (perSet && !reachForward && score < LowConfidence)
+            {
+                // A pause inside the set (a stop to fix gear, a long story) puts the rest of it later than the line.
+                var wider = correlation.Search(lo, hi + (ForwardReachSeconds * Fps));
+                if (wider.Score > score)
+                {
+                    (index, score) = wider;
+                }
+            }
+
             double start = score >= RefineAcceptConfidence ? index / (double)Fps : predicted;
             chapters.Add(new AlignedChapter(tracks[i].Title, start, score));
             previous = (int)(start * Fps);
@@ -164,6 +191,15 @@ public static class ConsensusAligner
         double median = scores.Count > 0 ? Stats.Median(scores) : 0.0;
         int low = scores.Count(s => s < LowConfidence);
         return new AlignmentResult(chapters, median, low, null);
+    }
+
+    // The median of the largest group of intercepts that agree with one another, or null when fewer than
+    // MinSetAnchors agree: two anchors a setbreak apart average to a time that fits neither.
+    private static double? Consistent(List<double> intercepts)
+    {
+        var best = intercepts.Select(x => intercepts.Where(y => Math.Abs(y - x) <= AgreementSeconds).ToList())
+            .OrderByDescending(g => g.Count).FirstOrDefault();
+        return best is { Count: >= MinSetAnchors } ? Stats.Median(best) : null;
     }
 
     private static List<double> Slopes(List<(double X, double Y, int Set)> anchors, bool withinSets)
