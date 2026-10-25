@@ -160,9 +160,11 @@ public sealed class ChapterQueue : IHostedService, IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
+        // Registered as a singleton and as a hosted service, so the container disposes it twice.
         Unsubscribe();
-        _stopping?.Cancel();
-        _stopping?.Dispose();
+        var stopping = Interlocked.Exchange(ref _stopping, null);
+        stopping?.Cancel();
+        stopping?.Dispose();
     }
 
     private RunBudget BudgetFor(DateTime nowUtc)
