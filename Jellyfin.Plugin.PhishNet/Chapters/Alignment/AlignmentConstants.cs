@@ -27,6 +27,15 @@ public static class AlignmentConstants
     /// <summary>Lowest drift slope the fit may use.</summary>
     public const double SlopeMin = 0.85;
 
+    /// <summary>Anchors a set needs for its own intercept when intercepts are fitted per set.</summary>
+    public const int MinSetAnchors = 2;
+
+    /// <summary>
+    /// How much further forward than the refine window a search reaches when a break the line doesn't know
+    /// about may sit before the song (per-set mode). Encore breaks in trimmed webcasts run to about 220 s.
+    /// </summary>
+    public const int ForwardReachSeconds = 300;
+
     /// <summary>Highest drift slope the fit may use.</summary>
     public const double SlopeMax = 1.25;
 
