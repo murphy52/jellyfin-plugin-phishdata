@@ -699,7 +699,7 @@ public sealed class ChapterMarkerService : IChapterMarkerService
         }
 
         var align = Stopwatch.StartNew();
-        var tracks = show.Tracks.Select((t, i) => new AlignmentTrack(t.Title, t.DurationSeconds, templates.Templates[i])).ToList();
+        var tracks = show.Tracks.Select((t, i) => new AlignmentTrack(t.Title, t.DurationSeconds, templates.Templates[i], t.SetName)).ToList();
         var result = ConsensusAligner.Align(video, tracks);
         align.Stop();
         if (result.Chapters is not { } rows)

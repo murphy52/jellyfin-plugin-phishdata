@@ -27,6 +27,9 @@ public static class AlignmentConstants
     /// <summary>Lowest drift slope the fit may use.</summary>
     public const double SlopeMin = 0.85;
 
+    /// <summary>Anchors a set needs for its own intercept when intercepts are fitted per set.</summary>
+    public const int MinSetAnchors = 2;
+
     /// <summary>Highest drift slope the fit may use.</summary>
     public const double SlopeMax = 1.25;
 
