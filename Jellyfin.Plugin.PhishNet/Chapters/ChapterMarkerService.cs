@@ -171,8 +171,11 @@ public interface IChapterMarkerService
 /// </summary>
 public sealed class ChapterMarkerService : IChapterMarkerService
 {
-    /// <summary>The alignment version written into records. Bump it to re-align Skipped and NeedsReview items.</summary>
-    public const int AlgorithmVersion = 1;
+    /// <summary>
+    /// The alignment version written into records. Bump it to re-align Skipped and NeedsReview items.
+    /// 2: per-set intercepts (<see cref="AlignmentOptions.PerSet"/>).
+    /// </summary>
+    public const int AlgorithmVersion = 2;
 
     /// <summary>Reason for an item whose database already holds real chapters.</summary>
     public const string HasChaptersReason = "has-chapters";
@@ -700,7 +703,7 @@ public sealed class ChapterMarkerService : IChapterMarkerService
 
         var align = Stopwatch.StartNew();
         var tracks = show.Tracks.Select((t, i) => new AlignmentTrack(t.Title, t.DurationSeconds, templates.Templates[i], t.SetName)).ToList();
-        var result = ConsensusAligner.Align(video, tracks);
+        var result = ConsensusAligner.Align(video, tracks, AlignmentOptions.PerSet);
         align.Stop();
         if (result.Chapters is not { } rows)
         {

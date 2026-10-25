@@ -25,8 +25,9 @@ namespace Jellyfin.Plugin.PhishNet.Tests.Chapters;
 /// </summary>
 public partial class ChapterMarkerServiceTests : IDisposable
 {
+    // An untrimmed webcast: the 25-minute setbreak is in the video but not in phish.in's durations.
     private static readonly ConsensusAlignerTests.SyntheticShow Synthetic =
-        ConsensusAlignerTests.SyntheticShow.Build(seed: 10, songs: 12, leadInSec: 60, drift: 1.02, setbreakAfter: null, setbreakSec: 0);
+        ConsensusAlignerTests.SyntheticShow.Build(seed: 10, songs: 12, leadInSec: 60, drift: 1.02, setbreakAfter: 6, setbreakSec: 1500);
 
     private readonly string _dir = Path.Combine(Path.GetTempPath(), "chapter-service-" + Guid.NewGuid().ToString("N"));
     private readonly FakeChapters _db = new();
@@ -640,7 +641,7 @@ public partial class ChapterMarkerServiceTests : IDisposable
                 return Task.FromResult(new PhishInShow(Status, Status.ToString(), Array.Empty<PhishInTrack>()));
             }
 
-            var tracks = Synthetic.Tracks.Select((t, i) => new PhishInTrack(t.Title, i + 1, "Set 1", t.DurationSeconds, $"https://phish.in/blob/{i}.mp3")).ToList();
+            var tracks = Synthetic.Tracks.Select((t, i) => new PhishInTrack(t.Title, i + 1, t.Set ?? "Set 1", t.DurationSeconds, $"https://phish.in/blob/{i}.mp3")).ToList();
             return Task.FromResult(new PhishInShow(PhishInShowStatus.Ok, null, tracks));
         }
 
