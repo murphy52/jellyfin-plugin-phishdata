@@ -266,7 +266,9 @@
                 }
 
                 function actionButton(page, action, item) {
-                    var button = document.createElement('button', { is: 'emby-button' });
+                    // No options argument: jellyfin-web's custom-elements polyfill wraps createElement and
+                    // calls toLowerCase() on it, so { is: ... } throws and the row never renders.
+                    var button = document.createElement('button');
                     button.setAttribute('is', 'emby-button');
                     button.type = 'button';
                     button.className = 'raised emby-button';
