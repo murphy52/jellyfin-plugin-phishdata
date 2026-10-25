@@ -202,7 +202,7 @@ New files go under `Jellyfin.Plugin.PhishNet/Chapters/`. `ConsensusAligner`, `Nc
 **Phase 1 is a parity port**: same constants and same steps as `phish_core.align` at the version captured in the golden fixture. Acceptance: on the golden fixtures, every start time is within 0.1 s (2 frames) of Python and every NCC is within 0.01.
 
 **Phase 2 improvements**, each judged on the fixture corpus (§7). Adopt only if no show gets worse:
-- **Per-set piecewise fit:** fit the intercept per `set_name` (shared slope), falling back to the global line when a set has fewer than 2 anchors. Targets setbreak trims like 2026-07-21.
+- **Per-set piecewise fit:** fit the intercept per `set_name` (shared slope), falling back to the global line when a set has fewer than 2 anchors. Targets setbreak trims like 2026-07-21. *As built in Phase 5 (§11):* a set fits its own intercept only from at least 2 anchors that agree with each other, and never earlier than the set before it. Otherwise it borrows the previous set's intercept and is searched 300 s further forward. A song that scores below 0.35 gets one wider look forward, and a borrowed set that scores low also looks where its own lone anchor puts it. Sets are runs of consecutive tracks. A multi-set show where some set has no chapter at NCC ≥ 0.35 goes to Needs review (`unconfirmed-set`), with its rows kept for Apply anyway.
 - **Order constraint in refine:** already partly there via `prev + MIN_GAP`. Add a check that the final starts are strictly increasing, and flag rather than silently reorder.
 - **Encores and very short tracks** (< 90 s), where the template is the whole track: keep, and mark as low-confidence if refine < 0.30.
 
@@ -294,3 +294,20 @@ Each phase is its own PR off `master`, small enough to review.
 - **Use a vetted FFT package instead of a bespoke FFT** (part of #13). Narrowed: it would add a DLL to every release zip and to the manual release flow. A radix-2 FFT is small and is tested directly against a naive DFT and a naive NCC, which covers the risk. The performance half of the finding was accepted.
 - **Revalidate templates with ETag or update times** (part of #10). Rejected: phish.in MP3 URLs are content-addressed blob keys, so changed audio gets a new URL. The header and finite checks guard corruption. The unused `phishInUpdatedAt` field was dropped instead.
 - **Avoid overlapping playback and other media tasks** (part of #12). Deferred: one show is about one sequential file read, around a minute on the NAS HDD. Debounce, one-at-a-time and the budgets keep it bounded, and playback-aware throttling (watching `ISessionManager`) adds complexity v1 doesn't need. Revisit if the Phase 5 timings on the NAS say otherwise.
+
+## 11. Phase 5 results (2026-10-25)
+
+**Corpus:** 97 library shows copied read-only from the NAS to `~/.cache/phishdata-corpus` on the M6 (about 42 GB, not in git), built by `tools/make_corpus.py`. The library's existing chapters all came from earlier runs of the NAS scripts, so they measure agreement, not accuracy. Per-set was judged on real shows and on clean shows with a known setbreak spliced in.
+
+| Check | Result |
+|---|---|
+| C# parity vs `phish_core.align` | 92 shows, 0 mismatches (start ≤ 0.1 s, NCC ≤ 0.01, same skip reasons) |
+| Envelope decoder vs Python | 97 shows, same frame count, max diff 2.4e-7 |
+| Per-set vs parity, real shows | 41 better, 0 worse; intra-set songs that don't follow the previous one within 60 s: 13 → 3 |
+| Setbreak spliced into 57 clean shows | per-set 1002/1031 songs at +5, +15 and +30 min; parity 827, 420, 75 (9/57 aligned at +30) |
+
+The first per-set version made 5 shows worse. In trimmed webcasts, encore breaks run about 170 s (up to 222 s), longer than the setbreak (about 100 s), so a borrowed intercept missed the encore. And a reprise's false anchor in set 1 was averaged into one encore. The as-built rules in §6 fix both. Per-set is now the default (`AlgorithmVersion` 2). An independent Codex review then found that a set nothing confirms (missing audio, or an encore beyond the reach) could still be applied on the other sets' median. That led to the `unconfirmed-set` gate, which rejects no per-set show in the corpus. Under parity it would have rejected 9, 8 of them for the encore. The per-set corpus reports now fail if a real show gets worse.
+
+**E2E** on a throwaway Jellyfin 12.3 (portable build on the M6, port 8196, `tools/e2e_jellyfin.sh` and `tools/e2e_ui.py`): every §7 check passed. It found three bugs, all fixed: the Needs review rows didn't render in the real jellyfin-web (a `createElement` polyfill crash), the queue threw on a second dispose at shutdown, and log lines had doubled quotes. Chapter images need the library's "Extract chapter images" option, which is off by default. The README says so.
+
+**Not done:** timings and RSS on the NAS's Pentium. That needs the plugin on a server there. On the M6, one show reads in about 7 s, fetches in about 23 s and aligns in 0.7 s.
