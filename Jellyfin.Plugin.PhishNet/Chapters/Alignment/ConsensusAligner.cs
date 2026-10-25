@@ -79,19 +79,10 @@ public static class ConsensusAligner
             cumulative += tracks[i].DurationSeconds;
         }
 
-        // Sets in show order; without per-set intercepts the whole show is one set.
-        var setIndex = new int[tracks.Count];
-        var setNames = new List<string?>();
-        for (int i = 0; i < tracks.Count; i++)
-        {
-            string? name = perSet ? tracks[i].Set : null;
-            int found = setNames.IndexOf(name);
-            setIndex[i] = found >= 0 ? found : setNames.Count;
-            if (found < 0)
-            {
-                setNames.Add(name);
-            }
-        }
+        // Sets are runs of consecutive tracks with the same set name, so a name that comes back later is a
+        // new set; without per-set intercepts the whole show is one set.
+        var setIndex = SetIndex(tracks, perSet);
+        int setCount = tracks.Count > 0 ? setIndex[^1] + 1 : 1;
 
         // Stage 1: an independent global match per track.
         var anchors = new List<(double X, double Y, int Set)>();
@@ -128,12 +119,13 @@ public static class ConsensusAligner
         // A set without MinSetAnchors anchors that agree with each other (often a one- or two-song encore), or
         // whose fit would start it before the set ahead of it, borrows the intercept of the set before it; the
         // first set falls back to the whole-show fit.
-        var intercepts = new double[setNames.Count];
-        var borrowed = new bool[setNames.Count];
-        for (int s = 0; s < setNames.Count; s++)
+        var intercepts = new double[setCount];
+        var borrowed = new bool[setCount];
+        var ownGuess = new double?[setCount];
+        for (int s = 0; s < setCount; s++)
         {
             var own = anchors.Where(p => p.Set == s).Select(p => p.Y - (b * p.X)).ToList();
-            if (setNames.Count == 1)
+            if (setCount == 1)
             {
                 intercepts[s] = a;
             }
@@ -145,6 +137,11 @@ public static class ConsensusAligner
             {
                 intercepts[s] = s > 0 ? intercepts[s - 1] : a;
                 borrowed[s] = s > 0;
+
+                // A lone anchor isn't trusted for the intercept, but where it says the set starts is worth a
+                // look if the borrowed time finds nothing (an encore after a break longer than the reach).
+                var later = s > 0 ? own.Where(r => r >= intercepts[s - 1] - AgreementSeconds).ToList() : [];
+                ownGuess[s] = later.Count > 0 ? Stats.Median(later) : null;
             }
         }
 
@@ -172,7 +169,16 @@ public static class ConsensusAligner
             int hi = (int)((predicted + RefineWindowSeconds + (reachForward ? ForwardReachSeconds : 0)) * Fps);
             var correlation = searcher.Correlate(template);
             var (index, score) = correlation.Search(lo, hi);
-            if (perSet && !reachForward && score < LowConfidence)
+            if (reachForward && score < LowConfidence && ownGuess[setIndex[i]] is { } guess)
+            {
+                double own = guess + (b * cumulativeStart[i]);
+                var near = correlation.Search(Math.Max(lo, (int)((own - RefineWindowSeconds) * Fps)), (int)((own + RefineWindowSeconds) * Fps));
+                if (near.Score > score)
+                {
+                    (index, score) = near;
+                }
+            }
+            else if (perSet && !reachForward && score < LowConfidence)
             {
                 // A pause inside the set (a stop to fix gear, a long story) puts the rest of it later than the line.
                 var wider = correlation.Search(lo, hi + (ForwardReachSeconds * Fps));
@@ -200,6 +206,23 @@ public static class ConsensusAligner
         var best = intercepts.Select(x => intercepts.Where(y => Math.Abs(y - x) <= AgreementSeconds).ToList())
             .OrderByDescending(g => g.Count).FirstOrDefault();
         return best is { Count: >= MinSetAnchors } ? Stats.Median(best) : null;
+    }
+
+    /// <summary>
+    /// Numbers each track's set: runs of consecutive tracks with the same set name, in show order.
+    /// </summary>
+    /// <param name="tracks">Tracks in show order.</param>
+    /// <param name="perSet">False to put the whole show in set 0.</param>
+    /// <returns>The set number of each track.</returns>
+    public static int[] SetIndex(IReadOnlyList<AlignmentTrack> tracks, bool perSet = true)
+    {
+        var index = new int[tracks.Count];
+        for (int i = 1; i < tracks.Count; i++)
+        {
+            index[i] = index[i - 1] + (perSet && tracks[i].Set != tracks[i - 1].Set ? 1 : 0);
+        }
+
+        return index;
     }
 
     private static List<double> Slopes(List<(double X, double Y, int Set)> anchors, bool withinSets)

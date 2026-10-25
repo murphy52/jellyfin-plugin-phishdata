@@ -711,7 +711,7 @@ public sealed class ChapterMarkerService : IChapterMarkerService
         }
 
         LogTable(job, rows);
-        var rejected = AlignmentGates.CheckMedian(result.MedianConfidence) ?? ChapterValidator.Validate(rows, job.Runtime);
+        var rejected = AlignmentGates.CheckMedian(result.MedianConfidence) ?? AlignmentGates.CheckSets(tracks, rows) ?? ChapterValidator.Validate(rows, job.Runtime);
         if (rejected is not null)
         {
             return await SettleAsync(job, ChapterStatus.NeedsReview, rejected, result, cancellationToken).ConfigureAwait(false);

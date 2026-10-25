@@ -142,6 +142,39 @@ public class ConsensusAlignerTests
     }
 
     [Fact]
+    public void Align_PerSetIntercept_ShouldLookWhereTheEncoresOwnAnchorIs_WhenTheBreakIsBeyondTheReach()
+    {
+        // A one-song encore after a 10-minute break: past the borrowed time plus the reach, but its own match
+        // (not trusted alone for the intercept) says where it is.
+        var show = SyntheticShow.Build(seed: 13, songs: 13, leadInSec: 64, drift: 1.0, setbreakAfter: 6, setbreakSec: 900, encoreSongs: 1, pause: (12, 600));
+
+        var result = ConsensusAligner.Align(show.Video, show.Tracks, AlignmentOptions.PerSet);
+
+        result.SkipReason.Should().BeNull();
+        result.Chapters![12].StartSeconds.Should().BeApproximately(show.TrueStarts[12], 2.0);
+    }
+
+    [Fact]
+    public void SetIndex_ShouldStartANewSet_WhenANameComesBack()
+    {
+        var tracks = new[] { "Set 1", "Set 1", "Set 2", "Set 1", "Encore" }.Select(s => new AlignmentTrack("x", 300, null, s)).ToList();
+
+        ConsensusAligner.SetIndex(tracks).Should().Equal(0, 0, 1, 2, 3);
+        ConsensusAligner.SetIndex(tracks, perSet: false).Should().Equal(0, 0, 0, 0, 0);
+    }
+
+    [Fact]
+    public void CheckSets_ShouldReject_ASetThatNothingConfirmed()
+    {
+        var tracks = new[] { "Set 1", "Set 1", "Set 2", "Set 2", "Encore" }.Select(s => new AlignmentTrack("x", 300, null, s)).ToList();
+        AlignedChapter Row(double? confidence) => new("x", 0, confidence);
+
+        AlignmentGates.CheckSets(tracks, [Row(0.8), Row(0.2), Row(null), Row(0.34), Row(0.9)]).Should().Be("unconfirmed-set Set 2");
+        AlignmentGates.CheckSets(tracks, [Row(0.8), Row(0.2), Row(null), Row(0.35), Row(0.9)]).Should().BeNull();
+        AlignmentGates.CheckSets(tracks.Take(2).ToList(), [Row(null), Row(null)]).Should().BeNull("a one-set show has the median gate");
+    }
+
+    [Fact]
     public void Align_ShouldUseFittedTime_ForTrackWithoutAudio()
     {
         var show = SyntheticShow.Build(seed: 12, songs: 10, leadInSec: 30, drift: 1.0, setbreakAfter: null, setbreakSec: 0);

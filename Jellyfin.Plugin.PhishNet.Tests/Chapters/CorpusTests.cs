@@ -155,6 +155,7 @@ public class CorpusTests
 
         _output.WriteLine($"{shows} shows: {changed} changed, {better} better, {worse} worse");
         shows.Should().BeGreaterThan(0);
+        worse.Should().Be(0, "per-set is the default only because no real show got worse (plan §6)");
     }
 
     [CorpusFact]
@@ -200,6 +201,11 @@ public class CorpusTests
         foreach (var (key, r) in results.OrderBy(r => r.Key, StringComparer.Ordinal))
         {
             _output.WriteLine($"{key}: {r.Aligned}/{r.Shows} shows aligned, {r.Placed}/{r.Songs} songs within 2 s");
+        }
+
+        foreach (var key in results.Keys.Where(k => k.EndsWith(" parity", StringComparison.Ordinal)))
+        {
+            results[key.Replace(" parity", " per-set", StringComparison.Ordinal)].Placed.Should().BeGreaterThanOrEqualTo(results[key].Placed, key);
         }
 
         results.Should().NotBeEmpty();
@@ -386,9 +392,15 @@ internal sealed class CorpusShow
         }
 
         var result = ConsensusAligner.Align(video, tracks, options);
-        return result.SkipReason is null && AlignmentGates.CheckMedian(result.MedianConfidence) is { } low
-            ? result with { SkipReason = low }
-            : result;
+        if (result.SkipReason is not null || result.Chapters is not { } chapters)
+        {
+            return result;
+        }
+
+        // The set gate came with per-set intercepts, so parity runs stay comparable with the Python.
+        var rejected = AlignmentGates.CheckMedian(result.MedianConfidence)
+            ?? (options?.PerSetIntercept == true ? AlignmentGates.CheckSets(tracks, chapters) : null);
+        return rejected is null ? result : result with { SkipReason = rejected };
     }
 
     private static float[] ReadFloats(string path)

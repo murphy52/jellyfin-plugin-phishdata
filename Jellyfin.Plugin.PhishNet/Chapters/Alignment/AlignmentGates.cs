@@ -59,6 +59,33 @@ public static class AlignmentGates
     }
 
     /// <summary>
+    /// Rejects a show with a set that nothing in the video confirmed. Its chapters would be fitted times
+    /// only, and a setbreak or encore break the fit can't see would make them all early or late.
+    /// </summary>
+    /// <param name="tracks">The tracks that were aligned, in show order.</param>
+    /// <param name="chapters">The chapters, one per track.</param>
+    /// <returns>A reason, or null.</returns>
+    public static string? CheckSets(IReadOnlyList<AlignmentTrack> tracks, IReadOnlyList<AlignedChapter> chapters)
+    {
+        var set = ConsensusAligner.SetIndex(tracks);
+        if (set.Length == 0 || set[^1] == 0)
+        {
+            return null;
+        }
+
+        for (int s = 0; s <= set[^1]; s++)
+        {
+            var members = Enumerable.Range(0, set.Length).Where(i => set[i] == s).ToList();
+            if (!members.Any(i => chapters[i].Confidence >= LowConfidence))
+            {
+                return $"unconfirmed-set {tracks[members[0]].Set ?? "?"}";
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
     /// Formats seconds as H:MM:SS.
     /// </summary>
     /// <param name="seconds">Seconds.</param>

@@ -308,6 +308,21 @@ public partial class ChapterMarkerServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task Process_ShouldSendToReview_WhenNothingConfirmsASet()
+    {
+        // Set 2's audio is missing on phish.in: its chapters would be fitted times that don't know about the
+        // 25-minute setbreak, so the show waits for review instead, with the rows kept for Apply anyway.
+        _audio.Templates = Synthetic.Tracks.Select(t => t.Set == "Set 2" ? null : t.Template).ToList();
+
+        var outcome = await Process();
+
+        outcome.Kind.Should().Be(ChapterOutcomeKind.NeedsReview);
+        outcome.Reason.Should().Be("unconfirmed-set Set 2");
+        _db.Saves.Should().Be(0);
+        (await _service.Store.ReadAsync(_movie.Id, CancellationToken.None))!.Chapters.Should().HaveCount(12);
+    }
+
+    [Fact]
     public async Task Process_ShouldSendToReview_WhenTheAlignmentFindsNoAnchors()
     {
         var rng = new Random(3);
