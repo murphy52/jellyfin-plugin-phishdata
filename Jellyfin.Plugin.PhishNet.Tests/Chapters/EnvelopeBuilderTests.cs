@@ -70,4 +70,29 @@ public class EnvelopeBuilderTests
 
         fromBytes.ToArray().Should().Equal(fromFloats.ToArray());
     }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(5)]
+    [InlineData(7)]
+    public void AddBytes_ShouldKeepEveryByte_WhenReadsSplitSamplesUnevenly(int readSize)
+    {
+        // A pipe read can return any number of bytes, so a sample can arrive over several reads.
+        var rng = new Random(readSize);
+        var samples = Enumerable.Range(0, Hop * 3).Select(_ => (float)((rng.NextDouble() * 2) - 1)).ToArray();
+        var bytes = new byte[samples.Length * 4];
+        Buffer.BlockCopy(samples, 0, bytes, 0, bytes.Length);
+
+        var fromFloats = new EnvelopeBuilder();
+        fromFloats.Add(samples);
+        var fromBytes = new EnvelopeBuilder();
+        for (int pos = 0; pos < bytes.Length; pos += readSize)
+        {
+            fromBytes.AddBytes(bytes.AsSpan(pos, Math.Min(readSize, bytes.Length - pos)));
+        }
+
+        fromBytes.ToArray().Should().Equal(fromFloats.ToArray());
+    }
 }

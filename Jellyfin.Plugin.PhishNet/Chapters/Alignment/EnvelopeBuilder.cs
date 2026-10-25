@@ -51,6 +51,11 @@ public sealed class EnvelopeBuilder
             }
         }
 
+        if (bytes.IsEmpty)
+        {
+            return; // a sample may still be partly pending
+        }
+
         int whole = bytes.Length / 4 * 4;
         for (int i = 0; i < whole; i += 4)
         {
