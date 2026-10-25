@@ -97,7 +97,7 @@ public class CorpusTests
         {
             shows++;
             var result = show.AlignLikeTheService();
-            if (result.Chapters is null)
+            if (result.Chapters is null || result.SkipReason is not null) // a low-confidence result keeps its chapters for Apply anyway
             {
                 report.Append(CultureInfo.InvariantCulture, $"{show.Name}\t{result.SkipReason}\t{show.Tracks!.Count}\t\t\t\t\t\n");
                 continue;
@@ -185,10 +185,10 @@ public class CorpusTests
                     var r = CorpusShow.AlignLikeTheService(spliced, tracks, options);
                     var acc = results.GetValueOrDefault(key);
                     acc.Shows++;
-                    if (r.Chapters is { } got)
+                    acc.Songs += tracks.Count;
+                    if (r.Chapters is { } got && r.SkipReason is null)
                     {
                         acc.Aligned++;
-                        acc.Songs += got.Count;
                         acc.Placed += got.Select((c, i) => Math.Abs(c.StartSeconds - (truth[i].StartSeconds + (i >= split ? extraSec : 0)))).Count(d => d <= 2.0);
                     }
 
