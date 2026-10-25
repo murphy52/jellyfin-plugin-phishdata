@@ -41,6 +41,19 @@ public class ChapterQueueTests : IDisposable
     }
 
     [Fact]
+    public async Task Dispose_ShouldBeSafeTwice()
+    {
+        // The queue is registered as a singleton and as a hosted service, so the container disposes it
+        // twice on shutdown. A throw there escaped Host.Dispose in the E2E run and skipped later disposals.
+        await _queue.StartAsync(CancellationToken.None);
+
+        _queue.Dispose();
+        var again = () => _queue.Dispose();
+
+        again.Should().NotThrow();
+    }
+
+    [Fact]
     public async Task ProcessDue_ShouldProcessAnUpdatedShow_OnceItHasBeenQuietForTwoMinutes()
     {
         await _queue.StartAsync(CancellationToken.None);

@@ -171,8 +171,11 @@ public interface IChapterMarkerService
 /// </summary>
 public sealed class ChapterMarkerService : IChapterMarkerService
 {
-    /// <summary>The alignment version written into records. Bump it to re-align Skipped and NeedsReview items.</summary>
-    public const int AlgorithmVersion = 1;
+    /// <summary>
+    /// The alignment version written into records. Bump it to re-align Skipped and NeedsReview items.
+    /// 2: per-set intercepts (<see cref="AlignmentOptions.PerSet"/>).
+    /// </summary>
+    public const int AlgorithmVersion = 2;
 
     /// <summary>Reason for an item whose database already holds real chapters.</summary>
     public const string HasChaptersReason = "has-chapters";
@@ -400,7 +403,7 @@ public sealed class ChapterMarkerService : IChapterMarkerService
             // Not cancellable once saved, as in ProcessAsync.
             await _store.WriteAsync(item.Id, applied, CancellationToken.None).ConfigureAwait(false);
             _logger.LogInformation(
-                "Chapters APPLIED ANYWAY {Date} \"{File}\": {Count} ch, median {Median}",
+                "Chapters APPLIED ANYWAY {Date} {File}: {Count} ch, median {Median}",
                 state.ShowDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                 Path.GetFileName(item.Path),
                 state.Chapters.Count,
@@ -699,8 +702,8 @@ public sealed class ChapterMarkerService : IChapterMarkerService
         }
 
         var align = Stopwatch.StartNew();
-        var tracks = show.Tracks.Select((t, i) => new AlignmentTrack(t.Title, t.DurationSeconds, templates.Templates[i])).ToList();
-        var result = ConsensusAligner.Align(video, tracks);
+        var tracks = show.Tracks.Select((t, i) => new AlignmentTrack(t.Title, t.DurationSeconds, templates.Templates[i], t.SetName)).ToList();
+        var result = ConsensusAligner.Align(video, tracks, AlignmentOptions.PerSet);
         align.Stop();
         if (result.Chapters is not { } rows)
         {
@@ -708,7 +711,7 @@ public sealed class ChapterMarkerService : IChapterMarkerService
         }
 
         LogTable(job, rows);
-        var rejected = AlignmentGates.CheckMedian(result.MedianConfidence) ?? ChapterValidator.Validate(rows, job.Runtime);
+        var rejected = AlignmentGates.CheckMedian(result.MedianConfidence) ?? AlignmentGates.CheckSets(tracks, rows) ?? ChapterValidator.Validate(rows, job.Runtime);
         if (rejected is not null)
         {
             return await SettleAsync(job, ChapterStatus.NeedsReview, rejected, result, cancellationToken).ConfigureAwait(false);
@@ -799,7 +802,7 @@ public sealed class ChapterMarkerService : IChapterMarkerService
         if (job.Previous is { Status: ChapterStatus.Applied or ChapterStatus.Superseded })
         {
             // Keep the good result; the next pass tries the re-apply again.
-            _logger.LogError(ex, "Chapters FAILED {Date} \"{File}\"; record left as {Status}", Date(job), FileName(job), job.Previous.Status);
+            _logger.LogError(ex, "Chapters FAILED {Date} {File}; record left as {Status}", Date(job), FileName(job), job.Previous.Status);
             return new ChapterOutcome(ChapterOutcomeKind.Failed, ex.Message);
         }
 
@@ -812,7 +815,7 @@ public sealed class ChapterMarkerService : IChapterMarkerService
         state.Attempts = attempts;
         state.NextAttemptUtc = next;
         state.FirstPendingUtc = job.Previous is { Status: ChapterStatus.Pending or ChapterStatus.Failed } q ? q.FirstPendingUtc : null;
-        _logger.LogError(ex, "Chapters FAILED {Date} \"{File}\": attempt {Attempts}, next {Next}", Date(job), FileName(job), attempts, next?.ToString("u", CultureInfo.InvariantCulture) ?? "review");
+        _logger.LogError(ex, "Chapters FAILED {Date} {File}: attempt {Attempts}, next {Next}", Date(job), FileName(job), attempts, next?.ToString("u", CultureInfo.InvariantCulture) ?? "review");
         try
         {
             await RecordAsync(job, state, cancellationToken).ConfigureAwait(false);
@@ -899,7 +902,7 @@ public sealed class ChapterMarkerService : IChapterMarkerService
     private static string FileName(Job job) => Path.GetFileName(job.Path);
 
     private void Log(Job job, string verb, string detail) =>
-        _logger.LogInformation("Chapters {Verb} {Date} \"{File}\": {Detail}", verb, Date(job), FileName(job), detail);
+        _logger.LogInformation("Chapters {Verb} {Date} {File}: {Detail}", verb, Date(job), FileName(job), detail);
 
     private void LogTable(Job job, IReadOnlyList<AlignedChapter> rows)
     {
@@ -914,7 +917,7 @@ public sealed class ChapterMarkerService : IChapterMarkerService
             AlignmentGates.Hms(r.StartSeconds),
             r.Confidence is { } c ? c.ToString("0.00", CultureInfo.InvariantCulture) : "fit",
             r.Title));
-        _logger.LogDebug("Chapters for {Date} \"{File}\":\n{Table}", Date(job), FileName(job), string.Join('\n', lines));
+        _logger.LogDebug("Chapters for {Date} {File}:\n{Table}", Date(job), FileName(job), string.Join('\n', lines));
     }
 
     private sealed class Job(Video item, string path, DateTime showDate, FileFingerprint fingerprint, long runtime, ChapterState? previous, IReadOnlyList<AlignedChapter>? ours, SidecarResult sidecar, DateTime now)
