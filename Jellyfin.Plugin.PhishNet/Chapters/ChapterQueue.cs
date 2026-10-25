@@ -67,6 +67,13 @@ public sealed class ChapterQueue : IHostedService, IDisposable
     /// <summary>Gets how many items are waiting.</summary>
     public int Count => _due.Count;
 
+    /// <summary>
+    /// Queues an item for the next tick, without the quiet period: an admin's Retry. It still waits for a
+    /// file that is being written, and runs only while library-change processing is on.
+    /// </summary>
+    /// <param name="itemId">The item.</param>
+    public void Enqueue(Guid itemId) => _due[itemId] = _time.GetUtcNow().UtcDateTime;
+
     /// <inheritdoc />
     public Task StartAsync(CancellationToken cancellationToken)
     {
@@ -153,9 +160,11 @@ public sealed class ChapterQueue : IHostedService, IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
+        // Registered as a singleton and as a hosted service, so the container disposes it twice.
         Unsubscribe();
-        _stopping?.Cancel();
-        _stopping?.Dispose();
+        var stopping = Interlocked.Exchange(ref _stopping, null);
+        stopping?.Cancel();
+        stopping?.Dispose();
     }
 
     private RunBudget BudgetFor(DateTime nowUtc)

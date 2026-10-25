@@ -23,10 +23,11 @@ namespace Jellyfin.Plugin.PhishNet.Tests.Chapters;
 /// The service's rules with everything outside it faked: Jellyfin's chapter table, phish.in, ffmpeg and
 /// the clock. The alignment itself is real, on a synthetic show.
 /// </summary>
-public class ChapterMarkerServiceTests : IDisposable
+public partial class ChapterMarkerServiceTests : IDisposable
 {
+    // An untrimmed webcast: the 25-minute setbreak is in the video but not in phish.in's durations.
     private static readonly ConsensusAlignerTests.SyntheticShow Synthetic =
-        ConsensusAlignerTests.SyntheticShow.Build(seed: 10, songs: 12, leadInSec: 60, drift: 1.02, setbreakAfter: null, setbreakSec: 0);
+        ConsensusAlignerTests.SyntheticShow.Build(seed: 10, songs: 12, leadInSec: 60, drift: 1.02, setbreakAfter: 6, setbreakSec: 1500);
 
     private readonly string _dir = Path.Combine(Path.GetTempPath(), "chapter-service-" + Guid.NewGuid().ToString("N"));
     private readonly FakeChapters _db = new();
@@ -304,6 +305,21 @@ public class ChapterMarkerServiceTests : IDisposable
         outcome.Kind.Should().Be(ChapterOutcomeKind.Skipped);
         outcome.Reason.Should().StartWith("duration-mismatch");
         _decoder.FileDecodes.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task Process_ShouldSendToReview_WhenNothingConfirmsASet()
+    {
+        // Set 2's audio is missing on phish.in: its chapters would be fitted times that don't know about the
+        // 25-minute setbreak, so the show waits for review instead, with the rows kept for Apply anyway.
+        _audio.Templates = Synthetic.Tracks.Select(t => t.Set == "Set 2" ? null : t.Template).ToList();
+
+        var outcome = await Process();
+
+        outcome.Kind.Should().Be(ChapterOutcomeKind.NeedsReview);
+        outcome.Reason.Should().Be("unconfirmed-set Set 2");
+        _db.Saves.Should().Be(0);
+        (await _service.Store.ReadAsync(_movie.Id, CancellationToken.None))!.Chapters.Should().HaveCount(12);
     }
 
     [Fact]
@@ -640,7 +656,7 @@ public class ChapterMarkerServiceTests : IDisposable
                 return Task.FromResult(new PhishInShow(Status, Status.ToString(), Array.Empty<PhishInTrack>()));
             }
 
-            var tracks = Synthetic.Tracks.Select((t, i) => new PhishInTrack(t.Title, i + 1, "Set 1", t.DurationSeconds, $"https://phish.in/blob/{i}.mp3")).ToList();
+            var tracks = Synthetic.Tracks.Select((t, i) => new PhishInTrack(t.Title, i + 1, t.Set ?? "Set 1", t.DurationSeconds, $"https://phish.in/blob/{i}.mp3")).ToList();
             return Task.FromResult(new PhishInShow(PhishInShowStatus.Ok, null, tracks));
         }
 

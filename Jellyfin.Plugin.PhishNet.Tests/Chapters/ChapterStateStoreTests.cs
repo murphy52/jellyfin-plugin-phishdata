@@ -85,6 +85,33 @@ public class ChapterStateStoreTests : IDisposable
     }
 
     [Fact]
+    public async Task ReadAll_ShouldReturnEveryReadableRecord()
+    {
+        var store = new ChapterStateStore(_dir);
+        var other = Guid.NewGuid();
+        await store.WriteAsync(Item, Sample(), CancellationToken.None);
+        await store.WriteAsync(other, Sample(ChapterStatus.NeedsReview), CancellationToken.None);
+        File.WriteAllText(Path.Combine(_dir, Guid.NewGuid().ToString("N") + ".json"), "not json");
+
+        var all = await store.ReadAllAsync(CancellationToken.None);
+
+        all.Select(p => (p.Key, p.Value.Status)).Should().BeEquivalentTo(new[] { (Item, ChapterStatus.Applied), (other, ChapterStatus.NeedsReview) });
+    }
+
+    [Fact]
+    public async Task Read_ShouldDefaultTheNewerFields_ForAPhaseThreeRecord()
+    {
+        Directory.CreateDirectory(_dir);
+        File.WriteAllText(Path.Combine(_dir, Item.ToString("N") + ".json"), """{"schemaVersion":1,"status":"Applied","chapters":[]}""");
+
+        var read = await new ChapterStateStore(_dir).ReadAsync(Item, CancellationToken.None);
+
+        read!.Source.Should().BeNull();
+        read.SavedChapters.Should().BeNull();
+        read.RetryRequested.Should().BeFalse();
+    }
+
+    [Fact]
     public void KnownItemIds_ShouldIgnoreOtherFiles()
     {
         Directory.CreateDirectory(_dir);
@@ -116,9 +143,12 @@ public class ChapterStateStoreTests : IDisposable
         Status = status,
         Reason = null,
         AlgorithmVersion = 1,
-        Fingerprint = new FileFingerprint("/Concerts/ph2026-07-07.mkv", 9_600_000_000, new DateTime(2026, 7, 9, 3, 4, 5, 678, DateTimeKind.Utc).AddTicks(9)),
+        Fingerprint = new FileFingerprint("/Concerts/ph2026-07-07.mkv", 9_600_000_000, new DateTime(2026, 7, 9, 3, 4, 5, 678, DateTimeKind.Utc).AddTicks(9), "ab12"),
         ShowDate = new DateTime(2026, 7, 7),
         Chapters = [new AlignedChapter("Chalk Dust Torture", 12.35, 0.81), new AlignedChapter("Ghost", 604.5, null)],
+        Source = ChapterSource.Sidecar,
+        SavedChapters = [new AlignedChapter("Tweezer", 1.0, 0.5)],
+        RetryRequested = true,
         MedianConfidence = 0.73,
         LowConfidenceCount = 0,
         Attempts = 1,

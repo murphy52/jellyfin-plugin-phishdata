@@ -41,6 +41,19 @@ public class ChapterQueueTests : IDisposable
     }
 
     [Fact]
+    public async Task Dispose_ShouldBeSafeTwice()
+    {
+        // The queue is registered as a singleton and as a hosted service, so the container disposes it
+        // twice on shutdown. A throw there escaped Host.Dispose in the E2E run and skipped later disposals.
+        await _queue.StartAsync(CancellationToken.None);
+
+        _queue.Dispose();
+        var again = () => _queue.Dispose();
+
+        again.Should().NotThrow();
+    }
+
+    [Fact]
     public async Task ProcessDue_ShouldProcessAnUpdatedShow_OnceItHasBeenQuietForTwoMinutes()
     {
         await _queue.StartAsync(CancellationToken.None);
@@ -55,6 +68,17 @@ public class ChapterQueueTests : IDisposable
 
         await _queue.ProcessDueAsync(_now + TimeSpan.FromMinutes(10), CancellationToken.None);
         _service.Processed.Should().HaveCount(1, "it left the queue");
+    }
+
+    [Fact]
+    public async Task Enqueue_ShouldProcessARetriedShow_OnTheNextTick()
+    {
+        _library.Setup(l => l.GetItemById(_movie.Id)).Returns(_movie);
+
+        _queue.Enqueue(_movie.Id);
+        await _queue.ProcessDueAsync(_now, CancellationToken.None);
+
+        _service.Processed.Should().Equal(_movie.Id);
     }
 
     [Fact]
