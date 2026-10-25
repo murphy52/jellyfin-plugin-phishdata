@@ -76,6 +76,29 @@ Phish Videos/
 
 The plugin only acts on videos that look Phish-related: the title, filename, or any folder in the path contains "phish", or the filename uses the `ph` + date convention (for example `ph1997-11-22.mkv`). Anything else is left untouched for your other metadata providers, so Phish shows can share a library with other concerts or movies.
 
+## Chapter Markers (optional)
+
+The plugin can add a chapter for every song, so you can skip straight to the Tweezer. It finds each song by matching the video's own audio against the opening of that track on [phish.in](https://phish.in). It's off by default.
+
+- **Turn it on:** Dashboard > Plugins > Phish Data > **Add chapter markers to Phish shows**, then Save.
+- **When it runs:** soon after a new or changed show is scanned (once the file has stopped changing for 10 minutes), and every day at 4:00 in the **Phish: add chapter markers** scheduled task, which also picks up the backlog. To start right away, use **Run now** on that task.
+- **What it costs:** each show reads its video file once and downloads about 90 seconds of every track from phish.in, roughly 40–70 MB. The settings page caps how many shows and how many GB one run handles, so a big library is spread over several nights.
+- **Where chapters go:** Jellyfin's database only. Video files are never changed. If a "Replace all metadata" refresh wipes the chapters, the next run puts them back.
+- **What it leaves alone:** chapters that are already in the file, or that you added yourself. Jellyfin's generated "Chapter 1, Chapter 2…" markers are replaced unless you turn that off.
+- **Thumbnails:** if the library has chapter image extraction turned on (Manage Library > **Extract chapter images**, off by default), the images appear after Jellyfin's next **Extract Chapter Images** run, nightly by default. That run also removes the images of any "Chapter N" markers that were replaced.
+
+Shows that phish.in doesn't have yet (usually the last few days of a tour) are retried automatically for up to 60 days. Shows the plugin can't place with confidence are not guessed. They're listed under **Needs your attention** on the settings page with **Retry**, **Apply anyway** and **Ignore** buttons.
+
+To set a show's chapters by hand, put a text file next to the video, named like it with `.chapters.txt` in place of the extension (`ph2026-07-07.chapters.txt` next to `ph2026-07-07.mkv`), with one `H:MM:SS Title` per line:
+
+```
+0:00:58 Chalk Dust Torture
+0:11:03 Ghost
+1:32:40 Tweezer
+```
+
+It replaces alignment for that show, and editing it later updates the chapters.
+
 ## Supported Jellyfin Versions
 
 | Plugin version | Jellyfin version | .NET |
