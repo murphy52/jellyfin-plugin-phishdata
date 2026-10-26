@@ -269,6 +269,16 @@ public sealed class ChapterMarkerService : IChapterMarkerService
     }
 
     /// <summary>
+    /// Gets the day a premiere date stands for. The provider sets local midnight and Jellyfin hands it back
+    /// as UTC, which east of UTC is the evening before, so a UTC value is read in the server's zone.
+    /// </summary>
+    /// <param name="premiere">The item's premiere date.</param>
+    /// <param name="zone">The server's time zone.</param>
+    /// <returns>The date, with no time of day.</returns>
+    public static DateTime ReleaseDay(DateTime premiere, TimeZoneInfo zone) =>
+        (premiere.Kind == DateTimeKind.Utc ? TimeZoneInfo.ConvertTimeFromUtc(premiere, zone) : premiere).Date;
+
+    /// <summary>
     /// Says whether a file may still be being written: modified less than <see cref="MinFileAge"/> ago. A
     /// time well in the future is clock skew; the stats before and after the read still catch a change.
     /// </summary>
@@ -545,9 +555,9 @@ public sealed class ChapterMarkerService : IChapterMarkerService
         }
 
         // Only checked before aligning: an applied result was matched against this date's audio already.
-        if (job.Item.PremiereDate is { } premiere && premiere.Date != job.ShowDate)
+        if (job.Item.PremiereDate is { } premiere && ReleaseDay(premiere, _time.LocalTimeZone) is var release && release != job.ShowDate)
         {
-            var mismatch = string.Format(CultureInfo.InvariantCulture, "{0} premiere={1:yyyy-MM-dd} file={2:yyyy-MM-dd}", DateMismatchReason, premiere, job.ShowDate);
+            var mismatch = string.Format(CultureInfo.InvariantCulture, "{0} premiere={1:yyyy-MM-dd} file={2:yyyy-MM-dd}", DateMismatchReason, release, job.ShowDate);
             return state is { Status: ChapterStatus.NeedsReview } && state.Reason == mismatch
                 ? new ChapterOutcome(ChapterOutcomeKind.Unchanged, mismatch)
                 : await SettleAsync(job, ChapterStatus.NeedsReview, mismatch, null, cancellationToken).ConfigureAwait(false);

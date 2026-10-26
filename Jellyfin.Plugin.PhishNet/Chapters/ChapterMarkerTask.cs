@@ -76,7 +76,7 @@ public sealed class ChapterMarkerTask : IScheduledTask
             .Select(v => (Video: v, ShowDate: ChapterMarkerService.ShowDateOf(v)))
             .Where(s => s.ShowDate is not null)
             .OrderBy(s => known.Contains(s.Video.Id) ? 0 : 1)
-            .ThenByDescending(s => (s.Video.PremiereDate ?? s.ShowDate)!.Value.Date) // newest show first
+            .ThenByDescending(s => s.Video.PremiereDate is { } premiere ? ChapterMarkerService.ReleaseDay(premiere, TimeZoneInfo.Local) : s.ShowDate!.Value.Date) // newest show first
             .ThenByDescending(s => s.Video.DateCreated) // then the newest copy of a show
             .Select(s => s.Video)
             .ToList();
