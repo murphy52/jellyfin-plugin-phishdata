@@ -14,7 +14,8 @@ namespace Jellyfin.Plugin.PhishNet.Chapters;
 
 /// <summary>
 /// "Phish: add chapter markers" (plan §4.3): re-applies chapters Jellyfin dropped, retries shows whose
-/// backoff has passed, then sweeps shows with no record until the run's show or GB budget is spent. It
+/// backoff has passed, then sweeps shows with no record until the run's show or GB budget is spent. Each
+/// group goes newest show first (release date, then date added), so a backlog fills from recent shows. It
 /// awaits every show, so Run now stays active until the work is done and cancelling it stops the show
 /// in progress.
 /// </summary>
@@ -71,8 +72,13 @@ public sealed class ChapterMarkerTask : IScheduledTask
         var known = _store.KnownItemIds().ToHashSet();
         var shows = _library.GetItemList(new InternalItemsQuery { IncludeItemTypes = [BaseItemKind.Movie], Recursive = true })
             .OfType<Video>()
-            .Where(v => v.RunTimeTicks > 0 && ChapterMarkerService.ShowDateOf(v) is not null)
-            .OrderBy(v => known.Contains(v.Id) ? 0 : 1) // stable: library order within each group
+            .Where(v => v.RunTimeTicks > 0)
+            .Select(v => (Video: v, ShowDate: ChapterMarkerService.ShowDateOf(v)))
+            .Where(s => s.ShowDate is not null)
+            .OrderBy(s => known.Contains(s.Video.Id) ? 0 : 1)
+            .ThenByDescending(s => (s.Video.PremiereDate ?? s.ShowDate)!.Value.Date) // newest show first
+            .ThenByDescending(s => s.Video.DateCreated) // then the newest copy of a show
+            .Select(s => s.Video)
             .ToList();
 
         var budget = new RunBudget(Math.Max(0, config.ChapterMarkersMaxShowsPerRun), Math.Max(0, config.ChapterMarkersMaxGbPerRun) * BytesPerGb);
