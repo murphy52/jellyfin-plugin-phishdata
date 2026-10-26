@@ -88,6 +88,7 @@ Cost per show under A: one sequential read of the video plus about 18–30 parti
 - Re-applies cached chapters the DB lost.
 - Retries pending items whose backoff has expired.
 - Sweeps every eligible movie with no state file, stopping at whichever budget runs out first: "max shows per run" (default 10) or "max GB read per run" (default 100). A first run on a big library is spread over several nights.
+- Orders each group (the known items above, then the new ones) newest show first: release date descending (the item's `PremiereDate`, which the plugin sets to the show date, or the show date parsed from the file name when it's empty), then date added descending. A backlog therefore fills from the most recent shows back. The library-event queue is separate and stays first come, first served by due time.
 
 **"Missing chapters"** means `GetChapters(id)` returns **zero** chapters, **or** (when `ReplaceDummyChapters` is on) the list positively matches Jellyfin's dummy signature: starts exactly `i × DummyChapterDuration` with the localized default "Chapter N" names, for the current server setting. A single real chapter, or any real chapters (from the file, the NAS fleet or a rip), are never replaced.
 

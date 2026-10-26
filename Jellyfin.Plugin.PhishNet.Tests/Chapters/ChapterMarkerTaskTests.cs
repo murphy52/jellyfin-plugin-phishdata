@@ -85,6 +85,38 @@ public class ChapterMarkerTaskTests : IDisposable
     }
 
     [Fact]
+    public async Task Execute_ShouldProcessNewestShowsFirst_WithinKnownAndNewGroups()
+    {
+        // Known group: release date desc, the show date from the file when PremiereDate is null.
+        var knownOld = Show("ph1997-11-22", premiere: new DateTime(1997, 11, 22));
+        var knownNoPremiere = Show("ph2003-07-29");
+        var knownNew = Show("ph2019-12-31", premiere: new DateTime(2019, 12, 31));
+
+        // New group: two videos of one show tie on release date and fall back to date added desc.
+        var newOld = Show("ph1995-12-31", premiere: new DateTime(1995, 12, 31), added: new DateTime(2026, 1, 1));
+        var sameShowEarly = Show("ph2024-08-31", premiere: new DateTime(2024, 8, 31), added: new DateTime(2026, 3, 1));
+        var sameShowLate = Show("ph2024-08-31", added: new DateTime(2026, 9, 1));
+        var newNoPremiere = Show("ph2009-03-06", added: new DateTime(2026, 10, 1));
+
+        _items.AddRange([newOld, knownOld, sameShowEarly, knownNoPremiere, newNoPremiere, sameShowLate, knownNew]);
+        foreach (var item in new[] { knownOld, knownNoPremiere, knownNew })
+        {
+            await _store.WriteAsync(item.Id, new ChapterState { Status = ChapterStatus.Applied }, CancellationToken.None);
+        }
+
+        await _task.ExecuteAsync(new Progress<double>(), CancellationToken.None);
+
+        _service.Processed.Should().Equal(
+            knownNew.Id,
+            knownNoPremiere.Id,
+            knownOld.Id,
+            sameShowLate.Id,
+            sameShowEarly.Id,
+            newNoPremiere.Id,
+            newOld.Id);
+    }
+
+    [Fact]
     public async Task Execute_ShouldPassOneBudgetFromTheSettings()
     {
         _config.ChapterMarkersMaxShowsPerRun = 3;
@@ -128,8 +160,8 @@ public class ChapterMarkerTaskTests : IDisposable
     [Fact]
     public async Task Execute_ShouldKeepGoing_WhenOneShowThrows()
     {
-        var first = Show("ph2026-07-07");
-        var second = Show("ph2026-07-08");
+        var first = Show("ph2026-07-08");
+        var second = Show("ph2026-07-07");
         _items.AddRange([first, second]);
         _service.ThrowFor = first.Id;
 
@@ -187,8 +219,16 @@ public class ChapterMarkerTaskTests : IDisposable
         _task.Name.Should().Be("Phish: add chapter markers");
     }
 
-    private static Movie Show(string name) =>
-        new() { Id = Guid.NewGuid(), Name = name, Path = $"/media/Phish/{name}.Webcast.mkv", RunTimeTicks = TimeSpan.FromHours(3).Ticks };
+    private static Movie Show(string name, DateTime? premiere = null, DateTime? added = null) =>
+        new()
+        {
+            Id = Guid.NewGuid(),
+            Name = name,
+            Path = $"/media/Phish/{name}.Webcast.mkv",
+            RunTimeTicks = TimeSpan.FromHours(3).Ticks,
+            PremiereDate = premiere,
+            DateCreated = added ?? default,
+        };
 
     private sealed class SyncProgress(Action<double> report) : IProgress<double>
     {

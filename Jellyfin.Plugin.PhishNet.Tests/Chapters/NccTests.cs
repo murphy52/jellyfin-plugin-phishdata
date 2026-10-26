@@ -128,6 +128,34 @@ public class NccTests
         new NccSearcher(signal, 100).Correlate(new[] { 1f, 2f, 3f }).Search(10, null).Should().Be((10, 0.0));
     }
 
+    [Fact]
+    public void Correlate_ShouldScoreZero_WhenTheSignalIsNotFinite()
+    {
+        var rng = new Random(9);
+        var signal = RandomEnvelope(rng, 2000);
+        signal[500] = float.NaN;
+
+        var profile = new NccSearcher(signal, 200).Correlate(RandomEnvelope(rng, 200));
+
+        profile.Scores.Should().OnlyContain(s => s == 0.0, "a NaN score must fail closed, not slip past the > 1 check");
+    }
+
+    [Fact]
+    public void NextPowerOfTwo_ShouldRoundUp()
+    {
+        Fft.NextPowerOfTwo(1).Should().Be(1);
+        Fft.NextPowerOfTwo(3).Should().Be(4);
+        Fft.NextPowerOfTwo(1 << 30).Should().Be(1 << 30);
+    }
+
+    [Fact]
+    public void NextPowerOfTwo_ShouldThrow_AboveTheLargestIntPowerOfTwo()
+    {
+        var act = () => Fft.NextPowerOfTwo((1 << 30) + 1);
+
+        act.Should().Throw<ArgumentOutOfRangeException>();
+    }
+
     internal static float[] RandomEnvelope(Random rng, int frames)
     {
         // Smoothed noise looks more like a loudness curve than white noise does.

@@ -17,6 +17,8 @@ public sealed class NccSearcher
     private readonly double[] _workIm;
     private readonly double[] _sum;
     private readonly double[] _sumSquares;
+    private readonly double[] _ds;
+    private readonly double[] _dsSorted;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="NccSearcher"/> class.
@@ -39,6 +41,8 @@ public sealed class NccSearcher
         _workRe = new double[nfft];
         _workIm = new double[nfft];
 
+        _ds = new double[signal.Length];
+        _dsSorted = new double[signal.Length];
         _sum = new double[signal.Length + 1];
         _sumSquares = new double[signal.Length + 1];
         for (int i = 0; i < signal.Length; i++)
@@ -97,7 +101,7 @@ public sealed class NccSearcher
 
         int count = n - l + 1;
         var scores = new double[count];
-        var ds = new double[count];
+        var ds = _ds;
         for (int k = 0; k < count; k++)
         {
             double w1 = _sum[k + l] - _sum[k];
@@ -109,11 +113,13 @@ public sealed class NccSearcher
         // A digitally silent window (a setbreak) has zero variance, so FFT residue in the numerator
         // blows up into scores in the hundreds and every template "wins" there. Zero those windows;
         // clipping to 1.0 would turn the artefact into a perfect match instead.
-        double typical = Stats.Median(ds);
+        ds.AsSpan(0, count).CopyTo(_dsSorted);
+        double typical = Stats.MedianInPlace(_dsSorted.AsSpan(0, count));
         double floor = Math.Max(1e-6, 0.05 * typical);
         for (int k = 0; k < count; k++)
         {
-            if (ds[k] < floor || Math.Abs(scores[k]) > 1.0 + 1e-6)
+            // Written so a NaN score (non-finite input) is zeroed too: NaN > 1 is false.
+            if (ds[k] < floor || !(Math.Abs(scores[k]) <= 1.0 + 1e-6))
             {
                 scores[k] = 0.0;
             }

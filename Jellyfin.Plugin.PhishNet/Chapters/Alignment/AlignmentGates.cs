@@ -110,8 +110,19 @@ internal static class Stats
             throw new ArgumentException("Median of an empty sequence.", nameof(values));
         }
 
-        Array.Sort(sorted);
-        int m = sorted.Length / 2;
-        return sorted.Length % 2 == 1 ? sorted[m] : (sorted[m - 1] + sorted[m]) / 2.0;
+        return MedianInPlace(sorted);
+    }
+
+    // Sorts the values it is given, so callers pass a copy they don't need in order.
+    public static double MedianInPlace(Span<double> values)
+    {
+        if (values.IsEmpty)
+        {
+            throw new ArgumentException("Median of an empty sequence.", nameof(values));
+        }
+
+        values.Sort();
+        int m = values.Length / 2;
+        return values.Length % 2 == 1 ? values[m] : (values[m - 1] + values[m]) / 2.0;
     }
 }

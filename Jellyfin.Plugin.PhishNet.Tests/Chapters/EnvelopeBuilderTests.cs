@@ -23,6 +23,24 @@ public class EnvelopeBuilderTests
         env[0].Should().BeApproximately((float)Math.Log(1 + (Math.Sqrt((0.25 * 0.25) + 1e-9) * 20.0)), 1e-6f);
     }
 
+    [Theory]
+    [InlineData(float.NaN)]
+    [InlineData(float.PositiveInfinity)]
+    [InlineData(float.NegativeInfinity)]
+    public void NonFiniteSample_ShouldLeaveANonFiniteFrame_SoTheAlignerRejectsTheVideo(float bad)
+    {
+        // Treating it as silence would hide a corrupt decode; the aligner names it instead ("non-finite video").
+        var samples = Enumerable.Repeat(0.25f, Hop * 2).ToArray();
+        samples[Hop + 7] = bad;
+        var builder = new EnvelopeBuilder();
+        builder.Add(samples);
+
+        var env = builder.ToArray();
+
+        float.IsFinite(env[0]).Should().BeTrue();
+        float.IsFinite(env[1]).Should().BeFalse();
+    }
+
     [Fact]
     public void PartialLastHop_ShouldBeDropped()
     {
