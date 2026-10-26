@@ -25,6 +25,20 @@ public sealed record AlignmentTrack(string Title, double DurationSeconds, float[
 /// </param>
 public sealed record AlignmentOptions(bool PerSetIntercept)
 {
+    /// <summary>
+    /// Gets the shortest template, in seconds, that may anchor the line or confirm a set; 0 lets any
+    /// template do both. A few-second track can clear the anchor threshold by chance over a long search
+    /// (review of #28, issue #33). Proposal: off until the corpus says otherwise.
+    /// </summary>
+    public double MinAnchorTemplateSeconds { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether set 1, when it lacks <see cref="AlignmentConstants.MinSetAnchors"/>
+    /// agreeing anchors, starts at the earliest of its own anchors and the whole-show fit rather than at the
+    /// whole-show fit, which a dominant set 2 pulls late (issue #33). Proposal: off until the corpus says otherwise.
+    /// </summary>
+    public bool FirstSetEarliestIntercept { get; init; }
+
     /// <summary>Gets the options that match phish_core.align exactly (golden parity).</summary>
     public static AlignmentOptions Parity { get; } = new(false);
 
@@ -67,6 +81,7 @@ public static class ConsensusAligner
     public static AlignmentResult Align(float[] video, IReadOnlyList<AlignmentTrack> tracks, AlignmentOptions? options = null)
     {
         bool perSet = options?.PerSetIntercept ?? false;
+        int minAnchorFrames = MinTemplateFrames(options);
         const int minGapFrames = MinGapSeconds * Fps;
         var templates = tracks.Select(t => t.Template is null ? null : t.Template.Length > TemplateFrames ? t.Template[..TemplateFrames] : t.Template).ToList();
 
@@ -104,7 +119,7 @@ public static class ConsensusAligner
         var anchors = new List<(double X, double Y, int Set)>();
         for (int i = 0; i < tracks.Count; i++)
         {
-            if (templates[i] is { } template)
+            if (templates[i] is { } template && template.Length >= minAnchorFrames)
             {
                 var (index, score) = searcher.Correlate(template).Search(0, null);
                 if (score >= AnchorConfidence)
@@ -134,7 +149,7 @@ public static class ConsensusAligner
 
         // A set without MinSetAnchors anchors that agree with each other (often a one- or two-song encore), or
         // whose fit would start it before the set ahead of it, borrows the intercept of the set before it; the
-        // first set falls back to the whole-show fit.
+        // first set falls back to the whole-show fit (or the earlier of that and its own anchors, as an option).
         var intercepts = new double[setCount];
         var borrowed = new bool[setCount];
         var ownGuess = new double?[setCount];
@@ -151,7 +166,8 @@ public static class ConsensusAligner
             }
             else
             {
-                intercepts[s] = s > 0 ? intercepts[s - 1] : a;
+                intercepts[s] = s > 0 ? intercepts[s - 1]
+                    : options?.FirstSetEarliestIntercept == true && own.Count > 0 ? Math.Min(a, own.Min()) : a;
                 borrowed[s] = s > 0;
 
                 // A lone anchor isn't trusted for the intercept, but where it says the set starts is worth a
@@ -258,6 +274,15 @@ public static class ConsensusAligner
 
         return slopes;
     }
+
+    /// <summary>
+    /// Gets <see cref="AlignmentOptions.MinAnchorTemplateSeconds"/> in frames, rounded up so a template must
+    /// reach the full minimum.
+    /// </summary>
+    /// <param name="options">The options, or null.</param>
+    /// <returns>The frame count; 0 when unset, negative or not a number.</returns>
+    public static int MinTemplateFrames(AlignmentOptions? options) =>
+        options?.MinAnchorTemplateSeconds is > 0 and var seconds && double.IsFinite(seconds) ? (int)Math.Ceiling(seconds * Fps) : 0;
 
     private static bool AllFinite(float[] values)
     {

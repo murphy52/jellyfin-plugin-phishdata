@@ -64,8 +64,9 @@ public static class AlignmentGates
     /// </summary>
     /// <param name="tracks">The tracks that were aligned, in show order.</param>
     /// <param name="chapters">The chapters, one per track.</param>
+    /// <param name="minTemplateFrames">Shortest template that may confirm a set (<see cref="AlignmentOptions.MinAnchorTemplateSeconds"/>).</param>
     /// <returns>A reason, or null.</returns>
-    public static string? CheckSets(IReadOnlyList<AlignmentTrack> tracks, IReadOnlyList<AlignedChapter> chapters)
+    public static string? CheckSets(IReadOnlyList<AlignmentTrack> tracks, IReadOnlyList<AlignedChapter> chapters, int minTemplateFrames = 0)
     {
         var set = ConsensusAligner.SetIndex(tracks);
         if (set.Length == 0 || set[^1] == 0)
@@ -76,7 +77,7 @@ public static class AlignmentGates
         for (int s = 0; s <= set[^1]; s++)
         {
             var members = Enumerable.Range(0, set.Length).Where(i => set[i] == s).ToList();
-            if (!members.Any(i => chapters[i].Confidence >= LowConfidence))
+            if (!members.Any(i => chapters[i].Confidence >= LowConfidence && (tracks[i].Template?.Length ?? 0) >= minTemplateFrames))
             {
                 return $"unconfirmed-set {tracks[members[0]].Set ?? "?"}";
             }
