@@ -81,7 +81,7 @@ The plugin only acts on videos that look Phish-related: the title, filename, or 
 The plugin can add a chapter for every song, so you can skip straight to the Tweezer. It finds each song by matching the video's own audio against the opening of that track on [phish.in](https://phish.in). It's off by default.
 
 - **Turn it on:** Dashboard > Plugins > Phish Data > **Add chapter markers to Phish shows**, then Save.
-- **When it runs:** soon after a new or changed show is scanned (once the file has stopped changing for 10 minutes), and every day at 4:00 in the **Phish: add chapter markers** scheduled task, which also picks up the backlog. To start right away, use **Run now** on that task.
+- **When it runs:** soon after a new or changed show is scanned (once the file has stopped changing for 10 minutes), and every day at 4:00 in the **Phish: add chapter markers** scheduled task, which also picks up the backlog, newest shows first. To start right away, use **Run now** on that task.
 - **What it costs:** each show reads its video file once and downloads about 90 seconds of every track from phish.in, roughly 40–70 MB. The settings page caps how many shows and how many GB one run handles, so a big library is spread over several nights.
 - **Where chapters go:** Jellyfin's database only. Video files are never changed. If a "Replace all metadata" refresh wipes the chapters, the next run puts them back.
 - **What it leaves alone:** chapters that are already in the file, or that you added yourself. Jellyfin's generated "Chapter 1, Chapter 2…" markers are replaced unless you turn that off.
