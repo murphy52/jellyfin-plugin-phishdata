@@ -155,6 +155,52 @@ public class ConsensusAlignerTests
     }
 
     [Fact]
+    public void Align_MinAnchorTemplate_ShouldNotLetShortTemplatesAnchor()
+    {
+        var show = SyntheticShow.Build(seed: 17, songs: 8, leadInSec: 30, drift: 1.0, setbreakAfter: null, setbreakSec: 0);
+        var tracks = show.Tracks.Select((t, i) => i < 6 ? t with { Template = t.Template![..(10 * Fps)] } : t).ToList();
+        var gated = AlignmentOptions.PerSet with { MinAnchorTemplateSeconds = 20 };
+
+        ConsensusAligner.Align(show.Video, tracks, AlignmentOptions.PerSet).SkipReason.Should().BeNull("10 s templates anchor today");
+        ConsensusAligner.Align(show.Video, tracks, gated).SkipReason.Should().Be("few-anchors 2/8");
+    }
+
+    [Fact]
+    public void CheckSets_ShouldNotCountAShortTemplate_AsConfirmingASet()
+    {
+        var tracks = new[]
+        {
+            new AlignmentTrack("A", 300, new float[90 * Fps], "Set 1"),
+            new AlignmentTrack("B", 12, new float[12 * Fps], "Set 2"),
+            new AlignmentTrack("C", 300, null, "Set 2"),
+        };
+        var chapters = new[] { new AlignedChapter("A", 0, 0.9), new AlignedChapter("B", 400, 0.6), new AlignedChapter("C", 412, null) };
+
+        AlignmentGates.CheckSets(tracks, chapters).Should().BeNull();
+        AlignmentGates.CheckSets(tracks, chapters, minTemplateFrames: 20 * Fps).Should().Be("unconfirmed-set Set 2");
+    }
+
+    [Fact]
+    public void Align_FirstSetEarliestIntercept_ShouldPlaceSetOne_WhenItHasALoneAnchor()
+    {
+        // Set 1 has one song with audio; set 2, after a 15-minute break, has nine. The whole-show intercept
+        // follows set 2, so today set 1 is predicted 15 minutes late.
+        var show = SyntheticShow.Build(seed: 18, songs: 13, leadInSec: 64, drift: 1.0, setbreakAfter: 4, setbreakSec: 900);
+        var tracks = show.Tracks.Select((t, i) => i is > 0 and < 4 ? t with { Template = null } : t).ToList();
+        var earliest = AlignmentOptions.PerSet with { FirstSetEarliestIntercept = true };
+
+        var today = ConsensusAligner.Align(show.Video, tracks, AlignmentOptions.PerSet);
+        var result = ConsensusAligner.Align(show.Video, tracks, earliest);
+
+        today.Chapters![1].StartSeconds.Should().BeGreaterThan(show.TrueStarts[1] + 600);
+        result.SkipReason.Should().BeNull();
+        for (int i = 0; i < 13; i++)
+        {
+            result.Chapters![i].StartSeconds.Should().BeApproximately(show.TrueStarts[i], 2.0, "song {0}", i);
+        }
+    }
+
+    [Fact]
     public void SetIndex_ShouldStartANewSet_WhenANameComesBack()
     {
         var tracks = new[] { "Set 1", "Set 1", "Set 2", "Set 1", "Encore" }.Select(s => new AlignmentTrack("x", 300, null, s)).ToList();

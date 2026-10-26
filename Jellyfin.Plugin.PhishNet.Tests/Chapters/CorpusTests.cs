@@ -159,6 +159,53 @@ public class CorpusTests
     }
 
     [CorpusFact]
+    public void Proposals_AgainstPerSet()
+    {
+        // Report, not a gate: the #33 proposals against today's default (per-set), each alone and together.
+        // "Worse" and "better" use the same rules as Variants_OnRealShows.
+        var proposals = new (string Name, AlignmentOptions Options)[]
+        {
+            ("min-template-20s", AlignmentOptions.PerSet with { MinAnchorTemplateSeconds = 20 }),
+            ("first-set-earliest", AlignmentOptions.PerSet with { FirstSetEarliestIntercept = true }),
+            ("both", AlignmentOptions.PerSet with { MinAnchorTemplateSeconds = 20, FirstSetEarliestIntercept = true }),
+        };
+        var shows = CorpusShow.LoadAll().Where(s => s.Tracks is not null).ToList();
+        var baseline = shows.Select(s => s.AlignLikeTheService(AlignmentOptions.PerSet)).ToList();
+        _output.WriteLine($"per-set today: {baseline.Count(r => r.SkipReason is null)}/{shows.Count} aligned");
+        foreach (var (name, options) in proposals)
+        {
+            int changed = 0, worse = 0, better = 0, aligned = 0;
+            for (int i = 0; i < shows.Count; i++)
+            {
+                var before = baseline[i];
+                var after = shows[i].AlignLikeTheService(options);
+                aligned += after.SkipReason is null ? 1 : 0;
+                int moved = before.Chapters is { } p && after.Chapters is { } q
+                    ? p.Zip(q).Count(x => Math.Abs(x.First.StartSeconds - x.Second.StartSeconds) > 2.0)
+                    : 0;
+                if (before.SkipReason == after.SkipReason && moved == 0 && Math.Abs(before.MedianConfidence - after.MedianConfidence) < 1e-9)
+                {
+                    continue;
+                }
+
+                changed++;
+                bool isWorse = (before.SkipReason is null && after.SkipReason is not null)
+                    || (before.SkipReason is null && (after.MedianConfidence < before.MedianConfidence - 0.005 || after.LowConfidenceCount > before.LowConfidenceCount));
+                bool isBetter = !isWorse && ((before.SkipReason is not null && after.SkipReason is null)
+                    || after.MedianConfidence > before.MedianConfidence + 0.005 || after.LowConfidenceCount < before.LowConfidenceCount);
+                worse += isWorse ? 1 : 0;
+                better += isBetter ? 1 : 0;
+                _output.WriteLine(string.Create(CultureInfo.InvariantCulture,
+                    $"{name} {(isWorse ? "WORSE " : isBetter ? "better" : "      ")} {shows[i].Name}: today {Describe(before)} | proposal {Describe(after)} | {moved} moved >2s"));
+            }
+
+            _output.WriteLine($"{name}: {shows.Count} shows, {changed} changed, {better} better, {worse} worse, {aligned} aligned");
+        }
+
+        shows.Should().NotBeEmpty();
+    }
+
+    [CorpusFact]
     public void Variants_OnSetbreakInsertions()
     {
         // Real shows the parity aligner handles cleanly, with a longer setbreak spliced in before set 2.
@@ -415,7 +462,7 @@ internal sealed class CorpusShow
 
         // The set gate came with per-set intercepts, so parity runs stay comparable with the Python.
         var rejected = AlignmentGates.CheckMedian(result.MedianConfidence)
-            ?? (options?.PerSetIntercept == true ? AlignmentGates.CheckSets(tracks, chapters) : null);
+            ?? (options?.PerSetIntercept == true ? AlignmentGates.CheckSets(tracks, chapters, (int)(options.MinAnchorTemplateSeconds * AlignmentConstants.Fps)) : null);
         return rejected is null ? result : result with { SkipReason = rejected };
     }
 
