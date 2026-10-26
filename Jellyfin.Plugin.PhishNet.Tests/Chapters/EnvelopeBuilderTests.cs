@@ -27,18 +27,18 @@ public class EnvelopeBuilderTests
     [InlineData(float.NaN)]
     [InlineData(float.PositiveInfinity)]
     [InlineData(float.NegativeInfinity)]
-    public void NonFiniteSample_ShouldCountAsSilence(float bad)
+    public void NonFiniteSample_ShouldLeaveANonFiniteFrame_SoTheAlignerRejectsTheVideo(float bad)
     {
-        var samples = Enumerable.Repeat(0.25f, Hop).ToArray();
-        var expected = new EnvelopeBuilder();
-        samples[7] = 0f;
-        expected.Add(samples);
-
+        // Treating it as silence would hide a corrupt decode; the aligner names it instead ("non-finite video").
+        var samples = Enumerable.Repeat(0.25f, Hop * 2).ToArray();
+        samples[Hop + 7] = bad;
         var builder = new EnvelopeBuilder();
-        samples[7] = bad;
         builder.Add(samples);
 
-        builder.ToArray().Should().Equal(expected.ToArray());
+        var env = builder.ToArray();
+
+        float.IsFinite(env[0]).Should().BeTrue();
+        float.IsFinite(env[1]).Should().BeFalse();
     }
 
     [Fact]

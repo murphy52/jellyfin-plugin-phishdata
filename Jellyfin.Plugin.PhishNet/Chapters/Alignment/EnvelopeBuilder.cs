@@ -77,12 +77,6 @@ public sealed class EnvelopeBuilder
 
     private void AddSample(float sample)
     {
-        // A corrupt decode can yield NaN or infinity; one would poison its frame and, through the FFT, every score.
-        if (!float.IsFinite(sample))
-        {
-            sample = 0f;
-        }
-
         _hopSumSquares += (double)sample * sample;
         if (++_hopCount == Hop)
         {
