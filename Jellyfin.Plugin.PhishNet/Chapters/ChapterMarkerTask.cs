@@ -28,6 +28,7 @@ public sealed class ChapterMarkerTask : IScheduledTask
     private readonly ChapterStateStore _store;
     private readonly Func<PluginConfiguration> _config;
     private readonly ILogger<ChapterMarkerTask> _logger;
+    private readonly TimeProvider _time;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ChapterMarkerTask"/> class.
@@ -38,12 +39,19 @@ public sealed class ChapterMarkerTask : IScheduledTask
     /// <param name="config">Reads the current plugin configuration.</param>
     /// <param name="logger">The logger.</param>
     public ChapterMarkerTask(ILibraryManager library, IChapterMarkerService service, ChapterStateStore store, Func<PluginConfiguration> config, ILogger<ChapterMarkerTask> logger)
+        : this(library, service, store, config, logger, TimeProvider.System)
+    {
+    }
+
+    // Jellyfin builds the task from the public constructor; tests pass a clock with their own time zone.
+    internal ChapterMarkerTask(ILibraryManager library, IChapterMarkerService service, ChapterStateStore store, Func<PluginConfiguration> config, ILogger<ChapterMarkerTask> logger, TimeProvider time)
     {
         _library = library;
         _service = service;
         _store = store;
         _config = config;
         _logger = logger;
+        _time = time;
     }
 
     /// <inheritdoc />
@@ -76,7 +84,7 @@ public sealed class ChapterMarkerTask : IScheduledTask
             .Select(v => (Video: v, ShowDate: ChapterMarkerService.ShowDateOf(v)))
             .Where(s => s.ShowDate is not null)
             .OrderBy(s => known.Contains(s.Video.Id) ? 0 : 1)
-            .ThenByDescending(s => s.Video.PremiereDate is { } premiere ? ChapterMarkerService.ReleaseDay(premiere, TimeZoneInfo.Local) : s.ShowDate!.Value.Date) // newest show first
+            .ThenByDescending(s => s.Video.PremiereDate is { } premiere ? ChapterMarkerService.ReleaseDay(premiere, _time.LocalTimeZone) : s.ShowDate!.Value.Date) // newest show first
             .ThenByDescending(s => s.Video.DateCreated) // then the newest copy of a show
             .Select(s => s.Video)
             .ToList();

@@ -117,6 +117,23 @@ public class ChapterMarkerTaskTests : IDisposable
     }
 
     [Fact]
+    public async Task Execute_ShouldReadAUtcPremiereDateInTheServersZone()
+    {
+        // Berlin local midnight on 2010-06-11 comes back from Jellyfin as 2010-06-10 22:00 UTC. Read as the
+        // 10th it would sort behind the other copy; read in the server's zone the two tie on the date and the
+        // later-added copy goes first.
+        var clock = new TestClock(DateTime.UtcNow) { Zone = TimeZoneInfo.FindSystemTimeZoneById("Europe/Berlin") };
+        var task = new ChapterMarkerTask(_library.Object, _service, _store, () => _config, NullLogger<ChapterMarkerTask>.Instance, clock);
+        var utc = Show("ph2010-06-11", premiere: new DateTime(2010, 6, 10, 22, 0, 0, DateTimeKind.Utc), added: new DateTime(2026, 2, 1));
+        var fallback = Show("ph2010-06-11", added: new DateTime(2026, 1, 1));
+        _items.AddRange([fallback, utc]);
+
+        await task.ExecuteAsync(new Progress<double>(), CancellationToken.None);
+
+        _service.Processed.Should().Equal(utc.Id, fallback.Id);
+    }
+
+    [Fact]
     public async Task Execute_ShouldPassOneBudgetFromTheSettings()
     {
         _config.ChapterMarkersMaxShowsPerRun = 3;
