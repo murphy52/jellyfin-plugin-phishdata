@@ -235,6 +235,30 @@ public partial class ChapterMarkerServiceTests : IDisposable
         (await Process()).Kind.Should().Be(ChapterOutcomeKind.Applied, "fixing the date clears the review");
     }
 
+    [Theory]
+    [InlineData("Europe/Berlin", "2026-07-06T22:00:00Z")] // local midnight east of UTC is the evening before in UTC
+    [InlineData("America/New_York", "2026-07-07T04:00:00Z")]
+    [InlineData("Asia/Tokyo", "2026-07-06T15:00:00Z")]
+    public async Task Process_ShouldReadThePremiereDateInTheServersZone_WhenJellyfinStoredItAsUtc(string zone, string premiereUtc)
+    {
+        _time.Zone = TimeZoneInfo.FindSystemTimeZoneById(zone);
+        _movie.PremiereDate = DateTime.Parse(premiereUtc, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal);
+
+        (await Process()).Kind.Should().Be(ChapterOutcomeKind.Applied);
+    }
+
+    [Fact]
+    public async Task Process_ShouldStillSendToReview_WhenAUtcPremiereDateIsAnotherDayInTheServersZone()
+    {
+        _time.Zone = TimeZoneInfo.FindSystemTimeZoneById("Europe/Berlin");
+        _movie.PremiereDate = new DateTime(2026, 7, 7, 22, 0, 0, DateTimeKind.Utc); // midnight 2026-07-08 in Berlin
+
+        var outcome = await Process();
+
+        outcome.Kind.Should().Be(ChapterOutcomeKind.NeedsReview);
+        outcome.Reason.Should().Be($"{ChapterMarkerService.DateMismatchReason} premiere=2026-07-08 file=2026-07-07");
+    }
+
     [Fact]
     public async Task Process_ShouldRetryLater_WhenPhishInDoesNotHaveTheShowYet()
     {

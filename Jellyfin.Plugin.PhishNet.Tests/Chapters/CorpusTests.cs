@@ -211,7 +211,7 @@ public class CorpusTests
         results.Should().NotBeEmpty();
     }
 
-    [CorpusFact]
+    [CorpusAudioFact]
     public async Task Decoder_ShouldMatchPythonEnvelope()
     {
         // The plugin decodes with Jellyfin's ffmpeg, the Python with imageio-ffmpeg's. Different builds may
@@ -310,6 +310,22 @@ public sealed class CorpusFactAttribute : FactAttribute
         if (CorpusShow.Root is null)
         {
             Skip = "PHISHDATA_CORPUS not set or missing (see tools/make_corpus.py)";
+        }
+    }
+}
+
+/// <summary>A corpus test that decodes the shows' audio; skipped unless the corpus still has its audio.mka files.</summary>
+public sealed class CorpusAudioFactAttribute : FactAttribute
+{
+    public CorpusAudioFactAttribute()
+    {
+        if (CorpusShow.Root is null)
+        {
+            Skip = "PHISHDATA_CORPUS not set or missing (see tools/make_corpus.py)";
+        }
+        else if (!Directory.EnumerateDirectories(CorpusShow.Root).Any(d => File.Exists(Path.Combine(d, "audio.mka"))))
+        {
+            Skip = "the corpus has no audio.mka files (tools/make_corpus.py copies them again)";
         }
     }
 }
