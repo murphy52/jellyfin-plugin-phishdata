@@ -201,6 +201,32 @@ public class ConsensusAlignerTests
     }
 
     [Fact]
+    public void Align_ShouldSaySo_WhenTheVideoEnvelopeIsNotFinite()
+    {
+        var show = SyntheticShow.Build(seed: 15, songs: 8, leadInSec: 30, drift: 1.0, setbreakAfter: null, setbreakSec: 0);
+        show.Video[100] = float.NaN;
+
+        var result = ConsensusAligner.Align(show.Video, show.Tracks);
+
+        result.Chapters.Should().BeNull();
+        result.SkipReason.Should().Be("non-finite video");
+    }
+
+    [Fact]
+    public void Align_ShouldSaySo_WhenATemplateIsNotFinite()
+    {
+        var show = SyntheticShow.Build(seed: 16, songs: 8, leadInSec: 30, drift: 1.0, setbreakAfter: null, setbreakSec: 0);
+        var template = (float[])show.Tracks[2].Template!.Clone();
+        template[10] = float.PositiveInfinity;
+        var tracks = show.Tracks.Select((t, i) => i == 2 ? t with { Template = template } : t).ToList();
+
+        var result = ConsensusAligner.Align(show.Video, tracks);
+
+        result.Chapters.Should().BeNull();
+        result.SkipReason.Should().Be("non-finite template 3/8");
+    }
+
+    [Fact]
     public void Align_ShouldSkip_WhenConfidentMatchesDisagree()
     {
         // Songs appear in the video in reverse order: every match is confident but no line fits them.

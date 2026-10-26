@@ -80,8 +80,10 @@ public static class Fft
     /// </summary>
     /// <param name="value">Minimum length.</param>
     /// <returns>The power of two.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">Above 2^30, the largest power of two an int holds.</exception>
     public static int NextPowerOfTwo(int value)
     {
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(value, 1 << 30);
         int n = 1;
         while (n < value)
         {

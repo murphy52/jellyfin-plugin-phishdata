@@ -68,8 +68,24 @@ public static class ConsensusAligner
     {
         bool perSet = options?.PerSetIntercept ?? false;
         const int minGapFrames = MinGapSeconds * Fps;
-        var searcher = new NccSearcher(video, TemplateFrames);
         var templates = tracks.Select(t => t.Template is null ? null : t.Template.Length > TemplateFrames ? t.Template[..TemplateFrames] : t.Template).ToList();
+
+        // NaN and infinity compare false against every threshold, so they would hide the cause (or worse,
+        // a NaN median passes the median gate). Name it instead.
+        if (!AllFinite(video))
+        {
+            return Rejected("non-finite video");
+        }
+
+        for (int i = 0; i < templates.Count; i++)
+        {
+            if (templates[i] is { } t && !AllFinite(t))
+            {
+                return Rejected($"non-finite template {i + 1}/{tracks.Count}");
+            }
+        }
+
+        var searcher = new NccSearcher(video, TemplateFrames);
 
         var cumulativeStart = new double[tracks.Count];
         double cumulative = 0;
@@ -241,6 +257,19 @@ public static class ConsensusAligner
         }
 
         return slopes;
+    }
+
+    private static bool AllFinite(float[] values)
+    {
+        foreach (var v in values)
+        {
+            if (!float.IsFinite(v))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static AlignmentResult Rejected(string reason) => new(null, 0.0, 0, reason);
