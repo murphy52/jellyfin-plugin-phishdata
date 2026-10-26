@@ -183,7 +183,8 @@ public class CorpusTests
                 int moved = before.Chapters is { } p && after.Chapters is { } q
                     ? p.Zip(q).Count(x => Math.Abs(x.First.StartSeconds - x.Second.StartSeconds) > 2.0)
                     : 0;
-                if (before.SkipReason == after.SkipReason && moved == 0 && Math.Abs(before.MedianConfidence - after.MedianConfidence) < 1e-9)
+                if (before.SkipReason == after.SkipReason && moved == 0 && before.LowConfidenceCount == after.LowConfidenceCount
+                    && Math.Abs(before.MedianConfidence - after.MedianConfidence) < 1e-9)
                 {
                     continue;
                 }
@@ -462,7 +463,7 @@ internal sealed class CorpusShow
 
         // The set gate came with per-set intercepts, so parity runs stay comparable with the Python.
         var rejected = AlignmentGates.CheckMedian(result.MedianConfidence)
-            ?? (options?.PerSetIntercept == true ? AlignmentGates.CheckSets(tracks, chapters, (int)(options.MinAnchorTemplateSeconds * AlignmentConstants.Fps)) : null);
+            ?? (options?.PerSetIntercept == true ? AlignmentGates.CheckSets(tracks, chapters, ConsensusAligner.MinTemplateFrames(options)) : null);
         return rejected is null ? result : result with { SkipReason = rejected };
     }
 

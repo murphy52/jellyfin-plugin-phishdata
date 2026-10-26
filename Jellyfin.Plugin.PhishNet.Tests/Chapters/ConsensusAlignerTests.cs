@@ -163,6 +163,8 @@ public class ConsensusAlignerTests
 
         ConsensusAligner.Align(show.Video, tracks, AlignmentOptions.PerSet).SkipReason.Should().BeNull("10 s templates anchor today");
         ConsensusAligner.Align(show.Video, tracks, gated).SkipReason.Should().Be("few-anchors 2/8");
+        ConsensusAligner.Align(show.Video, tracks, AlignmentOptions.PerSet with { MinAnchorTemplateSeconds = 10.01 })
+            .SkipReason.Should().Be("few-anchors 2/8", "a fractional minimum rounds up, so a 10 s template is below 10.01 s");
     }
 
     [Fact]

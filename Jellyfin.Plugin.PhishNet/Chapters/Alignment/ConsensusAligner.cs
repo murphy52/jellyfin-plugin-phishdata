@@ -81,7 +81,7 @@ public static class ConsensusAligner
     public static AlignmentResult Align(float[] video, IReadOnlyList<AlignmentTrack> tracks, AlignmentOptions? options = null)
     {
         bool perSet = options?.PerSetIntercept ?? false;
-        int minAnchorFrames = (int)((options?.MinAnchorTemplateSeconds ?? 0) * Fps);
+        int minAnchorFrames = MinTemplateFrames(options);
         const int minGapFrames = MinGapSeconds * Fps;
         var templates = tracks.Select(t => t.Template is null ? null : t.Template.Length > TemplateFrames ? t.Template[..TemplateFrames] : t.Template).ToList();
 
@@ -274,6 +274,15 @@ public static class ConsensusAligner
 
         return slopes;
     }
+
+    /// <summary>
+    /// Gets <see cref="AlignmentOptions.MinAnchorTemplateSeconds"/> in frames, rounded up so a template must
+    /// reach the full minimum.
+    /// </summary>
+    /// <param name="options">The options, or null.</param>
+    /// <returns>The frame count; 0 when unset, negative or not a number.</returns>
+    public static int MinTemplateFrames(AlignmentOptions? options) =>
+        options?.MinAnchorTemplateSeconds is > 0 and var seconds && double.IsFinite(seconds) ? (int)Math.Ceiling(seconds * Fps) : 0;
 
     private static bool AllFinite(float[] values)
     {
